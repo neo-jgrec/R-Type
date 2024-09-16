@@ -32,3 +32,25 @@ void Registry::kill_entity(Entity const& entity)
     }
     _dead_entities.push_back(entity);
 }
+
+template <class ...Components, typename Function>
+void Registry::add_system(Function&& f)
+{
+    auto const& components = std::vector<std::type_index>{std::type_index(typeid(Components))...};
+    auto const& erase_function = [f](Registry& r, Entity const& e) {
+        f(r, e, r.get_components<Components>()[static_cast<size_t>(e)]...);
+    };
+    for (auto const& component : components) {
+        _erase_functions[component] = erase_function;
+    }
+}
+
+void Registry::run_systems()
+{
+    for (auto const& entity : _dead_entities) {
+        for (auto& [type, func] : _erase_functions) {
+            func(*this, entity);
+        }
+    }
+    _dead_entities.clear();
+}

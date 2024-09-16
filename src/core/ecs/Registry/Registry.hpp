@@ -14,6 +14,7 @@ namespace core::ecs {
             std::unordered_map<std::type_index, std::function<void(Registry&, Entity const&)>> _erase_functions;
             std::vector<Entity> _dead_entities;
             size_t _next_entity_id = 0;
+            std::vector<std::function<void(Registry&, Entity, std::any...)>> _systems;
 
         public:
             template <class Component>
@@ -37,5 +38,10 @@ namespace core::ecs {
 
             template <typename Component>
             void remove_component(Entity const& from) { get_components<Component>().erase(static_cast<size_t>(from)); }
+
+            template <class ...Components, typename Function>
+            void add_system(Function&& f);
+
+            void run_systems();
     };
 } // namespace core::ecs
