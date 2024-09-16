@@ -26,13 +26,13 @@ if [ -f "$PRESET_FILE" ]; then
     echo "-- USING PRESET FILE"
     if [ "$BUILD_CONAN" = "True" ]; then
         echo "-- RUNNING CONAN INSTALL"
-        conan install . --output-folder=build --build=missing -c tools.system.package_manager:sudo=True
+        conan install . --output-folder=build --build=missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True
     fi
     cmake --preset conan-release -DCMAKE_BUILD_TYPE="$BUILD_MODE" -DCMAKE_RUNTIME_OUTPUT_DIRECTORY="$SCRIPT_LOCATION" -DCMAKE_LIBRARY_OUTPUT_DIRECTORY="$SCRIPT_LOCATION"
     cmake --build "$OUTPUT_DIR" --preset conan-release
 else
     echo "-- RUNNING CONAN INSTALL"
-    conan install . --output-folder=build --build=missing -c tools.system.package_manager:sudo=True
+    conan install . --output-folder=build --build=missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True
     cmake --preset conan-release -DCMAKE_BUILD_TYPE="$BUILD_MODE" -DCMAKE_RUNTIME_OUTPUT_DIRECTORY="$SCRIPT_LOCATION" -DCMAKE_LIBRARY_OUTPUT_DIRECTORY="$SCRIPT_LOCATION"
     cmake --build "$OUTPUT_DIR" --preset conan-release
 fi
