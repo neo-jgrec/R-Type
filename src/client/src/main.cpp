@@ -1,4 +1,5 @@
 #include <iostream>
+#include "../../core/ecs/Registry/Registry.hpp"
 
 int main()
 {
