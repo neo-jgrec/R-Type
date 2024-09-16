@@ -1,5 +1,6 @@
 #include <cstddef>
 
+#pragma once
 namespace core::ecs {
     class Entity {
         private:
