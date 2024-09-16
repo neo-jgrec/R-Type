@@ -1,13 +1,12 @@
+#include <cstddef>
 
-namespace core {
-    namespace ecs {
-        class Entity {
-            private:
-                size_t id;
+namespace core::ecs {
+    class Entity {
+        private:
+            size_t id;
 
-            public:
-                explicit Entity(size_t id) : id(id) {}
-                operator size_t() const { return id; }
-        };
-    }
+        public:
+            explicit Entity(size_t id) : id(id) {}
+            operator size_t() const { return id; }
+    };
 }
