@@ -1,12 +1,76 @@
-CMakeLists.txt.user
-CMakeCache.txt
-CMakeFiles
-CMakeScripts
-Testing
-Makefile
-cmake_install.cmake
-install_manifest.txt
-compile_commands.json
-CTestTestfile.cmake
-_deps
-CMakeUserPresets.json
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+**/CMakeUserPresets.json
+**/cmake-build-debug
+**/CMakeCache.txt
+**/cmake_install.cmake
+**/install_manifest.txt
+**/CMakeFiles/
+**/CTestTestfile.cmake
+**/Makefile
+**/*.cbp
+**/CMakeScripts
+**/compile_commands.json
+
+/build
+
+r-type_client
+r-type_server
+
+## Local
+
+.idea/*.xml
+
+build/**/*
+
+include/*
+/bin/*
+!/bin/.*
+!/bin/lib/.gitkeep
+
+# tests
+unit_tests
+coverage.info
+*.gcno
+*.gcda
+vgcore.*
+
+# Images
+*.out.png
+*.out.ppm
+
+# IDE files
+.vscode/
+.idea/
+.cache
