@@ -1,13 +1,15 @@
+#pragma once
+
 #include <cstddef>
 
-#pragma once
-namespace core::ecs {
+namespace core::ecs
+{
     class Entity {
-        private:
-            size_t id;
+    private:
+        size_t id;
 
-        public:
-            explicit Entity(size_t id) : id(id) {}
-            operator size_t() const { return id; }
+    public:
+        explicit Entity(size_t id) : id(id) {}
+        operator size_t() const { return id; }
     };
-}
+} // namespace core::ecs
