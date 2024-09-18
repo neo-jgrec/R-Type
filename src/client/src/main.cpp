@@ -1,5 +1,5 @@
 #include <SFML/Graphics.hpp>
-#include <iostream>
+#include <memory>
 #include "../../core/ecs/Registry/Registry.hpp"
 
 struct Position {
@@ -12,28 +12,17 @@ struct Velocity {
 
 struct Drawable {
     sf::RectangleShape shape;
-};
+};;
 
 struct ClockComponent {
     sf::Clock clock;
     sf::Time elapsedTime;
 };
 
-void move_entity(Position &position, const Velocity &velocity)
-{
-    position.x += velocity.dx;
-    position.y += velocity.dy;
-}
-
-void update_drawable(Drawable &drawable, const Position &position)
-{
-    drawable.shape.setPosition(position.x, position.y);
-    std::cout << "Updated drawable to: " << position.x << ", " << position.y << std::endl;
-}
-
 int main()
 {
     sf::RenderWindow window(sf::VideoMode(800, 600), "ECS SFML Example");
+    window.setFramerateLimit(60);
 
     core::ecs::Registry registry;
 
@@ -51,19 +40,16 @@ int main()
 
     registry.add_system<Position, Velocity, ClockComponent>(
         [](Position &pos, const Velocity &vel, ClockComponent &clockComp) {
-            clockComp.elapsedTime = clockComp.clock.getElapsedTime();
-            if (clockComp.elapsedTime.asSeconds() >= 1.0f) {
-                move_entity(pos, vel);
-                std::cout << "Moved entity to: " << pos.x << ", " << pos.y << std::endl;
-
-                clockComp.clock.restart();
-            }
-        });
+            pos.x += vel.dx;
+            pos.y += vel.dy;
+        }
+    );
 
     registry.add_system<Drawable, Position>(
-        [](Drawable &drawable, const Position &pos) {
-            update_drawable(drawable, pos);
-        });
+        [&window](Drawable &drawable, const Position &pos) {
+            drawable.shape.setPosition(pos.x, pos.y);
+        }
+    );
 
     registry.add_system<Drawable>([&window](Drawable &drawable) {
         window.draw(drawable.shape);
@@ -79,9 +65,7 @@ int main()
         window.clear();
 
         registry.run_system<Position, Velocity, ClockComponent>();
-
         registry.run_system<Drawable, Position>();
-
         registry.run_system<Drawable>();
 
         window.display();
