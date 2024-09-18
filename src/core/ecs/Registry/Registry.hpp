@@ -77,13 +77,28 @@ namespace core::ecs
         void add_system(Function &&f)
         {
             _systems.emplace_back([this, f = std::forward<Function>(f)](Registry &r)
-                                  { call_system<Components...>(f, r, std::index_sequence_for<Components...>{}); });
+                                  { call_system<Components...>(f, r, std::index_sequence_for<Components...>{}); },
+                                  std::vector<std::type_index>{typeid(Components)...});
         }
 
+        // Run all systems
         void run_systems()
         {
-            for (auto &system : _systems) {
+            for (auto &[system, components] : _systems) {
                 system(*this);
+            }
+        }
+
+        // Selectively run systems that match the specified components
+        template <class... Components>
+        void run_system()
+        {
+            std::vector<std::type_index> component_types = {typeid(Components)...};
+            
+            for (auto &[system, components] : _systems) {
+                if (components == component_types) {
+                    system(*this);  // Run only the system that matches the specified components
+                }
             }
         }
 
@@ -110,6 +125,6 @@ namespace core::ecs
 
         std::unordered_map<std::type_index, std::any> _components_arrays;
         size_t _next_entity_id = 0;
-        std::vector<std::function<void(Registry &)>> _systems;
+        std::vector<std::pair<std::function<void(Registry &)>, std::vector<std::type_index>>> _systems;
     };
 } // namespace core::ecs
