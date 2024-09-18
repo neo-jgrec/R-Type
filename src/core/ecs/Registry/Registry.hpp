@@ -2,11 +2,11 @@
 
 #include <any>
 #include <functional>
+#include <memory>
 #include <typeindex>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <memory> // Include shared_ptr
 
 #include "../Entity/Entity.hpp"
 #include "../SparseArray/SparseArray.hpp"
@@ -35,7 +35,8 @@ namespace core::ecs
         template <class Component>
         SparseArray<std::shared_ptr<Component>> const &get_components() const
         {
-            return std::any_cast<SparseArray<std::shared_ptr<Component>> const &>(_components_arrays.at(typeid(Component)));
+            return std::any_cast<SparseArray<std::shared_ptr<Component>> const &>(
+                _components_arrays.at(typeid(Component)));
         }
 
         Entity spawn_entity()
@@ -57,14 +58,17 @@ namespace core::ecs
         typename SparseArray<std::shared_ptr<Component>>::reference_type add_component(Entity const &to, Component &&c)
         {
             auto &comp_array = get_components<Component>();
-            return comp_array.insert_at(static_cast<size_t>(to), std::make_shared<Component>(std::forward<Component>(c)));
+            return comp_array.insert_at(static_cast<size_t>(to),
+                                        std::make_shared<Component>(std::forward<Component>(c)));
         }
 
         template <typename Component, typename... Params>
-        typename SparseArray<std::shared_ptr<Component>>::reference_type emplace_component(Entity const &to, Params &&...params)
+        typename SparseArray<std::shared_ptr<Component>>::reference_type emplace_component(Entity const &to,
+                                                                                           Params &&...params)
         {
             auto &comp_array = get_components<Component>();
-            return comp_array.emplace_at(static_cast<size_t>(to), std::make_shared<Component>(std::forward<Params>(params)...));
+            return comp_array.emplace_at(static_cast<size_t>(to),
+                                         std::make_shared<Component>(std::forward<Params>(params)...));
         }
 
         template <typename Component>
