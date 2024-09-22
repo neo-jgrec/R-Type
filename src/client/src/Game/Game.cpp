@@ -1,4 +1,6 @@
 #include "Game.hpp"
+#include <iostream>
+#include "Components.hpp"
 
 void Game::run()
 {
@@ -26,28 +28,25 @@ void Game::addSystems()
     _registry.add_system<InputStateComponent>(
         [](InputStateComponent &input)
         {
-            // if (input.up) {
-            //     printf("up\n");
-            // }
-            // if (input.down) {
-            //     printf("down\n");
-            // }
-            // if (input.left) {
-            //     printf("left\n");
-            // }
-            // if (input.right) {
-            //     printf("right\n");
-            // }
-            // if (input.fire) {
-            //     printf("fire\n");
-            // }
+            auto handle_input = [](bool &state, const char *key) {
+                if (state) {
+                    std::cout << key << " key pressed" << std::endl;
+                    state = false;
+                }
+            };
+
+            handle_input(input.up, "Up");
+            handle_input(input.down, "Down");
+            handle_input(input.left, "Left");
+            handle_input(input.right, "Right");
         });
 }
 
 void Game::init()
 {
-    _window.create(sf::VideoMode(800, 600), "ECS Game");
+    _window.create(sf::VideoMode(800, 600), "R-Type");
     _window.setFramerateLimit(60);
+    _window.setKeyRepeatEnabled(true);
 
     _registry.register_component<Position>();
     _registry.register_component<Velocity>();
@@ -76,35 +75,39 @@ void Game::processEvents()
             _window.close();
         }
 
-        // if (event.type == sf::Event::KeyPressed) {
-        //     core::ecs::SparseArray<std::shared_ptr<KeyBinding>> keyBinding = _registry.get_components<KeyBinding>();
-        //     core::ecs::SparseArray<std::shared_ptr<InputStateComponent>> inputState =
-        //         _registry.get_components<InputStateComponent>();
+        if (event.type == sf::Event::KeyPressed) {
+            if (event.key.code == sf::Keyboard::Escape) {
+                _windowOpen = false;
+                _window.close();
+            }
 
-        //     for (auto &binding : keyBinding) {
-        //         if (event.key.code == key->up) {
-        //             inputState[entity]->up = true;
-        //         }
-        //         if (event.key.code == key->down) {
-        //             inputState[entity]->down = true;
-        //         }
-        //         if (event.key.code == key->left) {
-        //             inputState[entity]->left = true;
-        //         }
-        //         if (event.key.code == key->right) {
-        //             inputState[entity]->right = true;
-        //         }
-        //         if (event.key.code == key->fire) {
-        //             inputState[entity]->fire = true;
-        //         }
-        //     }
-        // }
+            auto &inputStateOpt = _registry.get_components<InputStateComponent>()[_playerEntity];
+            auto &keyBindingOpt = _registry.get_components<KeyBinding>()[_playerEntity];
+
+            if (inputStateOpt.has_value()) {
+                auto &keyBinding = *keyBindingOpt.value();
+                auto &inputState = *inputStateOpt.value();
+
+                auto set_input_state = [&inputState, &event](auto key, bool &state) {
+                    if (event.key.code == key) {
+                        state = true;
+                    }
+                };
+
+                set_input_state(keyBinding.moveUpKey, inputState.up);
+                set_input_state(keyBinding.moveDownKey, inputState.down);
+                set_input_state(keyBinding.moveLeftKey, inputState.left);
+                set_input_state(keyBinding.moveRightKey, inputState.right);
+
+            }
+        }
     }
 }
 
 
 void Game::update()
 {
+    _registry.run_system<InputStateComponent>();
     _registry.run_system<Position, Velocity, ClockComponent>();
     _registry.run_system<Drawable, Position>();
 }

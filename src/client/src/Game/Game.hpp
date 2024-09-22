@@ -3,8 +3,6 @@
 #include "../../../core/ecs/Registry/Registry.hpp"
 #include "../../../core/ecs/Entity/Entity.hpp"
 #include <SFML/Graphics.hpp>
-#include <memory>
-#include "Components.hpp"
 
 class Game {
 public:
