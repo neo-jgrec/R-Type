@@ -40,9 +40,8 @@ if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
     endif()
 endif()
 
-# Find Vulkan package
 find_package(asio REQUIRED)
-find_package(SFML REQUIRED)
+find_package(SFML COMPONENTS graphics window system audio network REQUIRED)
 
 file(GLOB_RECURSE SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
@@ -59,18 +58,12 @@ target_include_directories(r-type_client
     PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/includes
-    ${Vulkan_INCLUDE_DIRS}
 )
 
-# Link Vulkan and GLFW libraries
 target_link_libraries(r-type_client
     PRIVATE
     asio::asio
-    sfml-graphics
-    sfml-window
-    sfml-system
-    sfml-audio
-    sfml-network
+    sfml-graphics sfml-window sfml-system sfml-audio sfml-network
 )
 
 # Install the target

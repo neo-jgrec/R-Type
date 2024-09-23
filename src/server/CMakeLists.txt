@@ -40,7 +40,6 @@ if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
     endif()
 endif()
 
-# Find Vulkan package
 find_package(asio REQUIRED)
 
 file(GLOB_RECURSE SOURCES
@@ -58,7 +57,6 @@ target_include_directories(r-type_server
     PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/includes
-    ${Vulkan_INCLUDE_DIRS}
 )
 
 # Link Vulkan and GLFW libraries

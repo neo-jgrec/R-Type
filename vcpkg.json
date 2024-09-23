@@ -1,0 +1,7 @@
+{
+  "dependencies": [
+    "sfml",
+    "asio",
+    "luabridge"
+  ]
+}
