@@ -5,13 +5,9 @@
 ** RequestType
 */
 
-
-#pragma once
-
 #ifndef REQUESTTYPE_HPP
     #define REQUESTTYPE_HPP
     #include <cstdint> // Pour les types uint8_t, uint16_t, uint64_t
-
 
 // Enum pour les types de message GDTP
 enum class GDTPMessageType : uint8_t {
@@ -40,4 +36,5 @@ enum class GDTPMessageType : uint8_t {
     MapData = 0x20,
     MapScroll = 0x21
 };
+
 #endif //REQUESTTYPE_HPP
