@@ -13,33 +13,31 @@ void Game::run()
 
 void Game::addSystems()
 {
-    _registry.add_system<Position, Velocity, ClockComponent>(
-        [](Position &pos, const Velocity &vel, ClockComponent &)
+    _registry.add_system<Position, Velocity, InputStateComponent>(
+        [](Position &pos, const Velocity &vel, InputStateComponent &input)
         {
-            pos.x += vel.dx;
-            pos.y += vel.dy;
+            if (input.up) {
+                pos.y -= vel.dy;
+                input.up = false;
+            }
+            if (input.down) {
+                pos.y += vel.dy;
+                input.down = false;
+            }
+            if (input.left) {
+                pos.x -= vel.dx;
+                input.left = false;
+            }
+            if (input.right) {
+                pos.x += vel.dx;
+                input.right = false;
+            }
         });
 
     _registry.add_system<Drawable, Position>([](Drawable &drawable, const Position &pos)
                                              { drawable.shape.setPosition(pos.x, pos.y); });
 
     _registry.add_system<Drawable>([this](Drawable &drawable) { _window.draw(drawable.shape); });
-
-    _registry.add_system<InputStateComponent>(
-        [](InputStateComponent &input)
-        {
-            auto handle_input = [](bool &state, const char *key) {
-                if (state) {
-                    std::cout << key << " key pressed" << std::endl;
-                    state = false;
-                }
-            };
-
-            handle_input(input.up, "Up");
-            handle_input(input.down, "Down");
-            handle_input(input.left, "Left");
-            handle_input(input.right, "Right");
-        });
 }
 
 void Game::init()
@@ -56,7 +54,7 @@ void Game::init()
     _registry.register_component<InputStateComponent>();
 
     _registry.add_component(_playerEntity, Position{200.0f, 200.0f});
-    _registry.add_component(_playerEntity, Velocity{10.0f, 0.0f});
+    _registry.add_component(_playerEntity, Velocity{10.0f, 10.0f});
     _registry.add_component(_playerEntity, Drawable{sf::RectangleShape(sf::Vector2f(50.0f, 50.0f))});
     _registry.add_component(_playerEntity, ClockComponent{});
     _registry.add_component(_playerEntity, KeyBinding{});
@@ -107,8 +105,7 @@ void Game::processEvents()
 
 void Game::update()
 {
-    _registry.run_system<InputStateComponent>();
-    _registry.run_system<Position, Velocity, ClockComponent>();
+    _registry.run_system<Position, Velocity, InputStateComponent>();
     _registry.run_system<Drawable, Position>();
 }
 
