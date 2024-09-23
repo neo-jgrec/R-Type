@@ -1,117 +1,60 @@
 #pragma once
 
 #ifndef NETWORKSERVICE_HPP
-#define NETWORKSERVICE_HPP
-
+    #define NETWORKSERVICE_HPP
+/**
+ * @file NetworkingService.hpp
+ * @brief Defines the NetworkingService class, which provides UDP-based networking functionality.
+ */
     #include <asio.hpp>
     #include <chrono>
     #include <cstdint> // Pour les types uint8_t, uint16_t, uint64_t
     #include <cstring>
-    #include <functional> // Pour gérer les callbacks
     #include <iostream>
     #include <string>
     #include <thread>
     #include <vector>
+    #include <map>
+    #include "./includes/RequestType.hpp"
+    #include "./includes/RequestHeader.hpp"
 
-// Fonctions auxiliaires pour htonll et ntohll (pour les entiers 64 bits)
-inline uint64_t htonll(uint64_t value)
-{
-    if (htonl(1) != 1) { // Vérifie l'ordre des octets
-        return (static_cast<uint64_t>(htonl(value & 0xFFFFFFFF)) << 32) | htonl(value >> 32);
-    }
-    return value;
-}
 
-inline uint64_t ntohll(uint64_t value) {
-    if (ntohl(1) != 1) {  // Vérifie l'ordre des octets
-        return (static_cast<uint64_t>(ntohl(value & 0xFFFFFFFF)) << 32) | ntohl(value >> 32);
-    }
-    return value;
-}
-
-// Structure pour représenter un header GDTP
-struct GDTPHeader {
-    uint8_t version;         // Version du protocole (1 octet)
-    uint8_t messageType;     // Type de message (1 octet)
-    uint64_t packetId;       // Identifiant unique du paquet (8 octets)
-    uint16_t payloadSize;    // Taille du payload (2 octets)
-
-    // Convertit les éléments de la structure en un buffer binaire pour l'envoi
-    std::vector<uint8_t> toBuffer() const {
-        std::vector<uint8_t> buffer(12);  // 12 octets pour le header
-
-        buffer[0] = version;
-        buffer[1] = messageType;
-
-        uint64_t packetIdNetworkOrder = htonll(packetId);  // Conversion en big-endian
-        std::memcpy(&buffer[2], &packetIdNetworkOrder, 8); // Copie du packetId
-
-        uint16_t payloadSizeNetworkOrder = htons(payloadSize);  // Conversion en big-endian
-        std::memcpy(&buffer[10], &payloadSizeNetworkOrder, 2);  // Copie de la taille du payload
-
-        return buffer;
-    }
-
-    // Remplit la structure à partir d'un buffer binaire reçu
-    static GDTPHeader fromBuffer(const std::vector<uint8_t>& buffer) {
-        GDTPHeader header;
-        header.version = buffer[0];
-        header.messageType = buffer[1];
-
-        uint64_t packetIdNetworkOrder;
-        std::memcpy(&packetIdNetworkOrder, &buffer[2], 8);  // Récupération du packetId
-        header.packetId = ntohll(packetIdNetworkOrder);  // Conversion en format hôte (little-endian)
-
-        uint16_t payloadSizeNetworkOrder;
-        std::memcpy(&payloadSizeNetworkOrder, &buffer[10], 2);  // Récupération de la taille du payload
-        header.payloadSize = ntohs(payloadSizeNetworkOrder);  // Conversion en format hôte
-
-        return header;
-    }
-};
-
-// Enum pour les types de message GDTP
-enum class GDTPMessageType : uint8_t {
-    PlayerMovement = 0x01,
-    GameEvent = 0x02,
-    EntityUpdate = 0x03,
-    Acknowledgment = 0x04,
-    PlayerShoot = 0x05,
-    PlayerHealthUpdate = 0x06,
-    PlayerRespawn = 0x07,
-    PlayerDisconnect = 0x08,
-    EntitySpawn = 0x09,
-    EntityDestroy = 0x0A,
-    PowerUpCollected = 0x0B,
-    GameStart = 0x0C,
-    GameOver = 0x0D,
-    PingRequest = 0x0E,
-    PingResponse = 0x0F,
-    ConnectionRequest = 0x10,
-    ConnectionAccept = 0x11,
-    ConnectionReject = 0x12,
-    Synchronization = 0x13,
-    ErrorMessage = 0x14,
-    ChatMessage = 0x15,
-    GamePause = 0x16,
-    MapData = 0x20,
-    MapScroll = 0x21
-};
-
+/**
+ * @class NetworkingService
+ * @brief Provides networking services for sending and receiving UDP packets, handling various types of GDTP messages.
+ *
+ * The NetworkingService class handles UDP-based client-server communications, including sending requests, receiving packets,
+ * and processing messages based on GDTP message types. It uses the ASIO library for asynchronous network I/O.
+ */
 class NetworkingService {
 public:
-    NetworkingService(const std::string& server_ip, int port)
+    /**
+    * @brief Constructs a NetworkingService object and starts receiving packets on the specified IP and port.
+    * @param server_ip The IP address of the server.
+    * @param port The port number to listen on.
+    * @param message_handlers A shared pointer to a map of message handlers for different GDTPMessageType.
+    */
+    NetworkingService(const std::string& server_ip, int port, std::shared_ptr<std::map<GDTPMessageType, std::function<void(const GDTPHeader& header, const std::vector<uint8_t>& payload, const asio::ip::udp::endpoint& client_endpoint)>>>)
         : socket_(io_context_, asio::ip::udp::endpoint(asio::ip::udp::v4(), port)) {
         std::cout << "Server listening on " << server_ip << ":" << port << std::endl;
         startReceive(); // Commence l'écoute des paquets dès l'initialisation
     }
 
+    /**
+    * @brief Destructor for NetworkingService. Closes the socket and stops the service.
+    */
     ~NetworkingService() {
         socket_.close();
         this->stop();
     }
 
-    // Méthode pour envoyer une requête
+    /**
+     * @brief Sends a request to a specified recipient with the given message type and arguments.
+     * @param recipient The IP address of the recipient.
+     * @param port The port number of the recipient.
+     * @param messageType The type of the GDTP message to be sent.
+     * @param args Optional arguments for the payload of the message.
+     */
     void sendRequest(const std::string& recipient, int port, GDTPMessageType messageType, const std::vector<std::string>& args = {}) {
         std::vector<uint8_t> payload = preparePayload(messageType, args);
         std::cout << "Payload size: " << payload.size() << std::endl;
@@ -137,7 +80,22 @@ public:
         sendPacket(headerBuffer, recipient, port);
     }
 
-    // Démarrer l'écoute des paquets entrants
+    /**
+     * @brief Sends a request to a client using its endpoint.
+     * @param client_endpoint The UDP endpoint of the client (contains IP and port).
+     * @param messageType The type of the GDTP message to be sent.
+     * @param args Optional arguments for the payload of the message.
+     */
+    void sendRequest(const asio::ip::udp::endpoint& client_endpoint, GDTPMessageType messageType, const std::vector<std::string>& args = {})
+    {
+        sendRequest(client_endpoint.address().to_string(), client_endpoint.port(), messageType, args);
+    }
+
+    /**
+     * @brief Starts the asynchronous reception of UDP packets.
+     *
+     * This method continuously listens for incoming packets using the ASIO library's async_receive_from function.
+     */
     void startReceive() {
         socket_.async_receive_from(
             asio::buffer(recv_buffer_), remote_endpoint_,
@@ -150,11 +108,22 @@ public:
         );
     }
 
+    /**
+     * @brief Runs the NetworkingService in a separate thread.
+     *
+     * This method starts the ASIO I/O context in a separate thread, allowing the service to handle network I/O asynchronously.
+     */
     void run() {
         this->thread = std::jthread([this]() {
             io_context_.run();
         });
     }
+
+    /**
+     * @brief Stops the NetworkingService and terminates the associated thread.
+     *
+     * Stops the ASIO I/O context and requests the termination of the thread running the service.
+     */
     void stop()
     {
         io_context_.stop();
@@ -162,18 +131,30 @@ public:
         this->thread.join();
     }
 
+    /**
+    * @brief Blocks the calling thread until the network service thread finishes execution.
+    *
+    * This method waits for the network service thread to complete, ensuring all network operations have finished.
+    */
     void attempt()
     {
         thread.join();
     }
 
 private:
-    asio::io_context io_context_;
-    asio::ip::udp::socket socket_;
-    asio::ip::udp::endpoint remote_endpoint_; // Endpoint distant (celui qui envoie les données)
-    std::array<uint8_t, 1400> recv_buffer_;   // Tampon pour recevoir les paquets
+    asio::io_context io_context_;                   ///< ASIO I/O context for handling asynchronous network operations.
+    asio::ip::udp::socket socket_;                  ///< ASIO UDP socket for sending and receiving packets.
+    asio::ip::udp::endpoint remote_endpoint_;       ///< Endpoint of the remote client sending the packet.
+    std::array<uint8_t, 1400> recv_buffer_;         ///< Buffer for receiving incoming packets.
+    std::jthread thread;                            ///< Thread for running the ASIO I/O context.
+    std::shared_ptr<std::map<GDTPMessageType, std::function<void(const GDTPHeader&, const std::vector<uint8_t>&, const asio::ip::udp::endpoint&)>>> message_handlers; ///< Handlers for processing received messages.
 
-    // Prépare le payload en fonction du type de message
+    /**
+    * @brief Prepares the payload based on the GDTP message type and arguments.
+    * @param messageType The type of the GDTP message.
+    * @param args The arguments required for the message's payload.
+    * @return A vector of bytes representing the payload.
+    */
     std::vector<uint8_t> preparePayload(GDTPMessageType messageType, const std::vector<std::string>& args) {
         std::vector<uint8_t> payload;
         switch (messageType) {
@@ -196,6 +177,35 @@ private:
         return payload;
     }
 
+    /**
+     * @brief Prepares the payload for an error message (ErrorMessage).
+     * @param args The arguments required for the error message (error code and description).
+     * @return A vector of bytes representing the error message payload.
+     */
+    std::vector<uint8_t> prepareErrorMessage(const std::vector<std::string>& args) {
+        if (args.size() < 2) {
+            std::cerr << "Invalid arguments for ErrorMessage!" << std::endl;
+            return {};
+        }
+
+        uint8_t errorCode = static_cast<uint8_t>(std::stoi(args[0]));
+
+        std::string errorDescription = args[1];
+
+        std::vector<uint8_t> payload(1 + errorDescription.size());
+
+        payload[0] = errorCode;
+
+        std::memcpy(&payload[1], errorDescription.data(), errorDescription.size());
+
+        return payload;
+    }
+
+    /**
+     * @brief Prepares the payload for a connection request (ConnectionRequest).
+     * @param args The arguments required for the connection request (username).
+     * @return A vector of bytes representing the connection request payload.
+     */
     std::vector<uint8_t> prepareConnectionRequest(const std::vector<std::string>& args) {
         if (args.size() < 1) {
             std::cerr << "Invalid arguments for Connection Request!" << std::endl;
@@ -208,7 +218,11 @@ private:
         return payload;
     }
 
-    // Exemple de préparation du payload pour le mouvement du joueur
+    /**
+     * @brief Prepares the payload for a player movement message (PlayerMovement).
+     * @param args The arguments required for the player movement (Player ID, X, Y, Z coordinates).
+     * @return A vector of bytes representing the player movement payload.
+     */
     std::vector<uint8_t> preparePlayerMovement(const std::vector<std::string>& args) {
         if (args.size() < 4) {
             std::cerr << "Invalid arguments for Player Movement!" << std::endl;
@@ -241,7 +255,11 @@ private:
         return payload;
     }
 
-    // Exemple de préparation du payload pour le tir du joueur
+    /**
+     * @brief Prepares the payload for a player shoot message (PlayerShoot).
+     * @param args The arguments required for the player shoot (Player ID, direction, weapon type).
+     * @return A vector of bytes representing the player shoot payload.
+     */
     std::vector<uint8_t> preparePlayerShoot(const std::vector<std::string>& args) {
         if (args.size() < 3) {
             std::cerr << "Invalid arguments for Player Shoot!" << std::endl;
@@ -261,7 +279,11 @@ private:
         return payload;
     }
 
-    // Exemple de préparation du payload pour un message de chat
+    /**
+     * @brief Prepares the payload for a chat message (ChatMessage).
+     * @param args The arguments required for the chat message (Player ID, message).
+     * @return A vector of bytes representing the chat message payload.
+     */
     std::vector<uint8_t> prepareChatMessage(const std::vector<std::string>& args) {
         if (args.size() < 2) {
             std::cerr << "Invalid arguments for Chat Message!" << std::endl;
@@ -281,16 +303,19 @@ private:
         return payload;
     }
 
-    // Envoi du paquet au client destinataire
+    /**
+     * @brief Sends a UDP packet to the specified recipient.
+     * @param packet The packet data to be sent (header + payload).
+     * @param recipient The IP address of the recipient.
+     * @param port The port number of the recipient.
+     */
     void sendPacket(const std::vector<uint8_t>& packet, const std::string& recipient, int port) {
         asio::ip::udp::endpoint recipient_endpoint(asio::ip::address::from_string(recipient), port);
-        std::error_code ec; // Code d'erreur pour capturer l'état de l'envoi
+        std::error_code ec;
         size_t bytesSent = socket_.send_to(asio::buffer(packet), recipient_endpoint, 0, ec);
 
 
-        // Vérification du code d'erreur
         if (ec) {
-            // En cas d'erreur, lever une exception avec un message descriptif
             throw std::runtime_error("Failed to send packet: " + ec.message());
         } else {
             std::cout << "Packet successfully sent to " << recipient
@@ -298,12 +323,18 @@ private:
         }
     }
 
-    // Traitement des paquets reçus
+    /**
+     * @brief Handles the reception of a packet and processes its content.
+     * @param packet The received packet data.
+     * @param length The length of the received packet.
+     * @param client_endpoint The endpoint of the client that sent the packet.
+     */
     void handleReceivedPacket(const std::array<uint8_t, 1400>& packet, std::size_t length, const asio::ip::udp::endpoint& client_endpoint) {
         std::cout << "Received packet of length: " << length << std::endl;
 
         if (length < 12) {
             std::cerr << "Received malformed packet: insufficient header size" << std::endl;
+            this->sendRequest(client_endpoint, GDTPMessageType::ConnectionReject, { "Invalid packet" });
             return;
         }
 
@@ -330,50 +361,25 @@ private:
         processMessage(static_cast<GDTPMessageType>(header.messageType), payload, header, client_endpoint);
     }
 
-    // Logique de traitement des messages reçus
+    /**
+     * @brief Processes the received message based on its type.
+     * @param messageType The type of the received GDTP message.
+     * @param payload The payload of the message.
+     * @param header The header of the received message.
+     * @param client_endpoint The endpoint of the client that sent the message.
+     */
     void processMessage(GDTPMessageType messageType, const std::vector<uint8_t>& payload, const GDTPHeader& header, const asio::ip::udp::endpoint& client_endpoint) {
-        switch (messageType) {
-            case GDTPMessageType::PlayerMovement:
-                handlePlayerMovement(payload);
-                break;
-            case GDTPMessageType::PlayerShoot:
-                handlePlayerShoot(payload);
-                break;
-            case GDTPMessageType::ChatMessage:
-                handleChatMessage(payload);
-                break;
-            case GDTPMessageType::ConnectionRequest:
-                handleConnectionRequest(payload, client_endpoint);
-                break;
-            case GDTPMessageType::ConnectionAccept:
-                handleConnectionAccept(payload);
-                break;
-            default:
-                std::cerr << "Received unsupported message type!" << std::endl;
-                break;
+        if (message_handlers->find(messageType) != message_handlers->end()) {
+            (*message_handlers)[messageType](header, payload, client_endpoint);
+        } else {
+            std::cerr << "No handler found for message type: " << static_cast<int>(messageType) << std::endl;
         }
     }
-    void handleConnectionRequest(const std::vector<uint8_t>& payload, const asio::ip::udp::endpoint& client_endpoint) {
-        // 1. Vérifier si le payload contient un nom d'utilisateur
-        // if (payload.empty()) {
-        //     std::cerr << "Received Connection Request with an empty payload!" << std::endl;
-        //     return;
-        // }
 
-        // 2. Convertir le payload en nom d'utilisateur (chaîne de caractères)
-        std::string username(payload.begin(), payload.end());
-        std::cout << "Received Connection Request from username: " << username << std::endl;
-
-        // 3. Récupérer l'IP et le port du client
-        std::string client_ip = client_endpoint.address().to_string();
-        uint16_t client_port = client_endpoint.port();
-
-        std::cout << "Client IP: " << client_ip << ", Client Port: " << client_port << std::endl;
-
-        // 4. Envoyer une réponse de "Connection Accept" au client
-        sendConnectionAccept(client_endpoint);
-    }
-
+    /**
+     * @brief Sends a "Connection Accept" message to the client.
+     * @param client_endpoint The endpoint of the client to which the message is sent.
+     */
     void sendConnectionAccept(const asio::ip::udp::endpoint& client_endpoint) {
         // 1. Préparer le header et le payload de la réponse Connection Accept
         GDTPHeader header;
@@ -395,81 +401,6 @@ private:
                       << ":" << client_endpoint.port() << std::endl;
         }
     }
-
-    void handleConnectionAccept(const std::vector<uint8_t>& payload)
-    {
-        std::cout << "Received Connection Accept!" << std::endl;
-    }
-
-
-    // Exemple de traitement du message PlayerMovement
-    void handlePlayerMovement(const std::vector<uint8_t>& payload) {
-        if (payload.size() < 16) {
-            std::cerr << "Invalid PlayerMovement payload!" << std::endl;
-            return;
-        }
-
-        uint32_t playerId_net;
-        uint32_t x_net, y_net, z_net;
-        std::memcpy(&playerId_net, &payload[0], 4);
-        std::memcpy(&x_net, &payload[4], 4);
-        std::memcpy(&y_net, &payload[8], 4);
-        std::memcpy(&z_net, &payload[12], 4);
-
-        uint32_t playerId = ntohl(playerId_net);
-
-        float x, y, z;
-        x_net = ntohl(x_net);
-        y_net = ntohl(y_net);
-        z_net = ntohl(z_net);
-        std::memcpy(&x, &x_net, 4);
-        std::memcpy(&y, &y_net, 4);
-        std::memcpy(&z, &z_net, 4);
-
-        std::cout << "Player " << playerId << " moved to position (" << x << ", " << y << ", " << z << ")" << std::endl;
-    }
-
-    // Exemple de traitement du message PlayerShoot
-    void handlePlayerShoot(const std::vector<uint8_t>& payload) {
-        if (payload.size() < 6) {
-            std::cerr << "Invalid PlayerShoot payload!" << std::endl;
-            return;
-        }
-
-        uint32_t playerId_net;
-        std::memcpy(&playerId_net, &payload[0], 4);
-        uint32_t playerId = ntohl(playerId_net);
-
-        uint8_t direction = payload[4];
-        uint8_t weaponType = payload[5];
-
-        std::cout << "Player " << playerId << " shot in direction " << (int)direction << " with weapon " << (int)weaponType << std::endl;
-    }
-
-    // Exemple de traitement du message ChatMessage
-    void handleChatMessage(const std::vector<uint8_t>& payload) {
-        if (payload.size() < 6) {
-            std::cerr << "Invalid ChatMessage payload!" << std::endl;
-            return;
-        }
-
-        uint32_t playerId_net;
-        uint16_t messageLength_net;
-        std::memcpy(&playerId_net, &payload[0], 4);
-        std::memcpy(&messageLength_net, &payload[4], 2);
-
-        uint32_t playerId = ntohl(playerId_net);
-        uint16_t messageLength = ntohs(messageLength_net);
-
-        if (payload.size() < 6 + messageLength) {
-            std::cerr << "Invalid ChatMessage payload: incorrect message length" << std::endl;
-            return;
-        }
-
-        std::string message(payload.begin() + 6, payload.begin() + 6 + messageLength);
-        std::cout << "Player " << playerId << " says: " << message << std::endl;
-    }
-    std::jthread thread;
 };
 
 #endif // NETWORKSERVICE_HPP
