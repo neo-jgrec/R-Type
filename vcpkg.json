@@ -1,7 +1,8 @@
 {
   "dependencies": [
-    "sfml",
     "asio",
-    "luabridge"
+    "luabridge",
+    "sfml",
+    "nlohmann-json"
   ]
 }
