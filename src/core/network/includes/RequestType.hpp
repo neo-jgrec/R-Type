@@ -37,4 +37,9 @@ enum class GDTPMessageType : uint8_t {
     MapScroll = 0x21
 };
 
+// Surcharge de l'opérateur de conversion explicite vers uint8_t
+inline uint8_t operator+(GDTPMessageType messageType) {
+    return static_cast<uint8_t>(messageType);
+}
+
 #endif //REQUESTTYPE_HPP

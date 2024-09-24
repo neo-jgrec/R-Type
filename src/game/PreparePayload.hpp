@@ -12,7 +12,6 @@
     #include <iostream>
     #include <vector>
     #include <cstring>
-    #include <arpa/inet.h>
     #include <map>
     #include "../core/network/includes/RequestType.hpp"
 
@@ -153,17 +152,21 @@ namespace Payload {
         return payload;
     }
 
-    static std::shared_ptr<std::map<GDTPMessageType, std::function<std::vector<uint8_t>(std::vector<std::string>)>>> payloadMap()
+    /**
+     * @brief Returns a map of payload preparation functions for a few GDTP message types. (is the default implementation)
+     * @return A shared pointer to the map of payload preparation functions.
+     */
+    static std::shared_ptr<std::map<uint8_t, std::function<std::vector<uint8_t>(std::vector<std::string>)>>> payloadMap()
     {
 
-        auto payloadMap = std::make_shared<std::map<GDTPMessageType, std::function<std::vector<uint8_t>(std::vector<std::string>)>>>();
+        auto payloadMap = std::make_shared<std::map<uint8_t, std::function<std::vector<uint8_t>(std::vector<std::string>)>>>();
 
         *payloadMap = {
-        {GDTPMessageType::ErrorMessage, prepareErrorMessage},
-        {GDTPMessageType::ConnectionRequest, prepareConnectionRequest},
-        {GDTPMessageType::PlayerMovement, preparePlayerMovement},
-        {GDTPMessageType::PlayerShoot, preparePlayerShoot},
-        {GDTPMessageType::ChatMessage, prepareChatMessage}
+        {+GDTPMessageType::ErrorMessage, prepareErrorMessage},
+        {+GDTPMessageType::ConnectionRequest, prepareConnectionRequest},
+        {+GDTPMessageType::PlayerMovement, preparePlayerMovement},
+        {+GDTPMessageType::PlayerShoot, preparePlayerShoot},
+        {+GDTPMessageType::ChatMessage, prepareChatMessage}
         };
         return payloadMap;
     };
