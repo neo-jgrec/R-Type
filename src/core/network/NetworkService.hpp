@@ -242,6 +242,8 @@ void setPayloadsHandler(
         header.packetId = std::chrono::system_clock::now().time_since_epoch().count();
 
         header.payloadSize = static_cast<uint16_t>(payload.size());
+        header.sequenceNumber = 1;
+        header.totalPackets = 1;
 
         std::vector<uint8_t> headerBuffer = header.toBuffer();
 
