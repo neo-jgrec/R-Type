@@ -198,7 +198,7 @@ public:
      * auto newPayloadHandlers = std::make_shared<std::map<uint8_t, std::function<std::vector<uint8_t>(std::vector<std::string>)>>>();
      * newPayloadHandlers->emplace(uint8_t::PlayerMovement, [](std::vector<std::string> args) -> std::vector<uint8_t> {
      *     // Prepare the payload for PlayerMovement
-     *     return std::vector<uint8_t>{/* binary payload data };
+     *     return std::vector<uint8_t>;
         * });
         * networkService.setPayloadsHandler(newPayloadHandlers);
         * @endcode

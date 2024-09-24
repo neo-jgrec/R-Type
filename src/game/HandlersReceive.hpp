@@ -16,7 +16,7 @@
     #include "../core/network/includes/RequestType.hpp"
 
 namespace Receive {
-    void handleConnectionRequest(const GDTPHeader &header, const std::vector<uint8_t>& payload, const asio::ip::udp::endpoint& client_endpoint) {
+    void handleConnectionRequest([[maybe_unused]] const GDTPHeader &header, [[maybe_unused]] const std::vector<uint8_t>& payload, [[maybe_unused]] const asio::ip::udp::endpoint& client_endpoint) {
         if (payload.empty()) {
             std::cerr << "Received Connection Request with an empty payload!" << std::endl;
             return;
@@ -30,7 +30,7 @@ namespace Receive {
         // 4. Envoyer une réponse de "Connection Accept" au client
     }
 
-    void handleConnectionAccept(const GDTPHeader &header, const std::vector<uint8_t>& payload, const asio::ip::udp::endpoint& client_endpoint)
+    void handleConnectionAccept([[maybe_unused]] const GDTPHeader &header, [[maybe_unused]] const std::vector<uint8_t>& payload, [[maybe_unused]] const asio::ip::udp::endpoint& client_endpoint)
     {
         std::cout << "Received Connection Accept!" << std::endl;
     }
