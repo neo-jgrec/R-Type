@@ -4,6 +4,7 @@
 #include <SFML/Audio.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <functional>
+#include <memory>
 
 struct KeyBinding {
     sf::Keyboard::Key moveUpKey = sf::Keyboard::Z;
@@ -70,8 +71,8 @@ struct AnimationComponent {
     std::vector<sf::IntRect> frames;
     sf::Time frameTime;
     sf::Time elapsedTime;
-    unsigned int currentFrame;
-    bool loop;
+    unsigned int currentFrame = 0;
+    bool loop = true;
 };
 
 struct ColorComponent {
@@ -88,4 +89,8 @@ struct MusicComponent {
 
 struct ParallaxComponent {
     sf::Vector2f speed;
+};
+
+struct TextureComponent {
+    std::shared_ptr<sf::Texture> texture;
 };

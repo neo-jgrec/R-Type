@@ -35,8 +35,25 @@ void Systems::positionSystem(core::ecs::Registry &registry)
     registry.add_system<DrawableComponent, TransformComponent>(
         [](DrawableComponent &drawable, const TransformComponent &transform) {
             drawable.shape.setPosition(transform.position);
-            // drawable.shape.setSize(transform.size);
-            // drawable.shape.setRotation(transform.rotation);
-            // drawable.shape.setScale(transform.scale);
+            drawable.shape.setSize(transform.size);
+            drawable.shape.setRotation(transform.rotation);
+            drawable.shape.setScale(transform.scale);
         });
 }
+
+// void Systems::animationSystem(core::ecs::Registry& registry) {
+//     registry.add_system<DrawableComponent, AnimationComponent>(
+//         [&](DrawableComponent &drawable, AnimationComponent &anim, sf::Time deltaTime) {
+//             // Update elapsed time based on delta time
+//             anim.elapsedTime += deltaTime;
+
+//             if (anim.elapsedTime >= anim.frameTime) {
+//                 anim.currentFrame = (anim.currentFrame + 1) % anim.frames.size();
+//                 anim.elapsedTime -= anim.frameTime; // Keep the remainder for the next update
+//             }
+
+//             drawable.shape.setTextureRect(anim.frames[anim.currentFrame]);
+//         });
+// }
+
+

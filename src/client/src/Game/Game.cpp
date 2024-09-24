@@ -1,4 +1,5 @@
 #include "Game.hpp"
+#include <SFML/System/Time.hpp>
 #include "EntityFactory.hpp"
 #include "Systems.hpp"
 #include "Components.hpp"
@@ -15,17 +16,21 @@ void Game::init() {
     _registry.register_component<KeyBinding>();
     _registry.register_component<HealthComponent>();
     _registry.register_component<ScoreComponent>();
+    _registry.register_component<AnimationComponent>();
+    _registry.register_component<TextureComponent>();
 
     _playerEntity = EntityFactory::createPlayer(_registry);
 
     Systems::positionSystem(_registry);
     Systems::movementSystem(_registry);
     Systems::renderSystem(_registry, _window);
+    // Systems::animationSystem(_registry);
 }
 
 void Game::update() {
     _registry.run_system<TransformComponent, VelocityComponent, InputStateComponent>();
     _registry.run_system<DrawableComponent, TransformComponent>();
+    // _registry.run_system<DrawableComponent, AnimationComponent>();
 }
 
 void Game::render() {

@@ -23,5 +23,6 @@ private:
     core::ecs::Registry _registry;
     core::ecs::Entity _playerEntity;
     sf::RenderWindow _window;
+    sf::Clock _clock;
     bool _windowOpen = true;
 };

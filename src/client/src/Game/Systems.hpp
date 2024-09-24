@@ -7,4 +7,5 @@ namespace Systems {
     void movementSystem(core::ecs::Registry& registry);
     void renderSystem(core::ecs::Registry& registry, sf::RenderWindow& window);
     void positionSystem(core::ecs::Registry& registry);
+    // void animationSystem(core::ecs::Registry& registry);
 }
