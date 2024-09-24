@@ -35,7 +35,7 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry) {
     for (int i = 0; i < 5; i++) {
         frames.emplace_back(i * 33, 0, 33, 17);
     }
-    registry.add_component(player, AnimationComponent{frames, sf::seconds(0.1f), sf::seconds(0.0f), 0, true});
+    registry.add_component(player, AnimationComponent{frames, 0.1f, 0.0f, 0});
 
     return player;
 }

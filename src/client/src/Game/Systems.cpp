@@ -1,5 +1,6 @@
 #include "Systems.hpp"
 #include "src/Game/Components.hpp"
+#include "src/Game/Globals.hpp"
 
 void Systems::movementSystem(core::ecs::Registry& registry) {
     registry.add_system<TransformComponent, VelocityComponent, InputStateComponent>(
@@ -41,19 +42,18 @@ void Systems::positionSystem(core::ecs::Registry &registry)
         });
 }
 
-// void Systems::animationSystem(core::ecs::Registry& registry) {
-//     registry.add_system<DrawableComponent, AnimationComponent>(
-//         [&](DrawableComponent &drawable, AnimationComponent &anim, sf::Time deltaTime) {
-//             // Update elapsed time based on delta time
-//             anim.elapsedTime += deltaTime;
+void Systems::animationSystem(core::ecs::Registry& registry) {
+    registry.add_system<DrawableComponent, AnimationComponent>(
+        [&](DrawableComponent &drawable, AnimationComponent &anim) {
+            anim.elapsedTime += DELTA_T;
 
-//             if (anim.elapsedTime >= anim.frameTime) {
-//                 anim.currentFrame = (anim.currentFrame + 1) % anim.frames.size();
-//                 anim.elapsedTime -= anim.frameTime; // Keep the remainder for the next update
-//             }
+            if (anim.elapsedTime >= anim.frameTime) {
+                anim.currentFrame = (anim.currentFrame + 1) % anim.frames.size();
+                anim.elapsedTime -= anim.frameTime;
+            }
 
-//             drawable.shape.setTextureRect(anim.frames[anim.currentFrame]);
-//         });
-// }
+            drawable.shape.setTextureRect(anim.frames[anim.currentFrame]);
+        });
+}
 
 

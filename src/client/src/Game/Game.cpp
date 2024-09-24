@@ -24,13 +24,13 @@ void Game::init() {
     Systems::positionSystem(_registry);
     Systems::movementSystem(_registry);
     Systems::renderSystem(_registry, _window);
-    // Systems::animationSystem(_registry);
+    Systems::animationSystem(_registry);
 }
 
 void Game::update() {
     _registry.run_system<TransformComponent, VelocityComponent, InputStateComponent>();
     _registry.run_system<DrawableComponent, TransformComponent>();
-    // _registry.run_system<DrawableComponent, AnimationComponent>();
+    _registry.run_system<DrawableComponent, AnimationComponent>();
 }
 
 void Game::render() {
@@ -77,6 +77,9 @@ void Game::processEvents() {
 
 void Game::run() {
     while (_windowOpen) {
+        sf::Time elapsed = _clock.restart();
+        DELTA_T = elapsed.asSeconds();
+
         processEvents();
         update();
         render();

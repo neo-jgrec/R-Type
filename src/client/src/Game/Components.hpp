@@ -69,8 +69,8 @@ struct CollisionComponent {
 
 struct AnimationComponent {
     std::vector<sf::IntRect> frames;
-    sf::Time frameTime;
-    sf::Time elapsedTime;
+    float frameTime;
+    float elapsedTime;
     unsigned int currentFrame = 0;
     bool loop = true;
 };

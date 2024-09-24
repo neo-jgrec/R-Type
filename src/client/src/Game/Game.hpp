@@ -2,6 +2,7 @@
 
 #include "../../../core/ecs/Registry/Registry.hpp"
 #include "../../../core/ecs/Entity/Entity.hpp"
+#include "Globals.hpp"
 #include <SFML/Graphics.hpp>
 
 class Game {
