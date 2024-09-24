@@ -72,7 +72,11 @@ target_link_libraries(r-type_editor
 )
 
 # Install the target
-install(TARGETS r-type_editor DESTINATION bin)
+install(TARGETS r-type_editor DESTINATION . COMPONENT editor)
+cpack_add_component(editor
+    DISPLAY_NAME "R-Type Editor"
+    DESCRIPTION "The R-Type Editor that allows you to create levels"
+)
 
 # Add subdirectory for tests
 # add_subdirectory(tests)
