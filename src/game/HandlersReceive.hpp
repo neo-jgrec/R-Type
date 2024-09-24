@@ -29,6 +29,15 @@ namespace Receive {
     {
         std::cout << "Received Connection Accept!" << std::endl;
     }
+
+    std::shared_ptr<std::map<uint8_t, std::function<void(const GDTPHeader& header, const std::vector<uint8_t>& payload, const asio::ip::udp::endpoint& client_endpoint)>>> handlersMap()
+    {
+        auto handlers = std::make_shared<std::map<uint8_t, std::function<void(const GDTPHeader& header, const std::vector<uint8_t>& payload, const asio::ip::udp::endpoint& client_endpoint)>>>();
+
+        handlers->emplace(+GDTPMessageType::ConnectionRequest, handleConnectionRequest);
+        handlers->emplace(+GDTPMessageType::ConnectionAccept, handleConnectionAccept);
+        return handlers;
+    }
 }
 
 #endif //HANDLERSRECEIVE_HPP

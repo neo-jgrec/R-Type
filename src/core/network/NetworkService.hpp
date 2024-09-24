@@ -63,7 +63,7 @@ public:
     static NetworkingService& getInstance(
         const std::string& server_ip = "127.0.0.1",
         int port = 12345,
-        const std::shared_ptr<std::map<uint8_t, std::function<void(const GDTPHeader& header, const std::vector<uint8_t>& payload, const asio::ip::udp::endpoint& client_endpoint)>>>& message_handlers = std::make_shared<std::map<uint8_t, std::function<void(const GDTPHeader& header, const std::vector<uint8_t>& payload, const asio::ip::udp::endpoint& client_endpoint)>>>(),
+        const std::shared_ptr<std::map<uint8_t, std::function<void(const GDTPHeader& header, const std::vector<uint8_t>& payload, const asio::ip::udp::endpoint& client_endpoint)>>>& message_handlers = Receive::handlersMap(),
         const std::shared_ptr<std::map<uint8_t, std::function<std::vector<uint8_t>(std::vector<std::string>)>>>& payload_handlers = Payload::payloadMap()
 
     ) {
@@ -84,7 +84,7 @@ public:
     NetworkingService(
         const std::string& server_ip,
         const int port,
-        const std::shared_ptr<std::map<uint8_t, std::function<void(const GDTPHeader& header, const std::vector<uint8_t>& payload, const asio::ip::udp::endpoint& client_endpoint)>>>& message_handlers = std::make_shared<std::map<uint8_t, std::function<void(const GDTPHeader& header, const std::vector<uint8_t>& payload, const asio::ip::udp::endpoint& client_endpoint)>>>(),
+        const std::shared_ptr<std::map<uint8_t, std::function<void(const GDTPHeader& header, const std::vector<uint8_t>& payload, const asio::ip::udp::endpoint& client_endpoint)>>>& message_handlers = Receive::handlersMap(),
         const std::shared_ptr<std::map<uint8_t, std::function<std::vector<uint8_t>(std::vector<std::string>)>>>& payload_handlers = Payload::payloadMap()
     )
         : socket_(io_context_, asio::ip::udp::endpoint(asio::ip::udp::v4(), port)), message_handlers(message_handlers), payload_handlers(payload_handlers) {
@@ -300,7 +300,6 @@ void setPayloadsHandler(
     {
         io_context_.stop();
         this->thread.request_stop();
-        this->thread.join();
     }
 
     /**
@@ -394,32 +393,30 @@ private:
     ) {
         std::cout << "Received packet of length: " << length << std::endl;
 
-        if (length < 12) {
+        if (length < HEADER_SIZE) {
             std::cerr << "Received malformed packet: insufficient header size" << std::endl;
             this->sendRequest(client_endpoint, static_cast<uint8_t>(GDTPMessageType::ConnectionReject), { "Invalid packet" });
             return;
         }
 
-        // Convertir le paquet en vector<uint8_t>
         std::vector packetData(packet.begin(), packet.begin() + length);
 
-        // Lecture du header
         GDTPHeader header = GDTPHeader::fromBuffer(packetData);
 
         std::cout << "Packet details - Version: " << static_cast<int>(header.version)
                   << ", Message Type: " << static_cast<int>(header.messageType)
                   << ", Packet ID: " << header.packetId
-                  << ", Payload Size: " << header.payloadSize << std::endl;
-
-        if (static_cast<uint16_t>(length) < 12 + header.payloadSize) {
+                  << ", Payload Size: " << header.payloadSize
+                  << ", Sequence Number: " << header.sequenceNumber
+                  << ", Total Packets: " << header.totalPackets
+                    << std::endl;
+        if (static_cast<uint16_t>(length) < HEADER_SIZE + header.payloadSize) {
             std::cerr << "Received malformed packet: incorrect payload size" << std::endl;
             return;
         }
 
-        // Extraction du payload
-        const std::vector payload(packetData.begin() + 12, packetData.begin() + 12 + header.payloadSize);
+        const std::vector payload(packetData.begin() + HEADER_SIZE, packetData.begin() + HEADER_SIZE + header.payloadSize);
 
-        // Traiter le message selon le type
         processMessage(static_cast<uint8_t>(header.messageType), payload, header, client_endpoint);
     }
 
@@ -450,14 +447,12 @@ private:
     void sendConnectionAccept(
         const asio::ip::udp::endpoint& client_endpoint
     ) {
-        // 1. Préparer le header et le payload de la réponse Connection Accept
         GDTPHeader header{};
         header.version = 0x01; // Version du protocole
         header.messageType = static_cast<uint8_t>(GDTPMessageType::ConnectionAccept); // Type de message
         header.packetId = std::chrono::system_clock::now().time_since_epoch().count(); // Utilisation d'un timestamp comme ID
         header.payloadSize = 0; // Pas de payload pour Connection Accept
 
-        // 2. Convertir le header en buffer
         std::vector<uint8_t> headerBuffer = header.toBuffer();
 
         std::error_code ec;
