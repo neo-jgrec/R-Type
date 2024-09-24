@@ -67,7 +67,12 @@ target_link_libraries(r-type_client
 )
 
 # Install the target
-install(TARGETS r-type_client DESTINATION bin)
+install(TARGETS r-type_client DESTINATION . COMPONENT client)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/assets DESTINATION . COMPONENT client)
+cpack_add_component(client
+    DISPLAY_NAME "R-Type Client"
+    DESCRIPTION "The R-Type Client made in SFML"
+)
 
 # Add subdirectory for tests
 # add_subdirectory(tests)
