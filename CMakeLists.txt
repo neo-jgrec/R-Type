@@ -25,7 +25,7 @@ if(CCACHE_FOUND)
 	set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
 endif()
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+if (UNIX)
 	add_compile_options(-Wall
 		-Wextra
 		-Wpedantic
@@ -46,8 +46,39 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 		-pipe
 		-pthread
 	)
-elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+elseif (WIN32)
 	add_compile_options(/W4)
 endif()
 
+include(InstallRequiredSystemLibraries)
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+set(CPACK_PACKAGE_CONTACT "R-Type Team")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "R-Type is a side-scrolling shoot-em-up arcade game")
+set(CPACK_PACKAGE_VENDOR "R-Type Team")
+set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
+
+set(CPACK_PACKAGE_VERSION_MAJOR "1")
+set(CPACK_PACKAGE_VERSION_MINOR "0")
+set(CPACK_PACKAGE_VERSION_PATCH "0")
+
+set(CPACK_COMPONENTS_ALL client editor server)
+
+set(CPACK_COMPONENT_GROUPS_ALL R-Type)
+set(CPACK_COMPONENT_GROUP_R-Type_DESCRIPTION "R-Type component group")
+
+set(CPACK_COMPONENT_CLIENT_GROUP R-Type)
+set(CPACK_COMPONENT_EDITOR_GROUP R-Type)
+set(CPACK_COMPONENT_SERVER_GROUP R-Type)
+
+set(CPACK_COMPONENTS_GROUPING ONE_PER_GROUP_MANDATORY)
+
+include(CPack)
+
 add_subdirectory(src)
+
+if (WIN32)
+	file(GLOB DLLS "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/*.dll")
+	install(FILES ${DLLS} DESTINATION . COMPONENT client)
+	install(FILES ${DLLS} DESTINATION . COMPONENT editor)
+	install(FILES ${DLLS} DESTINATION . COMPONENT server)
+endif()

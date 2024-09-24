@@ -66,7 +66,11 @@ target_link_libraries(r-type_server
 )
 
 # Install the target
-install(TARGETS r-type_server DESTINATION bin)
+install(TARGETS r-type_server DESTINATION . COMPONENT server)
+cpack_add_component(server
+    DISPLAY_NAME "R-Type Server"
+    DESCRIPTION "The server program of the R-Type game"
+)
 
 # Add subdirectory for tests
 # add_subdirectory(tests)
