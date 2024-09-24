@@ -5,6 +5,7 @@
 #include <SFML/System/Vector2.hpp>
 #include <functional>
 #include <memory>
+#include "../../../core/ecs/Entity/Entity.hpp"
 
 struct KeyBinding {
     sf::Keyboard::Key moveUpKey = sf::Keyboard::Z;
@@ -94,3 +95,9 @@ struct ParallaxComponent {
 struct TextureComponent {
     std::shared_ptr<sf::Texture> texture;
 };
+
+// Identifiers
+
+struct Player {};
+struct Enemy {};
+struct Projectile {};

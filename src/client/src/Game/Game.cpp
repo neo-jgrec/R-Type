@@ -18,6 +18,9 @@ void Game::init() {
     _registry.register_component<ScoreComponent>();
     _registry.register_component<AnimationComponent>();
     _registry.register_component<TextureComponent>();
+    _registry.register_component<Player>();
+    _registry.register_component<Projectile>();
+    _registry.register_component<DamageComponent>();
 
     _playerEntity = EntityFactory::createPlayer(_registry);
 
@@ -25,12 +28,16 @@ void Game::init() {
     Systems::movementSystem(_registry);
     Systems::renderSystem(_registry, _window);
     Systems::animationSystem(_registry);
+    Systems::projectileMovementSystem(_registry);
 }
 
 void Game::update() {
-    _registry.run_system<TransformComponent, VelocityComponent, InputStateComponent>();
+    _registry.run_system<TransformComponent, VelocityComponent, InputStateComponent, Player>();
     _registry.run_system<DrawableComponent, TransformComponent>();
     _registry.run_system<DrawableComponent, AnimationComponent>();
+
+    // Projectile movement
+    _registry.run_system<TransformComponent, VelocityComponent, Projectile>();
 }
 
 void Game::render() {
@@ -70,6 +77,7 @@ void Game::processEvents() {
                 set_input_state(keyBinding.moveDownKey, inputState.down);
                 set_input_state(keyBinding.moveLeftKey, inputState.left);
                 set_input_state(keyBinding.moveRightKey, inputState.right);
+                set_input_state(keyBinding.fireKey, inputState.fire);
             }
         }
     }

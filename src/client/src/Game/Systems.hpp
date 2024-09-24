@@ -9,4 +9,5 @@ namespace Systems {
     void renderSystem(core::ecs::Registry& registry, sf::RenderWindow& window);
     void positionSystem(core::ecs::Registry& registry);
     void animationSystem(core::ecs::Registry& registry);
+    void projectileMovementSystem(core::ecs::Registry& registry);
 }

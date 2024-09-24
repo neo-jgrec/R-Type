@@ -7,7 +7,7 @@
 
 class Game {
 public:
-    Game(core::ecs::Registry &registry) : _registry(registry), _playerEntity(_registry.spawn_entity())
+    Game(core::ecs::Registry &registry) : _registry(registry)
     {
         init();
     }
@@ -22,7 +22,7 @@ private:
     void init();
 
     core::ecs::Registry _registry;
-    core::ecs::Entity _playerEntity;
+    core::ecs::Entity _playerEntity = core::ecs::Entity();
     sf::RenderWindow _window;
     sf::Clock _clock;
     bool _windowOpen = true;
