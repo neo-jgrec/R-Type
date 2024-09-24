@@ -14,7 +14,7 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry) {
     registry.add_component(player, HealthComponent{100});
     registry.add_component(player, ScoreComponent{0});
 
-    std::string relativePath = "src/client/src/Assets/player_sprite.png";
+    std::string relativePath = "assets/player_sprite.png";
     std::string absolutePath = std::filesystem::absolute(relativePath).string();
     auto texture = std::make_shared<sf::Texture>();
 
