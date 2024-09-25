@@ -8,6 +8,9 @@
 #include "Window/Window.hpp"
 #include "Exceptions.hpp"
 #include <iostream>
+#include <imgui.h>
+#include <imgui-SFML.h>
+#include <SFML/Graphics.hpp>
 
 int main(int argc, char **argv) {
     try {

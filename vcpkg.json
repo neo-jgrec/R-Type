@@ -2,7 +2,8 @@
   "dependencies": [
     "asio",
     "luabridge",
+    "nlohmann-json",
     "sfml",
-    "nlohmann-json"
+    "imgui-sfml"
   ]
 }
