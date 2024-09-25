@@ -175,6 +175,32 @@ public:
         this->message_handlers = std::move(message_handlers);
     }
 
+    /**
+ * @brief Gets the IP address and port the server is currently listening on.
+ * @return A string representing the IP address and port in the format "IP:Port".
+ */
+    std::string getLocalEndpoint() const {
+        asio::ip::udp::endpoint local_endpoint = socket_.local_endpoint();
+        return local_endpoint.address().to_string() + ":" + std::to_string(local_endpoint.port());
+    }
+
+    /**
+     * @brief Gets the IP address the server is currently listening on.
+     * @return A string representing the IP address.
+     */
+    std::string getIp() const {
+        asio::ip::udp::endpoint local_endpoint = socket_.local_endpoint();
+        return local_endpoint.address().to_string();
+    }
+
+    /**
+     * @brief Gets the Port the server is currently listening on.
+     * @return unsigned short representing the port number.
+     */
+    unsigned short getPort() const
+    {
+        return socket_.local_endpoint().port();
+    }
 
     /**
      * @brief Sets the shared pointer to the map of payload preparation handlers.
