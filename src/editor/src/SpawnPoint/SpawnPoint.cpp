@@ -9,20 +9,15 @@
 
 using namespace Editor;
 
-SpawnPoint::SpawnPoint(float x, float y) : _position(x, y) {}
+SpawnPoint::SpawnPoint(float x, float y) : Entity(x, y, "Spawn Point") {}
 
-sf::Vector2f SpawnPoint::getPosition() const {
-    return _position;
-}
-
-void SpawnPoint::setPosition(float x, float y) {
-    _position.x = x;
-    _position.y = y;
+sf::Vector2f SpawnPoint::getSize() {
+    return {10, 10};
 }
 
 void SpawnPoint::draw(sf::RenderWindow &window) const {
     sf::CircleShape shape(5);
-    shape.setFillColor(sf::Color::Red);
     shape.setPosition(_position);
+    shape.setFillColor(sf::Color(255, 0, 0, static_cast<int>(_opacity * 255)));
     window.draw(shape);
 }

@@ -9,17 +9,18 @@
 #define SPAWNPOINT_HPP_
 
 #include <SFML/Graphics.hpp>
+#include "../Entity/Entity.hpp"
 
 namespace Editor {
-    class SpawnPoint {
+    class SpawnPoint : public Entity {
         public:
             SpawnPoint(float x, float y);
-            sf::Vector2f getPosition() const;
-            void setPosition(float x, float y);
-            void draw(sf::RenderWindow &window) const;
+
+            void draw(sf::RenderWindow &window) const override;
+            [[nodiscard]]
+            static sf::Vector2f getSize();
 
         private:
-            sf::Vector2f _position;
     };
 }
 
