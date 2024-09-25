@@ -2,8 +2,17 @@
 #include <iostream>
 #include <vector>
 
-enum {
+#include "../../core/network/NetworkService.hpp"
 
+enum PacketType {
+    ConnectionRequest = 0,
+    ConnectionResponse = 1,
+    PlayerMovement = 2,
+    PlayerShoot = 3,
+    PlayerLoadShoot = 4,
+    PlayerDied = 5,
+    MapScrolling = 6,
+    HitCollision = 7
 };
 
 class World {
@@ -65,9 +74,13 @@ public:
 };
 
 class ServerPlayer: public Player {
+private:
+    const asio::ip::udp::endpoint& _endpoint;
+    uint64_t _lastTimeConnected;
+
 public:
-    ServerPlayer(const uint8_t id, const std::pair<uint32_t, uint32_t> &position = {0, 0})
-        : Player(id, position) {}
+    ServerPlayer(const asio::ip::udp::endpoint& endpoint, const uint8_t id, const std::pair<uint32_t, uint32_t> &position = {0, 0})
+        : Player(id, position), _endpoint(endpoint) {}
 
     void sendHitCollision() const
     {
@@ -85,21 +98,34 @@ public:
         // TODO: send payload to client
     }
 
-    void sendPlayerDied(std::vector<Player> &players) const
-    {
+    void sendPlayerDied(
+        NetworkingService networkingService,
+        std::vector<ServerPlayer> &players
+    ) const {
         const std::vector payload = {
             static_cast<uint8_t>(_id)
         };
 
         // TODO: send payload to clients
+        for (const auto &player : players) {
+            if (player.getId() == _id)
+                continue;
+            std::cout << "Player " << _id << " died" << std::endl;
+            // networkingService.sendRequest(
+            //     player._endpoint,
+            //     PacketType::PlayerDied,
+            //     payload);
+        }
     }
 
     //
     // Other player actions received from clients
     //
 
-    void sendPlayerShoot(std::vector<Player> &players) const
-    {
+    void sendPlayerShoot(
+        NetworkingService networkingService,
+        std::vector<ServerPlayer> &players
+    ) const {
         const std::vector payload = {
             static_cast<uint8_t>(_id),
             static_cast<uint8_t>(_position.first >> 24),
@@ -113,17 +139,30 @@ public:
         };
     }
 
-    void sendPlayerLoadShoot(std::vector<Player> &players) const
-    {
+    void sendPlayerLoadShoot(
+        NetworkingService networkingService,
+        std::vector<ServerPlayer> &players
+    ) const {
         const std::vector payload = {
             static_cast<uint8_t>(_id)
         };
 
         // TODO: send payload to clients
+        for (const auto &player : players) {
+            if (player.getId() == _id)
+                continue;
+            std::cout << "Player " << _id << " loaded a shoot" << std::endl;
+            // networkingService.sendRequest(
+            //     player._endpoint,
+            //     PacketType::PlayerLoadShoot,
+            //     payload);
+        }
     }
 
-    void sendPlayerMove(std::vector<Player> &players) const
-    {
+    void sendPlayerMove(
+        NetworkingService networkingService,
+        std::vector<ServerPlayer> &players
+    ) const {
         const std::vector payload = {
             static_cast<uint8_t>(_id),
             static_cast<uint8_t>(_orientation),
@@ -138,11 +177,50 @@ public:
         };
 
         // TODO: send payload to clients
+        for (const auto &player : players) {
+            if (player.getId() == _id)
+                continue;
+            std::cout << "Player " << _id << " moved" << std::endl;
+            // networkingService.sendRequest(
+            //     player._endpoint,
+            //     PacketType::PlayerMovement,
+            //     payload);
+        }
     }
 };
 
+class Server {
+private:
+    NetworkingService _networkingService;
+
+    ServerWorld _world;
+    std::vector<ServerPlayer> _players;
+
+public:
+    Server(const std::string &serverAddress, const uint16_t serverPort)
+        : _networkingService(serverAddress, serverPort)
+    {
+        _networkingService.run();
+        std::cout << "Server is running and listening on all interfaces (" << serverAddress << ":" << serverPort << ")" << std::endl;
+    }
+
+    void connectPlayer(const asio::ip::udp::endpoint& endpoint)
+    {
+        const uint8_t playerId = _players.size();
+        _players.emplace_back(endpoint, playerId);
+
+        std::cout << "Player " << playerId << " connected" << std::endl;
+    }
+
+    void update()
+    {
+        _world.updateScroll(1);
+        _world.sendMapScrolling();
+    }
+};
+
+
 int main()
 {
-    std::cout << "un serveur, mais vreeeument" << std::endl;
-    return 0;
+    Server server("0.0.0.0", 12345);
 }
