@@ -23,6 +23,7 @@ private:
 
     core::ecs::Registry _registry;
     core::ecs::Entity _playerEntity = core::ecs::Entity();
+    core::ecs::Entity _player2Entity = core::ecs::Entity();
     sf::RenderWindow _window;
     sf::Clock _clock;
     bool _windowOpen = true;

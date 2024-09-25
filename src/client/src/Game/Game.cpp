@@ -21,14 +21,17 @@ void Game::init() {
     _registry.register_component<Player>();
     _registry.register_component<Projectile>();
     _registry.register_component<DamageComponent>();
+    _registry.register_component<CollisionComponent>();
 
-    _playerEntity = EntityFactory::createPlayer(_registry);
+    _playerEntity = EntityFactory::createPlayer(_registry, sf::Vector2f(100.0f, 100.0f));
+    _player2Entity = EntityFactory::createPlayer(_registry, sf::Vector2f(400.0f, 100.0f));
 
     Systems::positionSystem(_registry);
     Systems::movementSystem(_registry);
     Systems::renderSystem(_registry, _window);
     Systems::animationSystem(_registry);
     Systems::projectileMovementSystem(_registry);
+    Systems::collisionSystem(_registry);
 }
 
 void Game::update() {
@@ -38,6 +41,9 @@ void Game::update() {
 
     // Projectile movement
     _registry.run_system<TransformComponent, VelocityComponent, Projectile>();
+
+    // Collision detection
+    _registry.run_system<TransformComponent, CollisionComponent>();
 }
 
 void Game::render() {

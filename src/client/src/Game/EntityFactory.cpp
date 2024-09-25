@@ -4,11 +4,12 @@
 #include <iostream>
 #include "src/Game/Components.hpp"
 
-core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry) {
+core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, const sf::Vector2f& position) {
  
     core::ecs::Entity player = registry.spawn_entity();
 
-    registry.add_component(player, TransformComponent{sf::Vector2f(200.0f, 200.0f), sf::Vector2f(33.0f, 17.0f), sf::Vector2f(4.0f, 4.0f), 0.0f});
+    registry.add_component(player, TransformComponent{position, sf::Vector2f(33.0f, 17.0f), sf::Vector2f(4.0f, 4.0f), 0.0f});
+    registry.add_component(player, CollisionComponent{.collisionBoxes = {sf::FloatRect(0.0f, 0.0f, 33.0f, 17.0f)}});
     registry.add_component(player, VelocityComponent{10.0f, 10.0f});
     registry.add_component(player, InputStateComponent{});
     registry.add_component(player, KeyBinding{});
@@ -46,6 +47,7 @@ core::ecs::Entity EntityFactory::createPlayerProjectile(core::ecs::Registry& reg
     core::ecs::Entity projectile = registry.spawn_entity();
     
     registry.add_component(projectile, TransformComponent{startPosition, sf::Vector2f(18.0f, 5.0f), sf::Vector2f(4.0f, 4.0f), 0.0f});
+    registry.add_component(projectile, CollisionComponent{.collisionBoxes = {sf::FloatRect(0.0f, 0.0f, 18.0f, 5.0f)}});
     registry.add_component(projectile, VelocityComponent{10.0f, 10.0f});
     registry.add_component(projectile, DamageComponent{10});
     registry.add_component(projectile, Projectile{});
