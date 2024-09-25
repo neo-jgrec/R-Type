@@ -277,6 +277,69 @@ void setPayloadsHandler(
 
         sendPacket(headerBuffer, recipient, port);
     }
+/**
+ * @brief Sends a UDP request to the specified recipient with the given message type and payload.
+ *
+ * This function constructs a GDTP packet, consisting of a header and an optional payload, and sends it
+ * to the specified recipient's IP address and port. The header contains metadata such as the protocol version,
+ * message type, packet ID, payload size, and information on packet sequencing. The payload represents the
+ * data to be sent, such as game state updates or player actions.
+ *
+ * @param recipient The IP address of the recipient to which the packet will be sent.
+ * @param port The port number on the recipient's side where the packet will be sent.
+ * @param messageType The type of the GDTP message to be sent, represented as a `uint8_t`.
+ *                    The message type indicates what kind of data the packet contains (e.g., PlayerMovement, PingRequest).
+ * @param payload A vector of bytes (`std::vector<uint8_t>`) representing the payload data to be sent with the message.
+ *                If no payload is provided, the payload will be empty by default.
+ *
+ * @note The GDTP packet header is automatically constructed and includes:
+ * - Version (1 byte)
+ * - Message Type (1 byte)
+ * - Packet ID (8 bytes), generated using the current timestamp.
+ * - Payload Size (2 bytes)
+ * - Sequence Number (2 bytes), defaults to 1 (for unfragmented packets).
+ * - Total Packets (2 bytes), defaults to 1 (for unfragmented packets).
+ *
+ * @note The `messageType` indicates the nature of the message being sent (e.g., Player Movement, Chat, etc.),
+ * and the payload provides the data associated with this message.
+ *
+ * @warning The function does not handle packet fragmentation. If the payload exceeds the size of a typical UDP packet,
+ * consider splitting the payload into smaller packets before sending.
+ *
+ * @code
+ * // Example usage:
+ * std::vector<uint8_t> payload = {0x01, 0x02, 0x03}; // Payload data
+ * networkService.sendRequest("127.0.0.1", 12345, static_cast<uint8_t>(GDTPMessageType::PlayerMovement), payload);
+ * @endcode
+ *
+ * @see sendPacket() for how the constructed packet is sent.
+ */
+void sendRequest(
+    const std::string& recipient,
+    const int port,
+    uint8_t messageType,
+    const std::vector<uint8_t>& payload = {}
+) {
+        std::cout << "Payload size: " << payload.size() << std::endl;
+
+        GDTPHeader header{};
+        header.version = 0x01;
+        header.messageType = static_cast<uint8_t>(messageType);
+
+        header.packetId = std::chrono::system_clock::now().time_since_epoch().count();
+
+        header.payloadSize = static_cast<uint16_t>(payload.size());
+
+        header.sequenceNumber = 1;
+        header.totalPackets = 1;
+
+        std::vector<uint8_t> headerBuffer = header.toBuffer();
+
+        headerBuffer.insert(headerBuffer.end(), payload.begin(), payload.end());
+
+        sendPacket(headerBuffer, recipient, port);
+    }
+
     /**
      * @brief Sends a request to a client using its endpoint.
      * @param client_endpoint The UDP endpoint of the client (contains IP and port).
