@@ -9,9 +9,11 @@
 #include "Exceptions.hpp"
 #include <iostream>
 
-int main() {
+int main(int argc, char **argv) {
     try {
-        Editor::Window window("R-Type Map Editor");
+        if (argc != 2)
+            throw Editor::Exception("Usage: ./editor <map_path>");
+        Editor::Window window("R-Type Map Editor", argv[1]);
 
         window.run();
     } catch (const Editor::Exception &e) {

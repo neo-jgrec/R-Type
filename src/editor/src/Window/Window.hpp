@@ -13,11 +13,17 @@
 #include "../Grid/Grid.hpp"
 #include "../EventManager/EventManager.hpp"
 #include <unordered_set>
+#include <fstream>
+#include <nlohmann/json.hpp>
+#include <iostream>
+#include "../SpawnPoint/SpawnPoint.hpp"
+
+using json = nlohmann::json;
 
 namespace Editor {
     class Window {
     public:
-        Window(const std::string &title);
+        Window(const std::string &title, const std::string &mapPath = "");
         ~Window();
         void run();
         void handleZoom(float zoomFactor);
@@ -33,6 +39,8 @@ namespace Editor {
         std::unordered_set<sf::Keyboard::Key> _keysPressed;
         sf::Vector2i _lastMousePosition;
         void updateViewOffset();
+        void loadMapConfig(const std::string &mapPath);
+        std::vector<SpawnPoint> _spawnPoints;
     };
 }
 

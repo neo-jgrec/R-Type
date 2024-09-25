@@ -1,0 +1,15 @@
+{
+    "width": 1024,
+    "height": 512,
+    "enemies": [
+        { "type": "Bydo", "x": 500, "y": 100 },
+        { "type": "Boss", "x": 900, "y": 300 }
+    ],
+    "obstacles": [
+        { "x": 300, "y": 200, "destructible": true }
+    ],
+    "spawnPoints": [
+        { "x": 50, "y": 400 },
+        { "x": 50, "y": 100 }
+    ]
+}

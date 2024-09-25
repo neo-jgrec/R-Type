@@ -9,13 +9,14 @@
 
 using namespace Editor;
 
-Window::Window(const std::string &title)
+Window::Window(const std::string &title, const std::string &mapPath)
     : _grid(1000, 1000, 10), _zoomLevel(1.0f), _viewOffset(0.0f, 0.0f)
 {
     sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
     _window.create(desktop, title, sf::Style::Close);
     _view = _window.getDefaultView();
     registerEvents();
+    loadMapConfig(mapPath);
 }
 
 Window::~Window()
@@ -79,6 +80,34 @@ void Window::run() {
         _window.clear();
         _window.setView(_view);
         _grid.draw(_window);
+        for (const auto& spawnPoint : _spawnPoints)
+            spawnPoint.draw(_window);
         _window.display();
+    }
+}
+
+void Window::loadMapConfig(const std::string &mapPath) {
+    std::ifstream file(mapPath);
+    if (!file.is_open()) {
+        throw Editor::Exception("Failed to open map file: " + mapPath);
+    }
+
+    json data;
+    try {
+        file >> data;
+    } catch (const json::parse_error& e) {
+        throw Editor::Exception("Failed to parse JSON file: " + std::string(e.what()));
+    }
+
+    int mapWidth = data["width"];
+    int mapHeight = data["height"];
+    _grid.setGridSize(mapWidth, mapHeight);
+    std::cout << "Map width: " << mapWidth << std::endl;
+    std::cout << "Map height: " << mapHeight << std::endl;
+
+    for (const auto& spawnPoint : data["spawnPoints"]) {
+        float x = spawnPoint["x"];
+        float y = spawnPoint["y"];
+        _spawnPoints.emplace_back(x, y);
     }
 }
