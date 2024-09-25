@@ -355,6 +355,36 @@ void sendRequest(
     }
 
     /**
+     * @brief Sends a request to a client over UDP using the given endpoint.
+     *
+     * This function sends a message to the specified client using their UDP endpoint. The message is composed of a header
+     * and an optional payload. The header contains the message type, and the payload can include additional data as needed.
+     *
+     * @param client_endpoint The UDP endpoint of the client, which includes the IP address and port.
+     * @param messageType The type of the message being sent. This is an 8-bit unsigned integer that identifies the type of the message.
+     * @param payloads An optional vector of bytes that represents the payload to send along with the request. By default,
+     * this is an empty vector if no payload is provided.
+     *
+     * @note This function calls an overloaded version of `sendRequest` that takes the client's IP address as a string
+     * and their port number as arguments. It simplifies the process by allowing the user to pass an ASIO UDP endpoint directly.
+     *
+     * @code
+     * asio::ip::udp::endpoint clientEndpoint(asio::ip::address::from_string("127.0.0.1"), 8080);
+     * uint8_t messageType = 1; // Example message type
+     * std::vector<uint8_t> payload = {0x01, 0x02, 0x03}; // Example payload
+     * sendRequest(clientEndpoint, messageType, payload);
+     * @endcode
+     */
+    void sendRequest(
+        const asio::ip::udp::endpoint& client_endpoint,
+        const uint8_t messageType,
+        const std::vector<uint8_t>& payloads = {}
+    ) {
+        sendRequest(client_endpoint.address().to_string(), client_endpoint.port(), messageType, payloads);
+    }
+
+
+    /**
      * @brief Starts the asynchronous reception of UDP packets.
      *
      * This method continuously listens for incoming packets using the ASIO library's async_receive_from function.
