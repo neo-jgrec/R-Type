@@ -13,15 +13,24 @@
 namespace Editor {
     class Grid {
         public:
-            Grid(float width, float height, float cellSize);
+            Grid(int width, int height, int cellSize);
             void draw(sf::RenderWindow &window);
             void updateGrid(float zoomLevel);
             void setGridSize(int width, int height);
 
+            [[nodiscard]]
+            int getGridWidth() const;
+
+            [[nodiscard]]
+            int getGridHeight() const;
+
+            [[nodiscard]]
+            int getCellSize() const;
+
         private:
-            float _width;
-            float _height;
-            float _cellSize;
+            int _width;
+            int _height;
+            int _cellSize;
             std::vector<sf::Vertex> _vertices;
             std::vector<sf::Vertex> _gridLines;
 

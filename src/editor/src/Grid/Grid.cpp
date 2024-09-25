@@ -9,7 +9,7 @@
 #include <iostream>
 using namespace Editor;
 
-Grid::Grid(float width, float height, float cellSize)
+Grid::Grid(int width, int height, int cellSize)
     : _width(width), _height(height), _cellSize(cellSize) {
     defineGrid();
 }
@@ -20,11 +20,11 @@ void Grid::draw(sf::RenderWindow &window) {
 }
 
 void Grid::updateGrid(float zoomLevel) {
-    _gridLines.clear();
-    _cellSize = zoomLevel * 10;
-    if (_cellSize < 5.0f)
-        _cellSize = 5.0f;
-    defineGrid();
+    //_gridLines.clear();
+    //_cellSize = static_cast<int>(zoomLevel * 10);
+    //if (_cellSize < 5)
+    //    _cellSize = 5;
+    //defineGrid();
 }
 
 void Grid::setGridSize(int width, int height) {
@@ -59,4 +59,16 @@ void Grid::defineGrid() {
 
     _vertices.push_back(sf::Vertex(sf::Vector2f(_width, 0), sf::Color::Red));
     _vertices.push_back(sf::Vertex(sf::Vector2f(_width, _height), sf::Color::Red));
+}
+
+int Grid::getGridWidth() const {
+    return _width;
+}
+
+int Grid::getGridHeight() const {
+    return _height;
+}
+
+int Grid::getCellSize() const {
+    return _cellSize;
 }
