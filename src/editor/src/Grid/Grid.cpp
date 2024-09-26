@@ -6,7 +6,6 @@
 */
 
 #include "Grid.hpp"
-#include <iostream>
 using namespace Editor;
 
 Grid::Grid(int width, int height, int cellSize)
@@ -14,7 +13,7 @@ Grid::Grid(int width, int height, int cellSize)
     defineGrid();
 }
 
-void Grid::draw(sf::RenderWindow &window) {
+void Grid::draw(sf::RenderWindow &window) const {
     window.draw(&_gridLines[0], _gridLines.size(), sf::Lines);
     window.draw(&_vertices[0], _vertices.size(), sf::Lines);
 }
@@ -71,4 +70,9 @@ int Grid::getGridHeight() const {
 
 int Grid::getCellSize() const {
     return _cellSize;
+}
+
+void Grid::setCellSize(int cellSize) {
+    _cellSize = cellSize;
+    defineGrid();
 }

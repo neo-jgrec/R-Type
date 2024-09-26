@@ -14,7 +14,7 @@ namespace Editor {
     class Grid {
         public:
             Grid(int width, int height, int cellSize);
-            void draw(sf::RenderWindow &window);
+            void draw(sf::RenderWindow &window) const;
             void updateGrid(float zoomLevel);
             void setGridSize(int width, int height);
 
@@ -26,6 +26,8 @@ namespace Editor {
 
             [[nodiscard]]
             int getCellSize() const;
+
+            void setCellSize(int cellSize);
 
         private:
             int _width;
