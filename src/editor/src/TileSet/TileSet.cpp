@@ -13,7 +13,7 @@ using namespace Editor;
 
 int TileSet::_nextId = 1;
 
-TileSet::TileSet(const std::string& texturePath, int tileWidth, int tileHeight, std::string name) : _name(std::move(name)) {
+TileSet::TileSet(const std::string& texturePath, int tileWidth, int tileHeight, std::string name) : _name(std::move(name)), _tileWidth(tileWidth), _tileHeight(tileHeight) {
     loadFromFile(texturePath);
     sliceIntoTiles(tileWidth, tileHeight);
 }
@@ -53,4 +53,12 @@ const std::string& TileSet::getName() const {
 
 size_t TileSet::getTilesLength() const {
     return _tiles.size();
+}
+
+const std::string& TileSet::getFilePath() const {
+    return _name;
+}
+
+sf::Vector2i TileSet::getTileSize() const {
+    return {_tileWidth, _tileHeight};
 }

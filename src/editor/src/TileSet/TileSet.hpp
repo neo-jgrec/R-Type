@@ -24,11 +24,15 @@ namespace Editor {
             [[nodiscard]] size_t getTileCount() const;
             [[nodiscard]] const std::string& getName() const;
             [[nodiscard]] size_t getTilesLength() const;
+            [[nodiscard]] const std::string& getFilePath() const;
+            [[nodiscard]] sf::Vector2i getTileSize() const;
         private:
             sf::Texture _texture;
             std::vector<std::unique_ptr<Tile>> _tiles;
             std::string _name;
             static int _nextId;
+            int _tileWidth;
+            int _tileHeight;
     };
 }
 
