@@ -8,18 +8,17 @@
 #include "Window.hpp"
 #include <iostream>
 #include "../Exceptions.hpp"
-#include <fstream>
 #include <SFML/Graphics.hpp>
 #include <imgui.h>
 #include <imgui-SFML.h>
 #include <nlohmann/json.hpp>
+
 using namespace Editor;
 
 Window::Window(
     const std::string &title,
     const std::string &mapPath
-) : _grid(1000, 1000, 24),
-    _zoomLevel(1.0f),
+) : _zoomLevel(1.0f),
     _viewOffset(0.0f, 0.0f),
     _filePath(mapPath)
 {
@@ -27,7 +26,7 @@ Window::Window(
     _window.create(desktop, title, sf::Style::Close);
     _view = _window.getDefaultView();
     registerEvents();
-    loadMapConfig(mapPath);
+    _map.loadMapConfig(mapPath);
 
     if (!ImGui::SFML::Init(_window))
         throw Editor::Exception("Failed to initialize ImGui-SFML");
@@ -43,21 +42,13 @@ Window::~Window()
 
 void Window::loadTileSet(const std::string& filePath, int tileWidth, int tileHeight) {
     std::cout << "Loading TileSet: " << filePath << std::endl;
-    if (!_tileSets.empty()) {
-        const auto& previousTileSet = _tileSets[_tileSets.size() - 1];
-        if (previousTileSet->getName() == filePath) {
-            std::cout << "TileSet already loaded" << std::endl;
-            return;
-        }
-    }
-
-    _tileSets.push_back(std::make_unique<TileSet>(filePath, tileWidth, tileHeight, filePath));
-    _objectSelector.setSelectedTileSetIndex(_tileSets.size() - 1);
+    _map.loadTileSet(filePath, tileWidth, tileHeight);
+    _objectSelector.setSelectedTileSetIndex(static_cast<int>(_map.getTileSets().size()) - 1);
     updateObjectSelector();
 }
 
 void Window::updateObjectSelector() {
-    _objectSelector.updateObjectSelector(_tileSets);
+    _objectSelector.updateObjectSelector(_map.getTileSets());
     _objectSelector.setOnObjectSelected([this](const std::string& objectName) {
         std::cout << "Object selected: " << objectName << std::endl;
         if (objectName == "Erase") {
@@ -65,15 +56,12 @@ void Window::updateObjectSelector() {
             _currentTile = nullptr;
         } else {
             int tileId = std::stoi(objectName);
-            for (size_t i = 0; i < _tileSets.size(); ++i) {
-                for (size_t j = 0; j < _tileSets[i]->getTileCount(); ++j) {
-                    const auto& tile = _tileSets[i]->getTile(j);
-                    if (tile.getId() == tileId) {
-                        _currentTile = std::make_unique<Tile>(tile);
-                        _currentTileSetIndex = i;
-                        return;
-                    }
-                }
+            try {
+                const auto& tile = _map.getTileById(tileId);
+                _currentTile = std::make_unique<Tile>(tile);
+                _currentTileSetIndex = _map.getTileSets().size() - 1;
+            } catch (const Editor::Exception& e) {
+                std::cerr << e.what() << std::endl;
             }
         }
     });
@@ -134,7 +122,6 @@ void Window::updateViewOffset() {
 void Window::handleZoom(float zoomFactor) {
     _zoomLevel *= zoomFactor;
     _view.zoom(zoomFactor);
-    _grid.updateGrid(_zoomLevel);
 }
 
 void Window::run() {
@@ -153,7 +140,7 @@ void Window::run() {
         ImGui::SFML::Update(_window, _deltaTime.restart());
 
         _mainMenuBar.render();
-        _objectSelector.render(_tileSets);
+        _objectSelector.render(_map.getTileSets());
         loadTileSetDialog();
 
         if (_popupLoaderIsOpen)
@@ -161,51 +148,10 @@ void Window::run() {
 
         _window.clear();
         _window.setView(_view);
-        _grid.draw(_window);
-
-        if (!_tileSets.empty()) {
-            for (int y = 0; y < _grid.getGridHeight(); ++y) {
-                for (int x = 0; x < _grid.getGridWidth(); ++x) {
-                    const auto& tileId = _tileMap[y][x];
-                    if (tileId != -1) {
-                        const auto& tile = _tileSets[_currentTileSetIndex]->getTile(tileId);
-                        tile.draw(_window, x * _grid.getCellSize(), y * _grid.getCellSize());
-                    }
-                }
-            }
-        }
+        _map.draw(_window);
 
         ImGui::SFML::Render(_window);
         _window.display();
-    }
-}
-
-void Window::loadMapConfig(const std::string &mapPath) {
-    std::ifstream file(mapPath);
-    if (!file.is_open()) {
-        throw Editor::Exception("Failed to open map file: " + mapPath);
-    }
-
-    json data;
-    try {
-        file >> data;
-    } catch (const json::parse_error& e) {
-        throw Editor::Exception("Failed to parse JSON file: " + std::string(e.what()));
-    }
-
-    int mapWidth = data["width"];
-    int mapHeight = data["height"];
-    _grid.setGridSize(mapWidth, mapHeight);
-
-    _tileMap.resize(mapHeight, std::vector<int>(mapWidth, -1));
-
-    if (data.contains("tiles")) {
-        for (const auto& tile : data["tiles"]) {
-            int x = tile["x"];
-            int y = tile["y"];
-            int tileIndex = tile["tileIndex"];
-            _tileMap[y][x] = tileIndex;
-        }
     }
 }
 
@@ -257,35 +203,10 @@ void Window::openMap() {
 }
 
 void Window::saveMap() {
-    json mapData;
-    mapData["width"] = _grid.getGridWidth();
-    mapData["height"] = _grid.getGridHeight();
-
-    json tilesArray = json::array();
-    for (int y = 0; y < _grid.getGridHeight(); ++y) {
-        for (int x = 0; x < _grid.getGridWidth(); ++x) {
-            int tileIndex = _tileMap[y][x];
-            if (tileIndex != -1) {
-                json tile;
-                tile["x"] = x;
-                tile["y"] = y;
-                tile["tileIndex"] = tileIndex;
-                tilesArray.push_back(tile);
-            }
-        }
-    }
-    mapData["tiles"] = tilesArray;
-
     std::string fileName = openSaveFileDialog();
     if (!fileName.empty()) {
-        std::ofstream file(fileName);
-        if (file.is_open()) {
-            file << std::setw(4) << mapData << std::endl;
-            file.close();
-            std::cout << "Map saved successfully to: " << fileName << std::endl;
-        } else {
-            std::cerr << "Failed to open file for writing: " << fileName << std::endl;
-        }
+        _map.saveMap(fileName);
+        std::cout << "Map saved successfully to: " << fileName << std::endl;
     } else {
         std::cout << "Save operation cancelled" << std::endl;
     }
@@ -310,28 +231,22 @@ void Window::resetView() {
     // TODO: Implement reset view functionality
 }
 
-void Window::placeTile(int x, int y, int tileIndex) {
-    if (x >= 0 && x < _grid.getGridWidth() && y >= 0 && y < _grid.getGridHeight()) {
-        _tileMap[y][x] = tileIndex;
-    }
-}
-
-void Window::removeTile(int x, int y) {
-    if (x >= 0 && x < _grid.getGridWidth() && y >= 0 && y < _grid.getGridHeight()) {
-        _tileMap[y][x] = -1;
-    }
-}
-
 void Window::handleMouseButtonPressed(const sf::Event& event) {
     if (event.mouseButton.button == sf::Mouse::Left) {
+        std::cout << "Mouse button pressed" << std::endl;
         sf::Vector2f worldPos = _window.mapPixelToCoords(sf::Vector2i(event.mouseButton.x, event.mouseButton.y), _view);
-        int gridX = static_cast<int>(worldPos.x / _grid.getCellSize());
-        int gridY = static_cast<int>(worldPos.y / _grid.getCellSize());
+        int gridX = static_cast<int>(worldPos.x / static_cast<float>(_map.getGrid().getCellSize()));
+        int gridY = static_cast<int>(worldPos.y / static_cast<float>(_map.getGrid().getCellSize()));
+
+        std::cout << "Grid X: " << gridX << std::endl;
+        std::cout << "Grid Y: " << gridY << std::endl;
 
         if (_currentTile) {
-            placeTile(gridX, gridY, _currentTile->getId());
+            std::cout << "Placing tile" << std::endl;
+            _map.placeTile(gridX, gridY, _currentTile->getId());
         } else {
-            removeTile(gridX, gridY);
+            std::cout << "Removing tile" << std::endl;
+            _map.removeTile(gridX, gridY);
         }
     }
 }
@@ -343,13 +258,25 @@ void Window::handleMouseButtonReleased(const sf::Event& event) {
 void Window::handleMouseMoved(const sf::Event& event) {
     if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
         sf::Vector2f worldPos = _window.mapPixelToCoords(sf::Vector2i(event.mouseMove.x, event.mouseMove.y), _view);
-        int gridX = static_cast<int>(worldPos.x / _grid.getCellSize());
-        int gridY = static_cast<int>(worldPos.y / _grid.getCellSize());
+        int gridX = static_cast<int>(worldPos.x / static_cast<float>(_map.getGrid().getCellSize()));
+        int gridY = static_cast<int>(worldPos.y / static_cast<float>(_map.getGrid().getCellSize()));
 
         if (_currentTile) {
-            placeTile(gridX, gridY, _currentTile->getId());
+            _map.placeTile(gridX, gridY, _currentTile->getId());
         } else {
-            removeTile(gridX, gridY);
+            _map.removeTile(gridX, gridY);
         }
     }
+}
+
+const Tile& Window::getTile(int tileId) const {
+    for (const auto& tileSet : _map.getTileSets()) {
+        for (int i = 0; i < static_cast<int>(tileSet->getTileCount()); ++i) {
+            const Tile& tile = tileSet->getTile(i);
+            if (tile.getId() == tileId) {
+                return tile;
+            }
+        }
+    }
+    throw Editor::Exception("Tile not found");
 }
