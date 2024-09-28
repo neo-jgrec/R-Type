@@ -15,6 +15,7 @@
     #include <mutex>
     #include <optional>
     #include <queue>
+    #include <map>
 
     #include "../core/network/includes/RequestHeader.hpp"
     #include "Event.hpp"
@@ -27,7 +28,11 @@
  * for processing, ensuring that there are no race conditions.
  */
 class EventPool {
-public:
+    public:
+        EventPool();
+        static EventPool& getInstance();
+
+
         /**
          * @brief Adds a new event to the pool.
          *
@@ -49,6 +54,12 @@ public:
         std::optional<Event> popEvent();
 
         /**
+         * @brief  delete event
+         * @param event
+         */
+    void deleteEvent(Event& event);
+
+        /**
          * @brief Checks if the event pool is empty.
          *
          * @return True if the pool is empty, false otherwise.
@@ -57,10 +68,17 @@ public:
 
 
         void handler(const GDTPHeader& header, const std::vector<uint8_t>& payload, const asio::ip::udp::endpoint& client_endpoint);
+
+        void setNewHandler(const std::function<void(Event)>& newHandler);
     private:
         std::queue<Event> eventQueue; ///< Queue to store events.
         mutable std::mutex eventMutex; ///< Mutex to ensure thread-safety.
         std::condition_variable condition; ///< Condition variable to notify when events are added.
+        std::optional<std::function<void(Event)>> _handler;
 };
+
+std::shared_ptr<std::map<uint8_t, std::function<void(
+    const GDTPHeader &header, const std::vector<uint8_t> &payload,
+    const asio::ip::udp::endpoint &client_endpoint)>>> handlersMapEventPool();
 
 #endif // EVENTPOOL_HPP
