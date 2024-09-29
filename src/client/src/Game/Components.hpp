@@ -5,13 +5,12 @@
 #include <SFML/System/Vector2.hpp>
 #include <functional>
 #include <memory>
-#include "../../../core/ecs/Entity/Entity.hpp"
 
 struct KeyBinding {
-    sf::Keyboard::Key moveUpKey = sf::Keyboard::Z;
-    sf::Keyboard::Key moveDownKey = sf::Keyboard::S;
-    sf::Keyboard::Key moveLeftKey = sf::Keyboard::Q;
-    sf::Keyboard::Key moveRightKey = sf::Keyboard::D;
+    sf::Keyboard::Key moveUpKey = sf::Keyboard::Up;
+    sf::Keyboard::Key moveDownKey = sf::Keyboard::Down;
+    sf::Keyboard::Key moveLeftKey = sf::Keyboard::Left;
+    sf::Keyboard::Key moveRightKey = sf::Keyboard::Right;
     sf::Keyboard::Key fireKey = sf::Keyboard::Space;
 };
 
