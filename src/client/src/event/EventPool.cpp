@@ -21,7 +21,7 @@
  */
 void EventPool::pushEvent(const Event& event) {
     std::lock_guard<std::mutex> lock(eventMutex);
-    eventQueue.push(event);
+    eventQueue.push_back(event);
     condition.notify_one(); // Notifier que quelque chose a été ajouté
     if (_handler.has_value()) {
         (*_handler)(event);
@@ -37,16 +37,14 @@ void EventPool::pushEvent(const Event& event) {
  * @return The next event in the pool. If no event is available, it blocks until an event is pushed.
  */
 std::optional<Event> EventPool::popEvent() {
-    std::unique_lock<std::mutex> lock(eventMutex);
-    condition.wait(lock, [this] { return !eventQueue.empty(); }); // Attendre jusqu'à ce qu'il y ait un événement
-
-    if (!eventQueue.empty()) {
-        Event event = eventQueue.front();
-        eventQueue.pop();
-        return event;
+    std::lock_guard<std::mutex> lock(eventMutex);
+    if (eventQueue.empty()) {
+        return {};
     }
 
-    return std::nullopt;
+    Event event = eventQueue.front(); // Récupère le premier élément
+    eventQueue.erase(eventQueue.begin()); // Supprime le premier élément
+    return event;
 }
 
 /**
@@ -60,11 +58,29 @@ bool EventPool::isEmpty() const {
 }
 
 void EventPool::handler(const GDTPHeader &header, const std::vector<uint8_t> &payload,
-                        const asio::ip::udp::endpoint &client_endpoint){
+                        const asio::ip::udp::endpoint &client_endpoint) {
     try {
         Event::EventType type = uint8ToEventType(header.messageType);
-        //TODO implementé la création de l'event
-    } catch (std::exception e) {
+
+        switch (type) {
+        case Event::EventType::PlayerMovement:
+            handlePlayerMovement(header, payload);
+            break;
+
+        case Event::EventType::PlayerShoot:
+            handlePlayerShoot(header, payload);
+            break;
+
+        case Event::EventType::ChatMessage:
+            handleChatMessage(header, payload);
+            break;
+
+            // Ajoutez des cas supplémentaires pour les autres types d'événements
+        default:
+            throw UnknownEvent(header.messageType);
+            break;
+        }
+    } catch (const std::exception &e) {
         std::cerr << "Error in EventPool::Handler: " << e.what() << std::endl;
     }
 }
@@ -73,8 +89,6 @@ void EventPool::setNewHandler(const std::function<void(Event)>& newHandler){
 
     _handler = newHandler;
 }
-
-void EventPool::deleteEvent(Event &event) {}
 
 std::shared_ptr<std::map<uint8_t, std::function<void(
     const GDTPHeader &header, const std::vector<uint8_t> &payload,
@@ -102,4 +116,64 @@ EventPool &EventPool::getInstance(){
 
 
 
+void EventPool::handlePlayerMovement(const GDTPHeader &header, const std::vector<uint8_t> &payload) {
+    if (payload.size() < sizeof(PlayerMovement)) {
+        std::cerr << "Invalid payload size for PlayerMovement" << std::endl;
+        return;
+    }
 
+    PlayerMovement movement;
+    std::memcpy(&movement.playerId, &payload[0], 4);
+    std::memcpy(&movement.x, &payload[4], 4);
+    std::memcpy(&movement.y, &payload[8], 4);
+    std::memcpy(&movement.z, &payload[12], 4);
+
+    Event event(Event::EventType::PlayerMovement, movement);
+
+    // Verrouiller l'accès à la pool d'événements
+    std::lock_guard<std::mutex> lock(eventMutex);
+    eventQueue.push_back(event);
+}
+
+void EventPool::handlePlayerShoot(const GDTPHeader &header, const std::vector<uint8_t> &payload) {
+    if (payload.size() < sizeof(PlayerShoot)) {
+        std::cerr << "Invalid payload size for PlayerShoot" << std::endl;
+        return;
+    }
+
+    PlayerShoot shoot;
+    std::memcpy(&shoot.playerId, &payload[0], 4);
+    shoot.direction = payload[4];
+    shoot.weaponType = payload[5];
+
+    Event event(Event::EventType::PlayerShoot, shoot);
+
+    std::lock_guard<std::mutex> lock(eventMutex);
+    eventQueue.push_back(event);
+}
+
+void EventPool::handleChatMessage(const GDTPHeader &header, const std::vector<uint8_t> &payload) {
+    if (payload.size() < 6) {
+        std::cerr << "Invalid payload size for ChatMessage" << std::endl;
+        return;
+    }
+
+    uint32_t playerId;
+    uint16_t messageLength;
+    std::memcpy(&playerId, &payload[0], 4);
+    std::memcpy(&messageLength, &payload[4], 2);
+
+    std::string message(payload.begin() + 6, payload.begin() + 6 + messageLength);
+
+    ChatMessage chatMessage{playerId, message};
+
+    Event event(Event::EventType::ChatMessage, chatMessage);
+
+    std::lock_guard<std::mutex> lock(eventMutex);
+    eventQueue.push_back(event);
+}
+
+void EventPool::deleteEvent(Event& event) {
+    std::lock_guard<std::mutex> lock(eventMutex);
+    eventQueue.erase(std::remove(eventQueue.begin(), eventQueue.end(), event), eventQueue.end());
+}

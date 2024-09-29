@@ -16,6 +16,8 @@
     #include <optional>
     #include <queue>
     #include <map>
+#include <deque>
+#include <algorithm>
 
     #include "../core/network/includes/RequestHeader.hpp"
     #include "Event.hpp"
@@ -70,11 +72,44 @@ class EventPool {
         void handler(const GDTPHeader& header, const std::vector<uint8_t>& payload, const asio::ip::udp::endpoint& client_endpoint);
 
         void setNewHandler(const std::function<void(Event)>& newHandler);
+
+    /**
+     * @class UnknownEvent
+     * @brief Exception levée lorsqu'un événement inconnu est reçu.
+     */
+    class UnknownEvent : public std::exception {
+    public:
+        UnknownEvent(uint8_t value) : _value(value) {}
+        const char* what() const noexcept override {
+            return std::string("Unknown event type: " + std::to_string(this->_value)).c_str();
+        }
     private:
-        std::queue<Event> eventQueue; ///< Queue to store events.
+        uint8_t _value;
+    };
+    private:
+        std::deque<Event> eventQueue; ///< Queue to store events.
         mutable std::mutex eventMutex; ///< Mutex to ensure thread-safety.
         std::condition_variable condition; ///< Condition variable to notify when events are added.
         std::optional<std::function<void(Event)>> _handler;
+
+    void handlePlayerMovement(const GDTPHeader &header, const std::vector<uint8_t> &payload);
+
+    /**
+     * @brief Gère un événement de type PlayerShoot.
+     *
+     * @param header Le header du message.
+     * @param payload Les données associées à PlayerShoot.
+     */
+    void handlePlayerShoot(const GDTPHeader &header, const std::vector<uint8_t> &payload);
+
+    /**
+     * @brief Gère un événement de type ChatMessage.
+     *
+     * @param header Le header du message.
+     * @param payload Les données associées à ChatMessage.
+     */
+    void handleChatMessage(const GDTPHeader &header, const std::vector<uint8_t> &payload);
+
 };
 
 std::shared_ptr<std::map<uint8_t, std::function<void(
