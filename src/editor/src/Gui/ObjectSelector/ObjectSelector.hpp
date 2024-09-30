@@ -35,12 +35,15 @@ namespace Editor {
             void setSelectedTileSetIndex(int index);
             void clearObjects();
             void updateObjectSelector(const std::vector<std::unique_ptr<TileSet>>& tileSets);
+            static void renderTileSetInformation(const std::unique_ptr<TileSet>& tileSet);
 
         private:
             std::vector<std::string> _objects;
             int _selectedIndex;
             int _selectedTileSetIndex;
             std::function<void(const std::string&)> _onObjectSelected;
+            sf::RenderTexture _renderTexture;
+            static constexpr float TILE_DISPLAY_SIZE = 50.0f;  // Size of the tile preview
     };
 }
 
