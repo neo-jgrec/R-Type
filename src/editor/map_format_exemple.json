@@ -1,15 +1,22 @@
 {
-    "width": 1024,
-    "height": 512,
-    "enemies": [
-        { "type": "Bydo", "x": 500, "y": 100 },
-        { "type": "Boss", "x": 900, "y": 300 }
+    "cellSize": 24,
+    "editorVersion": "0.1",
+    "height": 20,
+    "name": "Default map",
+    "tileSets": [
+        {
+            "filePath": "oak_woods_tileset.png",
+            "tileCount": 315,
+            "tileHeight": 24,
+            "tileWidth": 24
+        }
     ],
-    "obstacles": [
-        { "x": 300, "y": 200, "destructible": true }
+    "tiles": [
+        {
+            "tileIndex": 1,
+            "x": 0,
+            "y": 0
+        }
     ],
-    "spawnPoints": [
-        { "x": 50, "y": 400 },
-        { "x": 50, "y": 100 }
-    ]
+    "width": 100
 }
