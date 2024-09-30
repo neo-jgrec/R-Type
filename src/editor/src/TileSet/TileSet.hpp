@@ -12,11 +12,18 @@
 #include <vector>
 #include <memory>
 #include "../Tile/Tile.hpp"
+#include <imgui.h>
 
 namespace Editor {
     class TileSet {
         public:
-            TileSet(const std::string& texturePath, int tileWidth, int tileHeight, std::string name);
+            TileSet(
+                const std::string& texturePath,
+                int tileWidth,
+                int tileHeight,
+                std::string name,
+                int nextId
+            );
             void loadFromFile(const std::string& texturePath);
             void sliceIntoTiles(int tileWidth, int tileHeight);
 
@@ -26,13 +33,18 @@ namespace Editor {
             [[nodiscard]] size_t getTilesLength() const;
             [[nodiscard]] const std::string& getFilePath() const;
             [[nodiscard]] sf::Vector2i getTileSize() const;
+            [[nodiscard]] sf::Texture& getTexture();
+            [[nodiscard]] ImTextureID getTextureID() const;
+            [[nodiscard]] sf::Vector2f getTextureSize() const;
+            [[nodiscard]] int getNextId() const;
+            static void resetNextId();
         private:
             sf::Texture _texture;
             std::vector<std::unique_ptr<Tile>> _tiles;
             std::string _name;
-            static int _nextId;
             int _tileWidth;
             int _tileHeight;
+            int _nextId;
     };
 }
 
