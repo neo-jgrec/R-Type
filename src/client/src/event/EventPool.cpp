@@ -6,52 +6,34 @@
 */
 
 #include "EventPool.hpp"
-
 #include <iostream>
-
 #include "../core/network/includes/RequestType.hpp"
 
-/**
- * @brief Adds a new event to the pool.
- *
- * This method allows threads to push new events into the pool. It is thread-safe and
- * uses a mutex to ensure that concurrent access is properly synchronized.
- *
- * @param event The event to be added to the pool.
- */
+EventPool& EventPool::getInstance(){
+    static EventPool instance;
+    return instance;
+}
+
 void EventPool::pushEvent(const Event& event) {
     std::lock_guard<std::mutex> lock(eventMutex);
     eventQueue.push_back(event);
-    condition.notify_one(); // Notifier que quelque chose a été ajouté
+    condition.notify_one();
     if (_handler.has_value()) {
         (*_handler)(event);
     }
 }
 
-/**
- * @brief Retrieves the next event from the pool, if available.
- *
- * This method pops an event from the pool. If the pool is empty, it blocks until
- * an event is available.
- *
- * @return The next event in the pool. If no event is available, it blocks until an event is pushed.
- */
 std::optional<Event> EventPool::popEvent() {
     std::lock_guard<std::mutex> lock(eventMutex);
     if (eventQueue.empty()) {
         return {};
     }
 
-    Event event = eventQueue.front(); // Récupère le premier élément
-    eventQueue.erase(eventQueue.begin()); // Supprime le premier élément
+    Event event = eventQueue.front();
+    eventQueue.pop_front();
     return event;
 }
 
-/**
- * @brief Checks if the event pool is empty.
- *
- * @return True if the pool is empty, false otherwise.
- */
 bool EventPool::isEmpty() const {
     std::lock_guard<std::mutex> lock(eventMutex);
     return eventQueue.empty();
@@ -60,25 +42,31 @@ bool EventPool::isEmpty() const {
 void EventPool::handler(const GDTPHeader &header, const std::vector<uint8_t> &payload,
                         const asio::ip::udp::endpoint &client_endpoint) {
     try {
-        Event::EventType type = uint8ToEventType(header.messageType);
 
-        switch (type) {
+        switch (Event::EventType type = uint8ToEventType(header.messageType)) {
         case Event::EventType::PlayerMovement:
             handlePlayerMovement(header, payload);
             break;
-
         case Event::EventType::PlayerShoot:
             handlePlayerShoot(header, payload);
             break;
-
         case Event::EventType::ChatMessage:
             handleChatMessage(header, payload);
             break;
-
-            // Ajoutez des cas supplémentaires pour les autres types d'événements
+        case Event::EventType::PlayerHealthUpdate:
+            handlePlayerHealthUpdate(header, payload);
+            break;
+        case Event::EventType::EntitySpawn:
+            handleEntitySpawn(header, payload);
+            break;
+        case Event::EventType::EntityDestroy:
+            handleEntityDestroy(header, payload);
+            break;
+        case Event::EventType::PowerUpCollected:
+            handlePowerUpCollected(header, payload);
+            break;
         default:
             throw UnknownEvent(header.messageType);
-            break;
         }
     } catch (const std::exception &e) {
         std::cerr << "Error in EventPool::Handler: " << e.what() << std::endl;
@@ -86,35 +74,8 @@ void EventPool::handler(const GDTPHeader &header, const std::vector<uint8_t> &pa
 }
 
 void EventPool::setNewHandler(const std::function<void(Event)>& newHandler){
-
     _handler = newHandler;
 }
-
-std::shared_ptr<std::map<uint8_t, std::function<void(
-    const GDTPHeader &header, const std::vector<uint8_t> &payload,
-    const asio::ip::udp::endpoint &client_endpoint)>>> handlersMapEventPool()
-{
-    auto handlers = std::make_shared<std::map<uint8_t,
-    std::function<void(const GDTPHeader &header, const std::vector<uint8_t> &payload,
-    const asio::ip::udp::endpoint &client_endpoint)>>>();
-
-    // Utiliser la macro pour enregistrer chaque type d'événement dans la map
-    #define X(name, value) \
-    handlers->emplace(static_cast<uint8_t>(value), EventPool::getInstance().handler);
-
-    EVENT_TYPE_LIST
-
-    #undef X
-
-    return handlers;
-}
-
-EventPool &EventPool::getInstance(){
-    static EventPool instance;
-    return instance;
-}
-
-
 
 void EventPool::handlePlayerMovement(const GDTPHeader &header, const std::vector<uint8_t> &payload) {
     if (payload.size() < sizeof(PlayerMovement)) {
@@ -129,8 +90,6 @@ void EventPool::handlePlayerMovement(const GDTPHeader &header, const std::vector
     std::memcpy(&movement.z, &payload[12], 4);
 
     Event event(Event::EventType::PlayerMovement, movement);
-
-    // Verrouiller l'accès à la pool d'événements
     std::lock_guard<std::mutex> lock(eventMutex);
     eventQueue.push_back(event);
 }
@@ -147,7 +106,6 @@ void EventPool::handlePlayerShoot(const GDTPHeader &header, const std::vector<ui
     shoot.weaponType = payload[5];
 
     Event event(Event::EventType::PlayerShoot, shoot);
-
     std::lock_guard<std::mutex> lock(eventMutex);
     eventQueue.push_back(event);
 }
@@ -164,11 +122,69 @@ void EventPool::handleChatMessage(const GDTPHeader &header, const std::vector<ui
     std::memcpy(&messageLength, &payload[4], 2);
 
     std::string message(payload.begin() + 6, payload.begin() + 6 + messageLength);
-
     ChatMessage chatMessage{playerId, message};
 
     Event event(Event::EventType::ChatMessage, chatMessage);
+    std::lock_guard<std::mutex> lock(eventMutex);
+    eventQueue.push_back(event);
+}
 
+void EventPool::handlePlayerHealthUpdate(const GDTPHeader &header, const std::vector<uint8_t> &payload) {
+    if (payload.size() < sizeof(PlayerHealthUpdate)) {
+        std::cerr << "Invalid payload size for PlayerHealthUpdate" << std::endl;
+        return;
+    }
+
+    PlayerHealthUpdate healthUpdate;
+    std::memcpy(&healthUpdate.playerId, &payload[0], 4);
+    std::memcpy(&healthUpdate.health, &payload[4], 4);
+
+    Event event(Event::EventType::PlayerHealthUpdate, healthUpdate);
+    std::lock_guard<std::mutex> lock(eventMutex);
+    eventQueue.push_back(event);
+}
+
+void EventPool::handleEntitySpawn(const GDTPHeader &header, const std::vector<uint8_t> &payload) {
+    if (payload.size() < sizeof(EntitySpawn)) {
+        std::cerr << "Invalid payload size for EntitySpawn" << std::endl;
+        return;
+    }
+
+    EntitySpawn entitySpawn;
+    std::memcpy(&entitySpawn.entityId, &payload[0], 4);
+    std::memcpy(&entitySpawn.x, &payload[4], 4);
+    std::memcpy(&entitySpawn.y, &payload[8], 4);
+
+    Event event(Event::EventType::EntitySpawn, entitySpawn);
+    std::lock_guard<std::mutex> lock(eventMutex);
+    eventQueue.push_back(event);
+}
+
+void EventPool::handleEntityDestroy(const GDTPHeader &header, const std::vector<uint8_t> &payload) {
+    if (payload.size() < sizeof(EntityDestroy)) {
+        std::cerr << "Invalid payload size for EntityDestroy" << std::endl;
+        return;
+    }
+
+    EntityDestroy entityDestroy;
+    std::memcpy(&entityDestroy.entityId, &payload[0], 4);
+
+    Event event(Event::EventType::EntityDestroy, entityDestroy);
+    std::lock_guard<std::mutex> lock(eventMutex);
+    eventQueue.push_back(event);
+}
+
+void EventPool::handlePowerUpCollected(const GDTPHeader &header, const std::vector<uint8_t> &payload) {
+    if (payload.size() < sizeof(PowerUpCollected)) {
+        std::cerr << "Invalid payload size for PowerUpCollected" << std::endl;
+        return;
+    }
+
+    PowerUpCollected powerUpCollected;
+    std::memcpy(&powerUpCollected.playerId, &payload[0], 4);
+    std::memcpy(&powerUpCollected.powerUpId, &payload[4], 4);
+
+    Event event(Event::EventType::PowerUpCollected, powerUpCollected);
     std::lock_guard<std::mutex> lock(eventMutex);
     eventQueue.push_back(event);
 }
@@ -178,19 +194,14 @@ void EventPool::deleteEvent(Event& event) {
     eventQueue.erase(std::remove(eventQueue.begin(), eventQueue.end(), event), eventQueue.end());
 }
 
-/**
- * @brief Gets the next event in the deque and removes it.
- * @return The next event in the deque.
- * @throws std::runtime_error If the event deque is empty.
- */
 Event EventPool::getNextEvent() {
     std::lock_guard<std::mutex> lock(eventMutex);
     if (eventQueue.empty()) {
-        throw std::runtime_error("Event deque is empty");
+        throw std::runtime_error("Event queue is empty");
     }
 
-    Event event = eventQueue.front(); // Récupérer l'événement au début de la deque
-    eventQueue.pop_front(); // Supprimer l'événement du début de la deque
+    Event event = eventQueue.front();
+    eventQueue.pop_front();
     return event;
 }
 
@@ -199,8 +210,25 @@ std::vector<Event> EventPool::getAllEvents() {
     std::vector<Event> allEvents;
 
     allEvents.insert(allEvents.end(), eventQueue.begin(), eventQueue.end());
-
     eventQueue.clear();
 
     return allEvents;
+}
+
+std::shared_ptr<std::map<uint8_t, std::function<void(
+    const GDTPHeader &header, const std::vector<uint8_t> &payload,
+    const asio::ip::udp::endpoint &client_endpoint)>>> handlersMapEventPool()
+{
+    auto handlers = std::make_shared<std::map<uint8_t,
+    std::function<void(const GDTPHeader &header, const std::vector<uint8_t> &payload,
+    const asio::ip::udp::endpoint &client_endpoint)>>>();
+
+    #define X(name, value) \
+    handlers->emplace(static_cast<uint8_t>(value), EventPool::getInstance().handler);
+
+    EVENT_TYPE_LIST
+
+    #undef X
+
+    return handlers;
 }

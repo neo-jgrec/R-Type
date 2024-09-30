@@ -14,10 +14,9 @@
     #include <condition_variable>
     #include <mutex>
     #include <optional>
-    #include <queue>
+    #include <deque>
     #include <map>
-#include <deque>
-#include <algorithm>
+    #include <vector>
 
     #include "../core/network/includes/RequestHeader.hpp"
     #include "Event.hpp"
@@ -34,12 +33,8 @@ class EventPool {
         EventPool();
         static EventPool& getInstance();
 
-
         /**
          * @brief Adds a new event to the pool.
-         *
-         * This method allows threads to push new events into the pool. It is thread-safe and
-         * uses a mutex to ensure that concurrent access is properly synchronized.
          *
          * @param event The event to be added to the pool.
          */
@@ -48,18 +43,9 @@ class EventPool {
         /**
          * @brief Retrieves the next event from the pool, if available.
          *
-         * This method pops an event from the pool. If the pool is empty, it blocks until
-         * an event is available.
-         *
          * @return The next event in the pool. If no event is available, it blocks until an event is pushed.
          */
         std::optional<Event> popEvent();
-
-        /**
-         * @brief  delete event
-         * @param event
-         */
-    void deleteEvent(Event& event);
 
         /**
          * @brief Checks if the event pool is empty.
@@ -68,60 +54,53 @@ class EventPool {
          */
         bool isEmpty() const;
 
-
+        /**
+         * @brief Event handler function for processing GDTP messages.
+         *
+         * @param header The header of the received message.
+         * @param payload The payload of the message.
+         * @param client_endpoint The client endpoint from which the message was received.
+         */
         void handler(const GDTPHeader& header, const std::vector<uint8_t>& payload, const asio::ip::udp::endpoint& client_endpoint);
 
+        /**
+         * @brief Sets a new handler to be called when an event is pushed.
+         *
+         * @param newHandler The function to handle new events.
+         */
         void setNewHandler(const std::function<void(Event)>& newHandler);
 
-    /**
-     * @class UnknownEvent
-     * @brief Exception levée lorsqu'un événement inconnu est reçu.
-     */
-    class UnknownEvent : public std::exception {
-    public:
-        UnknownEvent(uint8_t value) : _value(value) {}
-        const char* what() const noexcept override {
-            return std::string("Unknown event type: " + std::to_string(this->_value)).c_str();
-        }
-    private:
-        uint8_t _value;
-    };
-    /**
- * @brief Gets the next event in the queue and removes it.
- * @return The next event in the queue.
- * @throws std::runtime_error If the event queue is empty.
- */
-    Event getNextEvent();
+        /**
+         * @brief Exception class for handling unknown events.
+         */
+        class UnknownEvent : public std::exception {
+        public:
+            UnknownEvent(uint8_t value) : _value(value) {}
+            const char* what() const noexcept override {
+                return std::string("Unknown event type: " + std::to_string(this->_value)).c_str();
+            }
+        private:
+            uint8_t _value;
+        };
 
-    /**
-     * @brief Retrieves all events from the event queue.
-     * @return A vector containing all events.
-     */
-    std::vector<Event> getAllEvents();
+        Event getNextEvent();
+        std::vector<Event> getAllEvents();
+
+        void deleteEvent(Event& event);
+
     private:
         std::deque<Event> eventQueue; ///< Queue to store events.
         mutable std::mutex eventMutex; ///< Mutex to ensure thread-safety.
         std::condition_variable condition; ///< Condition variable to notify when events are added.
         std::optional<std::function<void(Event)>> _handler;
 
-    void handlePlayerMovement(const GDTPHeader &header, const std::vector<uint8_t> &payload);
-
-    /**
-     * @brief Gère un événement de type PlayerShoot.
-     *
-     * @param header Le header du message.
-     * @param payload Les données associées à PlayerShoot.
-     */
-    void handlePlayerShoot(const GDTPHeader &header, const std::vector<uint8_t> &payload);
-
-    /**
-     * @brief Gère un événement de type ChatMessage.
-     *
-     * @param header Le header du message.
-     * @param payload Les données associées à ChatMessage.
-     */
-    void handleChatMessage(const GDTPHeader &header, const std::vector<uint8_t> &payload);
-
+        void handlePlayerMovement(const GDTPHeader &header, const std::vector<uint8_t> &payload);
+        void handlePlayerShoot(const GDTPHeader &header, const std::vector<uint8_t> &payload);
+        void handleChatMessage(const GDTPHeader &header, const std::vector<uint8_t> &payload);
+        void handlePlayerHealthUpdate(const GDTPHeader &header, const std::vector<uint8_t> &payload);
+        void handleEntitySpawn(const GDTPHeader &header, const std::vector<uint8_t> &payload);
+        void handleEntityDestroy(const GDTPHeader &header, const std::vector<uint8_t> &payload);
+        void handlePowerUpCollected(const GDTPHeader &header, const std::vector<uint8_t> &payload);
 };
 
 std::shared_ptr<std::map<uint8_t, std::function<void(
