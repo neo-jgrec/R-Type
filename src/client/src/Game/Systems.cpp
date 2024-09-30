@@ -5,7 +5,7 @@
 #include "src/Game/EntityFactory.hpp"
 #include "src/Game/Globals.hpp"
 
-void Systems::movementSystem(core::ecs::Registry& registry) {
+void Systems::inputSystem(core::ecs::Registry& registry) {
     registry.add_system<TransformComponent, VelocityComponent, InputStateComponent, Player>(
         [&](TransformComponent &transform, const VelocityComponent &vel, InputStateComponent &input, Player&) {
             if (input.up) {
