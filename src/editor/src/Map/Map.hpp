@@ -25,6 +25,7 @@ namespace Editor {
         void saveMap(const std::string &fileName);
         void placeTile(int x, int y, int tileIndex);
         void removeTile(int x, int y);
+        void createNewMap(int width, int height, int cellSize);
 
         [[nodiscard]]
         int getTile(int x, int y) const;
@@ -32,8 +33,17 @@ namespace Editor {
         int getWidth() const;
         [[nodiscard]]
         int getHeight() const;
+        [[nodiscard]]
+        std::string getName() const;
+
+        void setWidth(int width);
+        void setHeight(int height);
+        void setCellSize(int cellSize);
+        void setName(const std::string& name);
 
         void loadTileSet(const std::string& filePath, int tileWidth, int tileHeight);
+        void clearTileSets();
+        void clearMap();
 
         [[nodiscard]]
         const Tile& getTileById(int tileId) const;
@@ -41,10 +51,15 @@ namespace Editor {
         const std::vector<std::unique_ptr<TileSet>>& getTileSets() const;
 
         void draw(sf::RenderWindow& window) const;
+        void drawPreviewTile(int x, int y, int tileIndex, sf::RenderWindow& window) const;
+
+        [[nodiscard]]
+        bool isPositionValid(int x, int y) const;
 
         Grid& getGrid();
 
     private:
+        std::string _name;
         int _width;
         int _height;
         int _cellSize;

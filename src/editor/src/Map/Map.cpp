@@ -9,6 +9,7 @@
 #include "../Exceptions.hpp"
 #include <fstream>
 #include <iomanip>
+#include <iostream>
 
 using namespace Editor;
 
@@ -26,27 +27,88 @@ void Map::loadMapConfig(const std::string &mapPath) {
         throw Editor::Exception("Failed to parse JSON file: " + std::string(e.what()));
     }
 
+    if (!data.contains("cellSize") || !data.contains("width") || !data.contains("height"))
+        throw Editor::Exception("Missing required fields in map configuration");
+
+    if (!data["cellSize"].is_number_integer() || !data["width"].is_number_integer() || !data["height"].is_number_integer())
+        throw Editor::Exception("Invalid data types for cellSize, width, or height");
+
+    if (!data.contains("name"))
+        throw Editor::Exception("Missing required field 'name' in map configuration");
+
+    _cellSize = data["cellSize"];
     _width = data["width"];
     _height = data["height"];
-    _cellSize = data["cellSize"];
+    _name = data["name"];
+
+    if (_cellSize <= 0 || _width <= 0 || _height <= 0)
+        throw Editor::Exception("Invalid values for cellSize, width, or height");
+
+    _width *= _cellSize;
+    _height *= _cellSize;
     _tileMap.resize(_height, std::vector<int>(_width, -1));
     _grid.setGridSize(_width, _height);
     _grid.setCellSize(_cellSize);
 
     if (data.contains("tiles")) {
+        if (!data["tiles"].is_array())
+            throw Editor::Exception("Invalid 'tiles' field: expected an array");
         for (const auto& tile : data["tiles"]) {
+            if (!tile.contains("x") || !tile.contains("y") || !tile.contains("tileIndex"))
+                throw Editor::Exception("Invalid tile data: missing x, y, or tileIndex");
             int x = tile["x"];
             int y = tile["y"];
             int tileIndex = tile["tileIndex"];
+            if (x < 0 || x >= _width / _cellSize || y < 0 || y >= _height / _cellSize)
+                throw Editor::Exception("Invalid tile position: (" + std::to_string(x) + ", " + std::to_string(y) + ")");
             _tileMap[y][x] = tileIndex;
+            std::cout << "Tile at (" << x << ", " << y << "): " << tileIndex << std::endl;
+        }
+    }
+
+    if (data.contains("tileSets")) {
+        if (!data["tileSets"].is_array())
+            throw Editor::Exception("Invalid 'tileSets' field: expected an array");
+        for (const auto& tileSetData : data["tileSets"]) {
+            if (!tileSetData.contains("filePath") || !tileSetData.contains("tileWidth") || !tileSetData.contains("tileHeight"))
+                throw Editor::Exception("Invalid tileSet data: missing filePath, tileWidth, or tileHeight");
+            std::string filePath = tileSetData["filePath"];
+            int tileWidth = tileSetData["tileWidth"];
+            int tileHeight = tileSetData["tileHeight"];
+            if (tileWidth <= 0 || tileHeight <= 0)
+                throw Editor::Exception("Invalid tileSet dimensions: tileWidth and tileHeight must be positive");
+            loadTileSet(filePath, tileWidth, tileHeight);
+            std::cout << "Tile set loaded: " << filePath << std::endl;
         }
     }
 }
 
+void Map::createNewMap(int width, int height, int cellSize) {
+    _width = width * cellSize;
+    _height = height * cellSize;
+    _cellSize = cellSize;
+    _tileMap.clear();
+    _tileSets.clear();
+    _tileMap.resize(_height, std::vector<int>(_width, -1));
+    _grid.setGridSize(_width, _height);
+    _grid.setCellSize(cellSize);
+}
+
+void Map::clearMap() {
+    _tileMap.clear();
+    _tileSets.clear();
+    _width = 0;
+    _height = 0;
+    _cellSize = 0;
+}
+
 void Map::saveMap(const std::string &fileName) {
     json mapData;
-    mapData["width"] = _width;
-    mapData["height"] = _height;
+    mapData["width"] = _width / _cellSize;
+    mapData["height"] = _height / _cellSize;
+    mapData["cellSize"] = _cellSize;
+    mapData["editorVersion"] = "0.1";
+    mapData["name"] = _name;
 
     json tilesArray = json::array();
     for (int y = 0; y < _height; ++y) {
@@ -69,6 +131,7 @@ void Map::saveMap(const std::string &fileName) {
         tileSetData["filePath"] = tileSet->getFilePath();
         tileSetData["tileWidth"] = tileSet->getTileSize().x;
         tileSetData["tileHeight"] = tileSet->getTileSize().y;
+        tileSetData["tileCount"] = tileSet->getTileCount();
         tileSetsArray.push_back(tileSetData);
     }
     mapData["tileSets"] = tileSetsArray;
@@ -83,21 +146,20 @@ void Map::saveMap(const std::string &fileName) {
 }
 
 void Map::placeTile(int x, int y, int tileIndex) {
-    if (x >= 0 && x < _width && y >= 0 && y < _height) {
-        _tileMap[y][x] = tileIndex;
-    }
+    if (!isPositionValid(x, y))
+        return;
+    _tileMap[y][x] = tileIndex;
 }
 
 void Map::removeTile(int x, int y) {
-    if (x >= 0 && x < _width && y >= 0 && y < _height) {
-        _tileMap[y][x] = -1;
-    }
+    if (!isPositionValid(x, y))
+        return;
+    _tileMap[y][x] = -1;
 }
 
 int Map::getTile(int x, int y) const {
-    if (x >= 0 && x < _width && y >= 0 && y < _height) {
+    if (isPositionValid(x, y))
         return _tileMap[y][x];
-    }
     return -1;
 }
 
@@ -110,7 +172,15 @@ int Map::getHeight() const {
 }
 
 void Map::loadTileSet(const std::string& filePath, int tileWidth, int tileHeight) {
-    _tileSets.push_back(std::make_unique<TileSet>(filePath, tileWidth, tileHeight, filePath));
+    int actualTileSetsTilesCount = 0;
+    for (const auto& tileSet : _tileSets)
+        actualTileSetsTilesCount += static_cast<int>(tileSet->getTileCount());
+    int nextId = actualTileSetsTilesCount + 1;
+    _tileSets.push_back(std::make_unique<TileSet>(filePath, tileWidth, tileHeight, filePath, nextId));
+}
+
+void Map::clearTileSets() {
+    _tileSets.clear();
 }
 
 const Tile& Map::getTileById(int tileId) const {
@@ -147,4 +217,41 @@ void Map::draw(sf::RenderWindow& window) const {
 
 Grid& Map::getGrid() {
     return _grid;
+}
+
+void Map::drawPreviewTile(int x, int y, int tileIndex, sf::RenderWindow& window) const {
+    if (!isPositionValid(x, y))
+        return;
+    const auto& tile = getTileById(tileIndex);
+    sf::Vector2f position(static_cast<float>(x * _cellSize), static_cast<float>(y * _cellSize));
+    tile.draw(window, position.x, position.y);
+}
+
+bool Map::isPositionValid(int x, int y) const {
+    return x >= 0 && x < _width / _cellSize && y >= 0 && y < _height / _cellSize;
+}
+
+void Map::setWidth(int width) {
+    _width = width;
+    _tileMap.resize(_height, std::vector<int>(_width, -1));
+    _grid.setGridSize(_width, _height);
+}
+
+void Map::setHeight(int height) {
+    _height = height;
+    _tileMap.resize(_height, std::vector<int>(_width, -1));
+    _grid.setGridSize(_width, _height);
+}
+
+void Map::setCellSize(int cellSize) {
+    _cellSize = cellSize;
+    _grid.setCellSize(_cellSize);
+}
+
+void Map::setName(const std::string& name) {
+    _name = name;
+}
+
+std::string Map::getName() const {
+    return _name;
 }
