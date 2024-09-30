@@ -16,6 +16,7 @@ void MainMenuBar::render() {
         renderFileMenu();
         renderEditMenu();
         renderViewMenu();
+        renderHelpMenu();
         ImGui::EndMainMenuBar();
     }
 }
@@ -23,8 +24,8 @@ void MainMenuBar::render() {
 void MainMenuBar::renderFileMenu() const {
     if (ImGui::BeginMenu("File")) {
         if (ImGui::MenuItem("New Map") && onNewMap) onNewMap();
-        if (ImGui::MenuItem("Open Map") && onOpenMap) onOpenMap();
-        if (ImGui::MenuItem("Save Map") && onSaveMap) onSaveMap();
+        if (ImGui::MenuItem("Open Map", "Ctrl+O") && onOpenMap) onOpenMap();
+        if (ImGui::MenuItem("Save Map", "Ctrl+S") && onSaveMap) onSaveMap();
         if (ImGui::MenuItem("Load TileSet") && onLoadTileSet) onLoadTileSet();
         ImGui::Separator();
         if (ImGui::MenuItem("Exit") && onExit) onExit();
@@ -43,6 +44,13 @@ void MainMenuBar::renderEditMenu() const {
 void MainMenuBar::renderViewMenu() const {
     if (ImGui::BeginMenu("View")) {
         if (ImGui::MenuItem("Reset View") && onResetView) onResetView();
+        ImGui::EndMenu();
+    }
+}
+
+void MainMenuBar::renderHelpMenu() const {
+    if (ImGui::BeginMenu("Help")) {
+        if (ImGui::MenuItem("About") && onAbout) onAbout();
         ImGui::EndMenu();
     }
 }

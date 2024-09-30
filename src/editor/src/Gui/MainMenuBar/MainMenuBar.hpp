@@ -26,11 +26,13 @@ namespace Editor {
             std::function<void()> onRedo;
             std::function<void()> onResetView;
             std::function<void()> onLoadTileSet;
+            std::function<void()> onAbout;
 
         private:
             void renderFileMenu() const;
             void renderEditMenu() const;
             void renderViewMenu() const;
+            void renderHelpMenu() const;
     };
 }
 
