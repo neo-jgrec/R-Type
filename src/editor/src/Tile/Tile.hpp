@@ -9,6 +9,7 @@
 #define TILE_HPP_
 
 #include <SFML/Graphics.hpp>
+#include <imgui.h>
 
 namespace Editor {
     class Tile {
@@ -19,7 +20,7 @@ namespace Editor {
             [[nodiscard]] const sf::Sprite& getSprite() const;
 
             [[nodiscard]] int getId() const;
-
+            [[nodiscard]] ImTextureID getTextureId() const;
         private:
             sf::Sprite _sprite;
             int _id;

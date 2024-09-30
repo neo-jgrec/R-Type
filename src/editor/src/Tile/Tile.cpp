@@ -6,6 +6,7 @@
 */
 
 #include "Tile.hpp"
+#include <SFML/Graphics/Texture.hpp>
 
 using namespace Editor;
 
@@ -27,4 +28,8 @@ const sf::Sprite& Tile::getSprite() const {
 
 int Tile::getId() const {
     return _id;
+}
+
+ImTextureID Tile::getTextureId() const {
+    return reinterpret_cast<ImTextureID>(_sprite.getTexture()->getNativeHandle());
 }
