@@ -82,6 +82,13 @@ void Systems::projectileMovementSystem(core::ecs::Registry& registry) {
         });
 }
 
+void Systems::enemyMovementSystem(core::ecs::Registry& registry) {
+    registry.add_system<TransformComponent, VelocityComponent, Enemy>(
+        [&](TransformComponent &transform, VelocityComponent &velocity, Enemy&) {
+            transform.position.x -= velocity.dx;
+        });
+}
+
 void Systems::collisionSystem(core::ecs::Registry& registry) {
     registry.add_system<TransformComponent, CollisionComponent>(
         [&](TransformComponent &transform1, CollisionComponent &collision1) {

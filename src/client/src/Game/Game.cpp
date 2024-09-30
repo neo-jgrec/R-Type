@@ -33,6 +33,7 @@ void Game::init() {
     Systems::animationSystem(_registry);
     Systems::projectileMovementSystem(_registry);
     Systems::collisionSystem(_registry);
+    Systems::enemyMovementSystem(_registry);
 }
 
 void Game::update() {
@@ -42,6 +43,9 @@ void Game::update() {
 
     // Projectile movement
     _registry.run_system<TransformComponent, VelocityComponent, Projectile>();
+
+    // Enemy movement
+    _registry.run_system<TransformComponent, VelocityComponent, Enemy>();
 
     // Collision detection
     _registry.run_system<TransformComponent, CollisionComponent>();
