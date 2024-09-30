@@ -15,8 +15,9 @@
 #include <nlohmann/json.hpp>
 #include "../Gui/MainMenuBar/MainMenuBar.hpp"
 #include "../Gui/ObjectSelector/ObjectSelector.hpp"
-#include "../TileSet/TileSet.hpp"
 #include "../Map/Map.hpp"
+#include "src/Gui/MapPropertiesPanel/MapPropertiesPanel.hpp"
+#include "src/Gui/ToolPanel/ToolPanel.hpp"
 
 using json = nlohmann::json;
 
@@ -48,7 +49,6 @@ namespace Editor {
 
         size_t _currentTileSetIndex;
         std::unique_ptr<Tile> _currentTile;
-        std::vector<std::unique_ptr<TileSet>> _tileSets;
         void loadTileSetDialog();
         void loadTileSet(const std::string& filePath, int tileWidth, int tileHeight);
         const Tile& getTile(int tileId) const;
@@ -61,12 +61,26 @@ namespace Editor {
         static std::string openSaveFileDialog();
 
         void setupMainMenuBar();
-        static void newMap();
-        static void openMap();
         void saveMap();
         static void undo();
         static void redo();
         static void resetView();
+        void openMapDialog();
+        bool _openMapDialogIsOpen = false;
+        void newMapDialog();
+        bool _newMapDialogIsOpen = false;
+        void aboutDialog();
+        bool _aboutDialogIsOpen = false;
+
+        ToolPanel _toolPanel;
+
+        void drawPreviewTile();
+        void renderUI();
+
+        MapPropertiesPanel _mapPropertiesPanel;
+
+        static constexpr float MIN_ZOOM = 0.1f;
+        static constexpr float MAX_ZOOM = 5.0f;
     };
 }
 

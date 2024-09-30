@@ -20,19 +20,30 @@ Window::Window(
     const std::string &mapPath
 ) : _zoomLevel(1.0f),
     _viewOffset(0.0f, 0.0f),
-    _filePath(mapPath)
+    _filePath(mapPath),
+    _currentTileSetIndex(-1)
 {
     sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
     _window.create(desktop, title, sf::Style::Close);
     _view = _window.getDefaultView();
     registerEvents();
     _map.loadMapConfig(mapPath);
+    updateObjectSelector();
 
     if (!ImGui::SFML::Init(_window))
         throw Editor::Exception("Failed to initialize ImGui-SFML");
 
     setupMainMenuBar();
-    _currentTileSetIndex = -1;
+
+    _toolPanel.setOnToolSelected([this](Tool tool) {
+        switch (tool) {
+            case Tool::ERASER:
+                _currentTile = nullptr;
+                break;
+            default:
+                break;
+        }
+    });
 }
 
 Window::~Window()
@@ -41,13 +52,18 @@ Window::~Window()
 }
 
 void Window::loadTileSet(const std::string& filePath, int tileWidth, int tileHeight) {
-    std::cout << "Loading TileSet: " << filePath << std::endl;
-    _map.loadTileSet(filePath, tileWidth, tileHeight);
-    _objectSelector.setSelectedTileSetIndex(static_cast<int>(_map.getTileSets().size()) - 1);
-    updateObjectSelector();
+    try {
+        _map.loadTileSet(filePath, tileWidth, tileHeight);
+        _objectSelector.setSelectedTileSetIndex(static_cast<int>(_map.getTileSets().size()) - 1);
+        updateObjectSelector();
+        std::cout << "TileSet loaded successfully: " << filePath << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "Failed to load TileSet: " << e.what() << std::endl;
+    }
 }
 
 void Window::updateObjectSelector() {
+    std::cout << "Updating object selector" << std::endl;
     _objectSelector.updateObjectSelector(_map.getTileSets());
     _objectSelector.setOnObjectSelected([this](const std::string& objectName) {
         std::cout << "Object selected: " << objectName << std::endl;
@@ -73,8 +89,26 @@ void Window::registerEvents() {
     });
 
     _eventManager.registerEvent(sf::Event::KeyPressed, [this](const sf::Event &event) {
-        if (event.key.code == sf::Keyboard::Escape)
+        // Check for Ctrl+S (Save Map)
+        if (event.key.control && event.key.code == sf::Keyboard::S)
+            saveMap();
+        // Check for Ctrl+O (Open Map)
+        if (event.key.control && event.key.code == sf::Keyboard::O)
+            _openMapDialogIsOpen = true;
+        // Check for Ctrl+N (New Map)
+        if (event.key.control && event.key.code == sf::Keyboard::N)
+            _newMapDialogIsOpen = true;
+        // Check for Alt+F4 (Exit)
+        if (event.key.alt && event.key.code == sf::Keyboard::F4)
             _window.close();
+
+        if (event.key.control)
+            return;
+        _keysPressed.insert(event.key.code);
+    });
+
+    _eventManager.registerEvent(sf::Event::KeyReleased, [this](const sf::Event &event) {
+        _keysPressed.erase(event.key.code);
     });
 
     _eventManager.registerEvent(sf::Event::MouseWheelScrolled, [this](const sf::Event &event) {
@@ -83,14 +117,6 @@ void Window::registerEvents() {
         } else {
             handleZoom(1.1f);
         }
-    });
-
-    _eventManager.registerEvent(sf::Event::KeyPressed, [this](const sf::Event &event) {
-        _keysPressed.insert(event.key.code);
-    });
-
-    _eventManager.registerEvent(sf::Event::KeyReleased, [this](const sf::Event &event) {
-        _keysPressed.erase(event.key.code);
     });
 
     _eventManager.registerEvent(sf::Event::MouseButtonPressed, [this](const sf::Event& event) {
@@ -120,11 +146,16 @@ void Window::updateViewOffset() {
 }
 
 void Window::handleZoom(float zoomFactor) {
-    _zoomLevel *= zoomFactor;
-    _view.zoom(zoomFactor);
+    float newZoomLevel = _zoomLevel * zoomFactor;
+
+    if (newZoomLevel >= MIN_ZOOM && newZoomLevel <= MAX_ZOOM) {
+        _zoomLevel = newZoomLevel;
+        _view.zoom(zoomFactor);
+    }
 }
 
 void Window::run() {
+    sf::Clock deltaClock;
     while (_window.isOpen()) {
         sf::Event event;
         while (_window.pollEvent(event)) {
@@ -135,29 +166,60 @@ void Window::run() {
         updateViewOffset();
 
         ImGuiIO& io = ImGui::GetIO();
-        io.FontGlobalScale = 2.0;
+        io.FontGlobalScale = 2.0f;
 
-        ImGui::SFML::Update(_window, _deltaTime.restart());
+        ImGui::SFML::Update(_window, deltaClock.restart());
 
-        _mainMenuBar.render();
-        _objectSelector.render(_map.getTileSets());
-        loadTileSetDialog();
-
-        if (_popupLoaderIsOpen)
-            ImGui::OpenPopup("Load TileSet");
+        renderUI();
 
         _window.clear();
         _window.setView(_view);
         _map.draw(_window);
+
+        drawPreviewTile();
 
         ImGui::SFML::Render(_window);
         _window.display();
     }
 }
 
+void Window::renderUI() {
+    _mapPropertiesPanel.render(_map);
+    _mainMenuBar.render();
+    _objectSelector.render(_map.getTileSets());
+    _toolPanel.render();
+    loadTileSetDialog();
+    openMapDialog();
+    newMapDialog();
+    aboutDialog();
+
+    if (_popupLoaderIsOpen)
+        ImGui::OpenPopup("Load TileSet");
+    if (_openMapDialogIsOpen)
+        ImGui::OpenPopup("Open Map");
+    if (_newMapDialogIsOpen)
+        ImGui::OpenPopup("New Map");
+    if (_aboutDialogIsOpen)
+        ImGui::OpenPopup("About");
+}
+
+void Window::drawPreviewTile() {
+    if (!_currentTile)
+        return;
+    sf::Vector2i mousePos = sf::Mouse::getPosition(_window);
+    sf::Vector2f worldPos = _window.mapPixelToCoords(mousePos, _view);
+    int gridX = static_cast<int>(worldPos.x / static_cast<float>(_map.getGrid().getCellSize()));
+    int gridY = static_cast<int>(worldPos.y / static_cast<float>(_map.getGrid().getCellSize()));
+    _map.drawPreviewTile(gridX, gridY, _currentTile->getId(), _window);
+}
+
 void Window::setupMainMenuBar() {
-    _mainMenuBar.onNewMap = []() { newMap(); };
-    _mainMenuBar.onOpenMap = []() { openMap(); };
+    _mainMenuBar.onNewMap = [this]() {
+        _newMapDialogIsOpen = true;
+    };
+    _mainMenuBar.onOpenMap = [this]() {
+        _openMapDialogIsOpen = true;
+    };
     _mainMenuBar.onSaveMap = [this]() { saveMap(); };
     _mainMenuBar.onExit = [this]() { _window.close(); };
     _mainMenuBar.onUndo = []() { undo(); };
@@ -166,6 +228,24 @@ void Window::setupMainMenuBar() {
     _mainMenuBar.onLoadTileSet = [this]() {
         _popupLoaderIsOpen = true;
     };
+    _mainMenuBar.onAbout = [this]() {
+        _aboutDialogIsOpen = true;
+    };
+}
+
+void Window::aboutDialog() {
+    if (ImGui::BeginPopupModal("About", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("R-Type Editor");
+        ImGui::Text("Version 0.1");
+        ImGui::Text("Author: Louis LANGANAY");
+        ImGui::Text("Email: louis.langanay@epitech.eu");
+        ImGui::Text("Repository: https://github.com/neo-jgrec/R-Type");
+        if (ImGui::Button("Close")) {
+            _aboutDialogIsOpen = false;
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
 }
 
 void Window::loadTileSetDialog() {
@@ -192,14 +272,66 @@ void Window::loadTileSetDialog() {
     }
 }
 
-void Window::newMap() {
-    std::cout << "New map" << std::endl;
-    // TODO: Implement new map functionality
+void Window::newMapDialog() {
+    if (ImGui::BeginPopupModal("New Map", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        static int mapWidth = 50;
+        static int mapHeight = 20;
+        static int cellSize = 24;
+        static char path[256] = "Untitled.json";
+
+        ImGui::InputInt("Map Width", &mapWidth);
+        ImGui::InputInt("Map Height", &mapHeight);
+        ImGui::InputInt("Cell Size", &cellSize);
+        ImGui::InputText("File Path", path, IM_ARRAYSIZE(path));
+
+        if (ImGui::Button("Create")) {
+            try {
+                _map.createNewMap(mapWidth, mapHeight, cellSize);
+                _filePath = path;
+                _zoomLevel = 1.0f;
+                _viewOffset = sf::Vector2f(0.0f, 0.0f);
+                _view = _window.getDefaultView();
+                _currentTileSetIndex = -1;
+                _currentTile = nullptr;
+                updateObjectSelector();
+                _newMapDialogIsOpen = false;
+                ImGui::CloseCurrentPopup();
+            } catch (const Editor::Exception& e) {
+                std::cerr << "Failed to create new map: " << e.what() << std::endl;
+            }
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel")) {
+            _newMapDialogIsOpen = false;
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
 }
 
-void Window::openMap() {
-    std::cout << "Open map" << std::endl;
-    // TODO: Implement open map functionality
+void Window::openMapDialog() {
+    if (ImGui::BeginPopupModal("Open Map", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        static char path[256] = "";
+        ImGui::InputText("File Path", path, IM_ARRAYSIZE(path));
+
+        if (ImGui::Button("Open")) {
+            try {
+                _map.clearMap();
+                _map.loadMapConfig(path);
+                updateObjectSelector();
+                _openMapDialogIsOpen = false;
+                ImGui::CloseCurrentPopup();
+            } catch (const Editor::Exception& e) {
+                std::cerr << "Failed to open map: " << e.what() << std::endl;
+            }
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel")) {
+            _openMapDialogIsOpen = false;
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
 }
 
 void Window::saveMap() {
@@ -232,23 +364,21 @@ void Window::resetView() {
 }
 
 void Window::handleMouseButtonPressed(const sf::Event& event) {
-    if (event.mouseButton.button == sf::Mouse::Left) {
-        std::cout << "Mouse button pressed" << std::endl;
-        sf::Vector2f worldPos = _window.mapPixelToCoords(sf::Vector2i(event.mouseButton.x, event.mouseButton.y), _view);
-        int gridX = static_cast<int>(worldPos.x / static_cast<float>(_map.getGrid().getCellSize()));
-        int gridY = static_cast<int>(worldPos.y / static_cast<float>(_map.getGrid().getCellSize()));
+    if (event.mouseButton.button != sf::Mouse::Left ||
+        _openMapDialogIsOpen || _newMapDialogIsOpen || _popupLoaderIsOpen || _aboutDialogIsOpen)
+        return;
 
-        std::cout << "Grid X: " << gridX << std::endl;
-        std::cout << "Grid Y: " << gridY << std::endl;
+    sf::Vector2f worldPos = _window.mapPixelToCoords(sf::Vector2i(event.mouseButton.x, event.mouseButton.y), _view);
+    int gridX = static_cast<int>(worldPos.x / static_cast<float>(_map.getGrid().getCellSize()));
+    int gridY = static_cast<int>(worldPos.y / static_cast<float>(_map.getGrid().getCellSize()));
 
-        if (_currentTile) {
-            std::cout << "Placing tile" << std::endl;
-            _map.placeTile(gridX, gridY, _currentTile->getId());
-        } else {
-            std::cout << "Removing tile" << std::endl;
-            _map.removeTile(gridX, gridY);
-        }
-    }
+    if (!_map.isPositionValid(gridX, gridY))
+        return;
+
+    if (_currentTile)
+        _map.placeTile(gridX, gridY, _currentTile->getId());
+    else
+        _map.removeTile(gridX, gridY);
 }
 
 void Window::handleMouseButtonReleased(const sf::Event& event) {
@@ -278,5 +408,5 @@ const Tile& Window::getTile(int tileId) const {
             }
         }
     }
-    throw Editor::Exception("Tile not found");
+    throw Editor::Exception("Tile not found: " + std::to_string(tileId));
 }
