@@ -86,6 +86,18 @@ class EventPool {
     private:
         uint8_t _value;
     };
+    /**
+ * @brief Gets the next event in the queue and removes it.
+ * @return The next event in the queue.
+ * @throws std::runtime_error If the event queue is empty.
+ */
+    Event getNextEvent();
+
+    /**
+     * @brief Retrieves all events from the event queue.
+     * @return A vector containing all events.
+     */
+    std::vector<Event> getAllEvents();
     private:
         std::deque<Event> eventQueue; ///< Queue to store events.
         mutable std::mutex eventMutex; ///< Mutex to ensure thread-safety.

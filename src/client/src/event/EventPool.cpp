@@ -177,3 +177,30 @@ void EventPool::deleteEvent(Event& event) {
     std::lock_guard<std::mutex> lock(eventMutex);
     eventQueue.erase(std::remove(eventQueue.begin(), eventQueue.end(), event), eventQueue.end());
 }
+
+/**
+ * @brief Gets the next event in the deque and removes it.
+ * @return The next event in the deque.
+ * @throws std::runtime_error If the event deque is empty.
+ */
+Event EventPool::getNextEvent() {
+    std::lock_guard<std::mutex> lock(eventMutex);
+    if (eventQueue.empty()) {
+        throw std::runtime_error("Event deque is empty");
+    }
+
+    Event event = eventQueue.front(); // Récupérer l'événement au début de la deque
+    eventQueue.pop_front(); // Supprimer l'événement du début de la deque
+    return event;
+}
+
+std::vector<Event> EventPool::getAllEvents() {
+    std::lock_guard<std::mutex> lock(eventMutex);
+    std::vector<Event> allEvents;
+
+    allEvents.insert(allEvents.end(), eventQueue.begin(), eventQueue.end());
+
+    eventQueue.clear();
+
+    return allEvents;
+}
