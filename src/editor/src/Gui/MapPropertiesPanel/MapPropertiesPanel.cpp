@@ -22,16 +22,16 @@ void MapPropertiesPanel::render(Map& map) {
         if (_onPropertyChanged) _onPropertyChanged();
     }
 
-    int width = map.getWidth() / map.getGrid().getCellSize();
-    int height = map.getHeight() / map.getGrid().getCellSize();
+    int width = map.getWidth();
+    int height = map.getHeight();
     int cellSize = map.getGrid().getCellSize();
 
     if (ImGui::InputInt("Width", &width)) {
-        map.setWidth(width * cellSize);
+        map.setWidth(width);
         if (_onPropertyChanged) _onPropertyChanged();
     }
     if (ImGui::InputInt("Height", &height)) {
-        map.setHeight(height * cellSize);
+        map.setHeight(height);
         if (_onPropertyChanged) _onPropertyChanged();
     }
     if (ImGui::InputInt("Cell Size", &cellSize)) {
