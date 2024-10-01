@@ -53,7 +53,7 @@ Event::EventType Event::getType() const {
 /**
  * @brief Returns the payload of the event.
  */
-const std::variant<std::monostate, PlayerMovement, ChatMessage, PlayerShoot, PowerUpCollected, EntityUpdate, NoData>& Event::getPayload() const {
+const std::variant<std::monostate, PlayerMovement, ChatMessage, PlayerShoot, PowerUpCollected, EntityUpdate, PlayerHealthUpdate, EntitySpawn, EntityDestroy, NoData>& Event::getPayload() const {
     return payload;
 }
 

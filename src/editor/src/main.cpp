@@ -1,6 +1,7 @@
-#include <imgui.h>
-#include <imgui-SFML.h>
 #include <SFML/Graphics.hpp>
+#include <imgui-SFML.h>
+#include <imgui.h>
+#include <iostream>
 
 int main()
 {
