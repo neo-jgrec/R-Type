@@ -1,5 +1,6 @@
 #include <iostream>
 #include "../../core/ecs/Registry/Registry.hpp"
+#include "../../core/network/NetworkService.hpp"
 
 struct Position {
     float x, y;
@@ -35,6 +36,5 @@ int main()
                                             { print_positions_and_velocities(pos, vel); });
 
     registry.run_systems();
-
     return 0;
 }

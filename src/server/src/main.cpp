@@ -1,7 +1,8 @@
-#include <iostream>
+#include "Server.hpp"
 
 int main()
 {
-    std::cout << "un serveur, mais vreeeument" << std::endl;
-    return 0;
+    Server server("0.0.0.0", 12345);
+
+    server.update();
 }

@@ -76,5 +76,6 @@ vgcore.*
 .idea/
 .cache
 
+cmake-**
 # IMGUI
 imgui.ini
