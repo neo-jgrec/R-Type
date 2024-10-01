@@ -1,11 +1,9 @@
-#include <iostream>
 #include <imgui.h>
 #include <imgui-SFML.h>
 #include <SFML/Graphics.hpp>
 
 int main()
 {
-
     sf::RenderWindow window(sf::VideoMode(800, 600), "Editor");
 
     if (!ImGui::SFML::Init(window)) {
@@ -38,6 +36,5 @@ int main()
     }
 
     ImGui::SFML::Shutdown();
-
     return 0;
 }
