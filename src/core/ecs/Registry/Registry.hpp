@@ -48,27 +48,10 @@ namespace core::ecs
 
         void kill_entity(Entity const &e)
         {
-            std::cout << "entering kill_entity" << std::endl;
-            auto id = static_cast<size_t>(e);
-            for (auto &[type, array] : _components_arrays) {
-                auto &sparse_array = std::any_cast<SparseArray<std::shared_ptr<std::any>> &>(array);
-                sparse_array.erase(id);
+            if (std::find(_entities_to_kill.begin(), _entities_to_kill.end(), e) == _entities_to_kill.end()) {
+                _entities_to_kill.push_back(e);
             }
-            std::cout << "leaving kill_entity" << std::endl;
         }
-
-        // void kill_entity(Entity const &e)
-        // {
-        //     auto id = static_cast<size_t>(e);
-        //     for (auto &[type, array] : _components_arrays) {
-        //         // Ensure the type can be cast to SparseArray
-        //         if (array.has_value() && array.type() == typeid(SparseArray<std::shared_ptr<std::any>>)) {
-        //             auto &sparse_array = std::any_cast<SparseArray<std::shared_ptr<std::any>> &>(array);
-        //             sparse_array.erase(id);
-        //         }
-        //     }
-        // }
-
 
         template <typename Component>
         typename SparseArray<std::shared_ptr<Component>>::reference_type add_component(Entity const &to, Component &&c)
@@ -107,6 +90,7 @@ namespace core::ecs
             for (auto &[system, components] : _systems) {
                 system(*this);
             }
+            cleanup_dead_entities();
         }
 
         template <class... Components>
@@ -156,8 +140,20 @@ namespace core::ecs
             return (... && get_components<Components>()[id].has_value());
         }
 
+        void cleanup_dead_entities()
+        {
+            for (const auto &entity : _entities_to_kill) {
+                for (auto &[type, array] : _components_arrays) {
+                    auto &component_array = std::any_cast<SparseArray<std::shared_ptr<void>> &>(array);
+                    component_array.erase(static_cast<size_t>(entity));
+                }
+            }
+            _entities_to_kill.clear();
+        }
+
         std::unordered_map<std::type_index, std::any> _components_arrays;
         size_t _next_entity_id = 0;
         std::vector<std::pair<std::function<void(Registry &)>, std::vector<std::type_index>>> _systems;
+        std::vector<Entity> _entities_to_kill;
     };
 } // namespace core::ecs
