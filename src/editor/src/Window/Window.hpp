@@ -58,7 +58,7 @@ namespace Editor {
         void handleMouseButtonReleased(const sf::Event& event);
         void handleMouseMoved(const sf::Event& event);
 
-        static std::string openSaveFileDialog();
+        std::string openSaveFileDialog();
 
         void setupMainMenuBar();
         void saveMap();

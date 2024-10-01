@@ -27,7 +27,12 @@ Window::Window(
     _window.create(desktop, title, sf::Style::Close);
     _view = _window.getDefaultView();
     registerEvents();
-    _map.loadMapConfig(mapPath);
+
+    if (!mapPath.empty()) {
+        _map.clearMap();
+        _map.loadMapConfig(mapPath);
+    } else
+        _newMapDialogIsOpen = true;
     updateObjectSelector();
 
     if (!ImGui::SFML::Init(_window))
@@ -345,7 +350,7 @@ void Window::saveMap() {
 }
 
 std::string Window::openSaveFileDialog() {
-    return "Untitled.json"; // TODO: Implement file dialog
+    return _filePath;
 }
 
 void Window::undo() {
