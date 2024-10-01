@@ -2,6 +2,7 @@
 
 #include <any>
 #include <functional>
+#include <memory>
 #include <typeindex>
 #include <unordered_map>
 #include <utility>
@@ -15,26 +16,27 @@ namespace core::ecs
     class Registry {
     public:
         template <class Component>
-        SparseArray<Component> &register_component()
+        SparseArray<std::shared_ptr<Component>> &register_component()
         {
             std::type_index index = typeid(Component);
             auto it = _components_arrays.find(index);
             if (it == _components_arrays.end()) {
-                _components_arrays[index] = SparseArray<Component>();
+                _components_arrays[index] = SparseArray<std::shared_ptr<Component>>();
             }
-            return std::any_cast<SparseArray<Component> &>(_components_arrays[index]);
+            return std::any_cast<SparseArray<std::shared_ptr<Component>> &>(_components_arrays[index]);
         }
 
         template <class Component>
-        SparseArray<Component> &get_components()
+        SparseArray<std::shared_ptr<Component>> &get_components()
         {
-            return std::any_cast<SparseArray<Component> &>(_components_arrays[typeid(Component)]);
+            return std::any_cast<SparseArray<std::shared_ptr<Component>> &>(_components_arrays[typeid(Component)]);
         }
 
         template <class Component>
-        SparseArray<Component> const &get_components() const
+        SparseArray<std::shared_ptr<Component>> const &get_components() const
         {
-            return std::any_cast<SparseArray<Component> const &>(_components_arrays.at(typeid(Component)));
+            return std::any_cast<SparseArray<std::shared_ptr<Component>> const &>(
+                _components_arrays.at(typeid(Component)));
         }
 
         Entity spawn_entity()
@@ -47,23 +49,26 @@ namespace core::ecs
         {
             auto id = static_cast<size_t>(e);
             for (auto &[type, array] : _components_arrays) {
-                auto &sparse_array = std::any_cast<SparseArray<std::any> &>(array);
+                auto &sparse_array = std::any_cast<SparseArray<std::shared_ptr<std::any>> &>(array);
                 sparse_array.erase(id);
             }
         }
 
         template <typename Component>
-        typename SparseArray<Component>::reference_type add_component(Entity const &to, Component &&c)
+        typename SparseArray<std::shared_ptr<Component>>::reference_type add_component(Entity const &to, Component &&c)
         {
             auto &comp_array = get_components<Component>();
-            return comp_array.insert_at(static_cast<size_t>(to), std::forward<Component>(c));
+            return comp_array.insert_at(static_cast<size_t>(to),
+                                        std::make_shared<Component>(std::forward<Component>(c)));
         }
 
         template <typename Component, typename... Params>
-        typename SparseArray<Component>::reference_type emplace_component(Entity const &to, Params &&...params)
+        typename SparseArray<std::shared_ptr<Component>>::reference_type emplace_component(Entity const &to,
+                                                                                           Params &&...params)
         {
             auto &comp_array = get_components<Component>();
-            return comp_array.emplace_at(static_cast<size_t>(to), std::forward<Params>(params)...);
+            return comp_array.emplace_at(static_cast<size_t>(to),
+                                         std::make_shared<Component>(std::forward<Params>(params)...));
         }
 
         template <typename Component>
@@ -77,13 +82,26 @@ namespace core::ecs
         void add_system(Function &&f)
         {
             _systems.emplace_back([this, f = std::forward<Function>(f)](Registry &r)
-                                  { call_system<Components...>(f, r, std::index_sequence_for<Components...>{}); });
+                                  { call_system<Components...>(f, r, std::index_sequence_for<Components...>{}); },
+                                  std::vector<std::type_index>{typeid(Components)...});
         }
 
         void run_systems()
         {
-            for (auto &system : _systems) {
+            for (auto &[system, components] : _systems) {
                 system(*this);
+            }
+        }
+
+        template <class... Components>
+        void run_system()
+        {
+            std::vector<std::type_index> component_types = {typeid(Components)...};
+
+            for (auto &[system, components] : _systems) {
+                if (components == component_types) {
+                    system(*this);
+                }
             }
         }
 
@@ -97,7 +115,7 @@ namespace core::ecs
 
             for (size_t i = 0; i < array_size; ++i) {
                 if (are_components_present<Components...>(i)) {
-                    std::apply([i, &f](auto &...arrays) { f((arrays[i].value())...); }, component_arrays);
+                    std::apply([i, &f](auto &...arrays) { f(*(arrays[i].value())...); }, component_arrays);
                 }
             }
         }
@@ -110,6 +128,6 @@ namespace core::ecs
 
         std::unordered_map<std::type_index, std::any> _components_arrays;
         size_t _next_entity_id = 0;
-        std::vector<std::function<void(Registry &)>> _systems;
+        std::vector<std::pair<std::function<void(Registry &)>, std::vector<std::type_index>>> _systems;
     };
 } // namespace core::ecs
