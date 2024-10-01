@@ -25,6 +25,10 @@ struct PlayerMovement {
     float x;
     float y;
     float z;
+
+    bool operator==(const PlayerMovement& other) const {
+        return playerId == other.playerId && x == other.x && y == other.y && z == other.z;
+    }
 };
 
 /**
@@ -34,6 +38,10 @@ struct PlayerMovement {
 struct ChatMessage {
     uint32_t playerId;
     std::string message;
+
+    bool operator==(const ChatMessage& other) const {
+        return playerId == other.playerId && message == other.message;
+    }
 };
 
 /**
@@ -44,13 +52,21 @@ struct PlayerShoot {
     uint32_t playerId;
     uint8_t direction;
     uint8_t weaponType;
+
+    bool operator==(const PlayerShoot& other) const {
+        return playerId == other.playerId && direction == other.direction && weaponType == other.weaponType;
+    }
 };
 
 /**
  * @struct NoData
  * @brief Represents an event that does not have a payload.
  */
-struct NoData {};
+struct NoData {
+    operator bool() const {
+        return true;
+    }
+};
 
 /**
  * @struct PowerUpCollected
@@ -59,6 +75,11 @@ struct NoData {};
 struct PowerUpCollected {
     uint32_t playerId;
     uint32_t powerUpId;
+
+    bool operator==(const PowerUpCollected &other) const
+    {
+        return this->playerId == other.playerId && this->powerUpId == other.powerUpId;
+    }
 };
 
 /**
@@ -70,6 +91,10 @@ struct EntityUpdate {
     float x;
     float y;
     float velocity;
+
+    bool operator==(const EntityUpdate& other) const {
+        return entityId == other.entityId && x == other.x && y == other.y && velocity == other.velocity;
+    }
 };
 
 /**
@@ -80,6 +105,10 @@ struct EntitySpawn {
     uint32_t entityId;
     float x;
     float y;
+
+    bool operator==(const EntitySpawn& other) const {
+        return entityId == other.entityId && x == other.x && y == other.y;
+    }
 };
 
 /**
@@ -88,6 +117,10 @@ struct EntitySpawn {
  */
 struct EntityDestroy {
     uint32_t entityId;
+
+    bool operator==(const EntityDestroy& other) const {
+        return entityId == other.entityId;
+    }
 };
 
 /**
@@ -97,6 +130,11 @@ struct EntityDestroy {
 struct PlayerHealthUpdate {
     uint32_t playerId;
     int health;
+
+    bool operator==(const PlayerHealthUpdate &other) const
+    {
+        return  this->playerId == other.playerId && this->health == other.health;
+    }
 };
 /**
  * @class Event
@@ -190,6 +228,10 @@ public:
      * @return A variant containing the event payload.
      */
     const std::variant<std::monostate, PlayerMovement, ChatMessage, PlayerShoot, PowerUpCollected, EntityUpdate, PlayerHealthUpdate, EntitySpawn, EntityDestroy, NoData>& getPayload() const;
+
+    bool operator==(const Event& other) const {
+        return this->type == other.type && this->payload == other.payload;
+    }
 
 private:
     EventType type; ///< The type of the event.

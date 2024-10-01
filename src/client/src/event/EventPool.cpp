@@ -42,7 +42,7 @@ bool EventPool::isEmpty() const {
 }
 
 void EventPool::handler(const GDTPHeader &header, const std::vector<uint8_t> &payload,
-                        const asio::ip::udp::endpoint &client_endpoint) {
+                       [[maybe_unused]] const asio::ip::udp::endpoint &client_endpoint) {
     try {
         EventFactory::createEvent(header, payload);
     } catch (const std::exception &e) {
@@ -89,11 +89,13 @@ std::shared_ptr<std::map<uint8_t, std::function<void(
     const asio::ip::udp::endpoint &client_endpoint)>>>();
 
     #define X(name, value) \
-    handlers->emplace(static_cast<uint8_t>(value), EventPool::getInstance().handler);
-
+    handlers->emplace(static_cast<uint8_t>(value), \
+    [](const GDTPHeader &header, const std::vector<uint8_t> &payload, const asio::ip::udp::endpoint &client_endpoint) { \
+    EventPool::getInstance().handler(header, payload, client_endpoint); \
+    });
     EVENT_TYPE_LIST
-
     #undef X
 
     return handlers;
 }
+
