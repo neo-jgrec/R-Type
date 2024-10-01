@@ -83,26 +83,114 @@ class EventPool {
             uint8_t _value;
         };
 
-        Event getNextEvent();
-        std::vector<Event> getAllEvents();
+    /**
+     * @brief Retrieves the next event in the event queue and removes it.
+     *
+     * This method retrieves the next event from the event queue(and delete it's). It throws an exception if the event queue is empty.
+     *
+     * @return The next event in the queue.
+     * @throws std::runtime_error If the event queue is empty.
+     */
+    Event getNextEvent();
 
-        void deleteEvent(Event& event);
+    /**
+     * @brief Retrieves all events from the event queue.
+     *
+     * This method returns all events currently in the event queue and clears the queue after retrieval.
+     *
+     * @return A vector containing all the events in the queue.
+     */
+    std::vector<Event> getAllEvents();
 
+    /**
+     * @brief Deletes an event from the event queue.
+     *
+     * This method removes the specified event from the event queue.
+     *
+     * @param event The event to be deleted from the queue.
+     */
+    void deleteEvent(Event& event);
     private:
         std::deque<Event> eventQueue; ///< Queue to store events.
         mutable std::mutex eventMutex; ///< Mutex to ensure thread-safety.
         std::condition_variable condition; ///< Condition variable to notify when events are added.
-        std::optional<std::function<void(Event)>> _handler;
+        std::optional<std::function<void(Event)>> _handler; ///< Optional handler function for processing events.
 
-        void handlePlayerMovement(const GDTPHeader &header, const std::vector<uint8_t> &payload);
-        void handlePlayerShoot(const GDTPHeader &header, const std::vector<uint8_t> &payload);
-        void handleChatMessage(const GDTPHeader &header, const std::vector<uint8_t> &payload);
-        void handlePlayerHealthUpdate(const GDTPHeader &header, const std::vector<uint8_t> &payload);
-        void handleEntitySpawn(const GDTPHeader &header, const std::vector<uint8_t> &payload);
-        void handleEntityDestroy(const GDTPHeader &header, const std::vector<uint8_t> &payload);
-        void handlePowerUpCollected(const GDTPHeader &header, const std::vector<uint8_t> &payload);
+
+/**
+ * @brief Handles player movement events.
+ *
+ * This method processes a player movement event from the given payload.
+ *
+ * @param header The header of the received message.
+ * @param payload The payload containing player movement data.
+ */
+void handlePlayerMovement(const GDTPHeader &header, const std::vector<uint8_t> &payload);
+
+/**
+ * @brief Handles player shoot events.
+ *
+ * This method processes a player shoot event from the given payload.
+ *
+ * @param header The header of the received message.
+ * @param payload The payload containing player shooting data.
+ */
+void handlePlayerShoot(const GDTPHeader &header, const std::vector<uint8_t> &payload);
+
+/**
+ * @brief Handles chat message events.
+ *
+ * This method processes a chat message event from the given payload.
+ *
+ * @param header The header of the received message.
+ * @param payload The payload containing chat message data.
+ */
+void handleChatMessage(const GDTPHeader &header, const std::vector<uint8_t> &payload);
+
+/**
+ * @brief Handles player health update events.
+ *
+ * This method processes a player health update event from the given payload.
+ *
+ * @param header The header of the received message.
+ * @param payload The payload containing player health update data.
+ */
+void handlePlayerHealthUpdate(const GDTPHeader &header, const std::vector<uint8_t> &payload);
+
+/**
+ * @brief Handles entity spawn events.
+ *
+ * This method processes an entity spawn event from the given payload.
+ *
+ * @param header The header of the received message.
+ * @param payload The payload containing entity spawn data.
+ */
+void handleEntitySpawn(const GDTPHeader &header, const std::vector<uint8_t> &payload);
+
+/**
+ * @brief Handles entity destroy events.
+ *
+ * This method processes an entity destroy event from the given payload.
+ *
+ * @param header The header of the received message.
+ * @param payload The payload containing entity destruction data.
+ */
+void handleEntityDestroy(const GDTPHeader &header, const std::vector<uint8_t> &payload);
+
+/**
+ * @brief Handles power-up collected events.
+ *
+ * This method processes a power-up collected event from the given payload.
+ *
+ * @param header The header of the received message.
+ * @param payload The payload containing power-up collection data.
+ */
+void handlePowerUpCollected(const GDTPHeader &header, const std::vector<uint8_t> &payload);
 };
-
+/**
+ * @brief use this function for set handlig map for use pool event
+ * @return map of event handlers (the handlers is the same for all requests)
+ */
 std::shared_ptr<std::map<uint8_t, std::function<void(
     const GDTPHeader &header, const std::vector<uint8_t> &payload,
     const asio::ip::udp::endpoint &client_endpoint)>>> handlersMapEventPool();
