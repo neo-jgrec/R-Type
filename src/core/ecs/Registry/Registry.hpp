@@ -2,6 +2,7 @@
 
 #include <any>
 #include <functional>
+#include <iostream>
 #include <memory>
 #include <typeindex>
 #include <unordered_map>
@@ -47,12 +48,26 @@ namespace core::ecs
 
         void kill_entity(Entity const &e)
         {
+            std::cout << "entering kill_entity" << std::endl;
             auto id = static_cast<size_t>(e);
             for (auto &[type, array] : _components_arrays) {
                 auto &sparse_array = std::any_cast<SparseArray<std::shared_ptr<std::any>> &>(array);
                 sparse_array.erase(id);
             }
+            std::cout << "leaving kill_entity" << std::endl;
         }
+
+        // void kill_entity(Entity const &e)
+        // {
+        //     auto id = static_cast<size_t>(e);
+        //     for (auto &[type, array] : _components_arrays) {
+        //         // Ensure the type can be cast to SparseArray
+        //         if (array.has_value() && array.type() == typeid(SparseArray<std::shared_ptr<std::any>>)) {
+        //             auto &sparse_array = std::any_cast<SparseArray<std::shared_ptr<std::any>> &>(array);
+        //             sparse_array.erase(id);
+        //         }
+        //     }
+        // }
 
 
         template <typename Component>

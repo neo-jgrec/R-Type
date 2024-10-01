@@ -86,11 +86,21 @@ void Systems::projectileMovementSystem(core::ecs::Registry& registry) {
 void Systems::enemyMovementSystem(core::ecs::Registry& registry, sf::RenderWindow& window) {
     registry.add_system<TransformComponent, VelocityComponent, Enemy>(
         [&](TransformComponent &transform, VelocityComponent &velocity, Enemy&) {
-            transform.position.x -= velocity.dx;
 
-            // Si l'ennemi sort de la fenêtre, il est détruit ??
+            transform.position.x -= velocity.dx;
+            
+            auto enemiesToCheck = registry.get_entities<Enemy>();
+
+            for (const auto &enemy : enemiesToCheck) {
+                // if (transform.position.x > static_cast<float>(window.getSize().x) || transform.position.x < 0.0f) {
+                //     registry.kill_entity(enemy);
+                // }
+                    registry.kill_entity(enemy);
+            }
         });
 }
+
+
 
 void Systems::collisionSystem(core::ecs::Registry& registry) {
     registry.add_system<TransformComponent, CollisionComponent>(
