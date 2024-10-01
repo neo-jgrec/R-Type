@@ -8,34 +8,44 @@
 #ifndef REQUESTTYPE_HPP
     #define REQUESTTYPE_HPP
     #include <cstdint> // Pour les types uint8_t, uint16_t, uint64_t
+    #include "EventTypeMapping.hpp"
+    #include "InvalidEventConversion.hpp"
 
 // Enum pour les types de message GDTP
 enum class GDTPMessageType : uint8_t {
-    PlayerMovement = 0x01,
-    GameEvent = 0x02,
-    EntityUpdate = 0x03,
-    Acknowledgment = 0x04,
-    PlayerShoot = 0x05,
-    PlayerHealthUpdate = 0x06,
-    PlayerRespawn = 0x07,
-    PlayerDisconnect = 0x08,
-    EntitySpawn = 0x09,
-    EntityDestroy = 0x0A,
-    PowerUpCollected = 0x0B,
-    GameStart = 0x0C,
-    GameOver = 0x0D,
-    PingRequest = 0x0E,
-    PingResponse = 0x0F,
-    ConnectionRequest = 0x10,
-    ConnectionAccept = 0x11,
-    ConnectionReject = 0x12,
-    Synchronization = 0x13,
-    ErrorMessage = 0x14,
-    ChatMessage = 0x15,
-    GamePause = 0x16,
-    MapData = 0x20,
-    MapScroll = 0x21
+    #define X(name, value) name = value,
+    EVENT_TYPE_LIST
+    #undef X
 };
+
+/**
+ * @brief Converts a uint8_t to the corresponding EventType.
+ *
+ * Dynamically generated based on the EVENT_TYPE_LIST macro.
+ *
+ * @param value The uint8_t value representing the event type.
+ * @return The corresponding EventType.
+ * @throws std::invalid_argument If the value does not correspond to any valid EventType.
+ */
+inline GDTPMessageType uint8ToEventType(uint8_t value) {
+    switch (value) {
+        #define X(name, value) case value: return GDTPMessageType::name;
+        EVENT_TYPE_LIST
+        #undef X
+        default:
+            throw InvalidEventConversion(value);
+    }
+}
+
+/**
+ * @brief Converts an EventType to its corresponding uint8_t value.
+ *
+ * @param eventType The EventType to convert.
+ * @return The corresponding uint8_t value.
+ */
+inline uint8_t eventTypeToUint8(GDTPMessageType eventType) {
+    return static_cast<uint8_t>(eventType);
+}
 
 // Surcharge de l'opérateur de conversion explicite vers uint8_t
 inline uint8_t operator+(GDTPMessageType messageType) {
