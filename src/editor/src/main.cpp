@@ -14,9 +14,12 @@
 
 int main(int argc, char **argv) {
     try {
-        if (argc != 2)
-            throw Editor::Exception("Usage: ./editor <map_path>");
-        Editor::Window window("R-Type Map Editor", argv[1]);
+        // Determine the map path
+        std::string mapPath = (argc > 1) ? argv[1] : "";
+
+        std::cout << "mapPataah: " << mapPath << std::endl;
+
+        Editor::Window window("R-Type Map Editor", mapPath);
 
         window.run();
     } catch (const Editor::Exception &e) {
