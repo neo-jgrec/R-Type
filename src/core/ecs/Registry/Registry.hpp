@@ -54,6 +54,7 @@ namespace core::ecs
             }
         }
 
+
         template <typename Component>
         typename SparseArray<std::shared_ptr<Component>>::reference_type add_component(Entity const &to, Component &&c)
         {
@@ -119,6 +120,7 @@ namespace core::ecs
                 }
             }
         }
+
 
         template <typename... Components>
         bool are_components_present(size_t id) const

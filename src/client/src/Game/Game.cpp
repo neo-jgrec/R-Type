@@ -25,7 +25,7 @@ void Game::init() {
     _registry.register_component<CollisionComponent>();
 
     _playerEntity = EntityFactory::createPlayer(_registry, sf::Vector2f(100.0f, 100.0f));
-    _enemyEntity = EntityFactory::createEnemy(_registry, sf::Vector2f(500.0f, 100.0f));
+    _enemyEntity = EntityFactory::createEnemy(_registry, sf::Vector2f(700.0f, 100.0f));
 
     Systems::positionSystem(_registry);
     Systems::inputSystem(_registry);
@@ -33,7 +33,7 @@ void Game::init() {
     Systems::animationSystem(_registry);
     Systems::projectileMovementSystem(_registry);
     Systems::collisionSystem(_registry);
-    Systems::enemyMovementSystem(_registry);
+    Systems::enemyMovementSystem(_registry, _window);
 }
 
 void Game::update() {

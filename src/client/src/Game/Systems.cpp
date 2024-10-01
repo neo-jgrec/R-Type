@@ -4,6 +4,7 @@
 #include "src/Game/Components.hpp"
 #include "src/Game/EntityFactory.hpp"
 #include "src/Game/Globals.hpp"
+#include <cmath>
 
 void Systems::inputSystem(core::ecs::Registry& registry) {
     registry.add_system<TransformComponent, VelocityComponent, InputStateComponent, Player>(
@@ -82,10 +83,12 @@ void Systems::projectileMovementSystem(core::ecs::Registry& registry) {
         });
 }
 
-void Systems::enemyMovementSystem(core::ecs::Registry& registry) {
+void Systems::enemyMovementSystem(core::ecs::Registry& registry, sf::RenderWindow& window) {
     registry.add_system<TransformComponent, VelocityComponent, Enemy>(
         [&](TransformComponent &transform, VelocityComponent &velocity, Enemy&) {
             transform.position.x -= velocity.dx;
+
+            // Si l'ennemi sort de la fenêtre, il est détruit ??
         });
 }
 

@@ -26,5 +26,6 @@ private:
     core::ecs::Entity _enemyEntity = core::ecs::Entity();
     sf::RenderWindow _window;
     sf::Clock _clock;
+
     bool _windowOpen = true;
 };
