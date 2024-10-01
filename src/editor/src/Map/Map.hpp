@@ -60,6 +60,7 @@ namespace Editor {
 
     private:
         std::string _name;
+        std::string _filePath;
         int _width;
         int _height;
         int _cellSize;

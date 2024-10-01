@@ -13,7 +13,17 @@
 
 using namespace Editor;
 
-Map::Map() : _width(0), _height(0), _cellSize(24), _grid(1, 1, 24) {}
+Map::Map() :
+    _name("Untitled"),
+    _width(1),
+    _height(1),
+    _cellSize(24),
+    _grid(1, 1, 24)
+{
+    _tileMap.resize(_height, std::vector<int>(_width, -1));
+    _grid.setGridSize(_width * _cellSize, _height * _cellSize);
+    _grid.setCellSize(_cellSize);
+}
 
 void Map::loadMapConfig(const std::string &mapPath) {
     std::ifstream file(mapPath);
@@ -44,10 +54,8 @@ void Map::loadMapConfig(const std::string &mapPath) {
     if (_cellSize <= 0 || _width <= 0 || _height <= 0)
         throw Editor::Exception("Invalid values for cellSize, width, or height");
 
-    _width *= _cellSize;
-    _height *= _cellSize;
     _tileMap.resize(_height, std::vector<int>(_width, -1));
-    _grid.setGridSize(_width, _height);
+    _grid.setGridSize(_width * _cellSize, _height * _cellSize);
     _grid.setCellSize(_cellSize);
 
     if (data.contains("tiles")) {
@@ -90,7 +98,7 @@ void Map::createNewMap(int width, int height, int cellSize) {
     _tileMap.clear();
     _tileSets.clear();
     _tileMap.resize(_height, std::vector<int>(_width, -1));
-    _grid.setGridSize(_width, _height);
+    _grid.setGridSize(_width * _cellSize, _height * _cellSize);
     _grid.setCellSize(cellSize);
 }
 
@@ -104,8 +112,8 @@ void Map::clearMap() {
 
 void Map::saveMap(const std::string &fileName) {
     json mapData;
-    mapData["width"] = _width / _cellSize;
-    mapData["height"] = _height / _cellSize;
+    mapData["width"] = _width;
+    mapData["height"] = _height;
     mapData["cellSize"] = _cellSize;
     mapData["editorVersion"] = "0.1";
     mapData["name"] = _name;
@@ -228,7 +236,7 @@ void Map::drawPreviewTile(int x, int y, int tileIndex, sf::RenderWindow& window)
 }
 
 bool Map::isPositionValid(int x, int y) const {
-    return x >= 0 && x < _width / _cellSize && y >= 0 && y < _height / _cellSize;
+    return x >= 0 && x < _width * _cellSize && y >= 0 && y < _height * _cellSize;
 }
 
 void Map::setWidth(int width) {
