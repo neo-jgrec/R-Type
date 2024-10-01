@@ -142,3 +142,15 @@ void Systems::collisionSystem(core::ecs::Registry& registry) {
         }
     );
 }
+
+void Systems::soundSystem(core::ecs::Registry &registry) {
+    registry.add_system<SoundComponent>(
+        [&](SoundComponent &sound) {
+            if (sound.playOnce && !sound.isPlaying) {
+                sound.sound.play();
+                sound.isPlaying = true;
+                std::cout << "Sound played" << std::endl;
+            }
+        });
+}
+

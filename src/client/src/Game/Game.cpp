@@ -23,6 +23,7 @@ void Game::init() {
     _registry.register_component<Projectile>();
     _registry.register_component<DamageComponent>();
     _registry.register_component<CollisionComponent>();
+    _registry.register_component<SoundComponent>();
 
     _playerEntity = EntityFactory::createPlayer(_registry, sf::Vector2f(100.0f, 100.0f));
     _enemyEntity = EntityFactory::createEnemy(_registry, sf::Vector2f(700.0f, 100.0f));
@@ -34,12 +35,16 @@ void Game::init() {
     Systems::projectileMovementSystem(_registry);
     Systems::collisionSystem(_registry);
     Systems::enemyMovementSystem(_registry, _window);
+    Systems::soundSystem(_registry);
 }
 
 void Game::update() {
     _registry.run_system<TransformComponent, VelocityComponent, InputStateComponent, Player>();
     _registry.run_system<DrawableComponent, TransformComponent>();
     _registry.run_system<DrawableComponent, AnimationComponent>();
+
+    // Sound
+    _registry.run_system<SoundComponent>();
 
     // Projectile movement
     _registry.run_system<TransformComponent, VelocityComponent, Projectile>();

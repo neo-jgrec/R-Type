@@ -143,6 +143,7 @@ namespace core::ecs
         void cleanup_dead_entities()
         {
             for (const auto &entity : _entities_to_kill) {
+                // Remove components for the entity
                 for (auto &[type, array] : _components_arrays) {
                     auto &component_array = std::any_cast<SparseArray<std::shared_ptr<void>> &>(array);
                     component_array.erase(static_cast<size_t>(entity));

@@ -80,7 +80,10 @@ struct ColorComponent {
 };
 
 struct SoundComponent {
-    sf::Sound soundEffect;
+    sf::Sound sound;
+    std::shared_ptr<sf::SoundBuffer> buffer;
+    bool playOnce = true;
+    bool isPlaying = false;
 };
 
 struct MusicComponent {

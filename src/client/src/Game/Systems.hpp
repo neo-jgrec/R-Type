@@ -14,4 +14,5 @@ namespace Systems {
     void projectileMovementSystem(core::ecs::Registry& registry);
     void collisionSystem(core::ecs::Registry& registry);
     void enemyMovementSystem(core::ecs::Registry& registry, sf::RenderWindow& window);
+    void soundSystem(core::ecs::Registry& registry);
 }

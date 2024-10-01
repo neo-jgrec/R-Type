@@ -52,10 +52,20 @@ core::ecs::Entity EntityFactory::createPlayerProjectile(core::ecs::Registry& reg
     registry.add_component(projectile, DamageComponent{10});
     registry.add_component(projectile, Projectile{});
 
+    auto buffer = std::make_shared<sf::SoundBuffer>();
+    std::string soundPath = "assets/shooting_sound.ogg";
+    if (!buffer->loadFromFile(soundPath)) {
+        std::cerr << "Failed to load sound: " << soundPath << std::endl;
+        return projectile;
+    }
+
+    sf::Sound sound;
+    sound.setBuffer(*buffer);
+    registry.add_component(projectile, SoundComponent{sound, buffer, true, false});
+
     std::string relativePath = "assets/player_projectile.png";
     std::string absolutePath = std::filesystem::absolute(relativePath).string();
     auto texture = std::make_shared<sf::Texture>();
-
     if (!texture->loadFromFile(absolutePath)) {
         std::cerr << "Failed to load texture: " << absolutePath << std::endl;
         return projectile;
