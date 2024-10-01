@@ -18,6 +18,15 @@ void ObjectSelector::render(const std::vector<std::unique_ptr<TileSet>>& tileSet
     ImGui::Begin("TileSet");
     float imageSizeMultiplier = 1.5f;
 
+    ImGui::Text("Load a tileset by clicking on the 'Load TileSet' button \rin the file menu.");
+    ImGui::Text("Select a tileset from the dropdown menu below.");
+    ImGui::Text("Click on a tile to select it.");
+    ImGui::Text("The selected tile will be highlighted in red.");
+    ImGui::Text("Click on the map to place the selected tile.");
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
     if (ImGui::BeginCombo("TileSet", _selectedTileSetIndex >= 0 ? tileSets[_selectedTileSetIndex]->getName().c_str() : "Select TileSet")) {
         for (int i = 0; i < static_cast<int>(tileSets.size()); ++i) {
             bool isSelected = (i == _selectedTileSetIndex);
