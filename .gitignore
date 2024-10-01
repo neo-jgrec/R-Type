@@ -75,3 +75,9 @@ vgcore.*
 .vscode/
 .idea/
 .cache
+
+cmake-**
+
+
+# IMGUI
+imgui.ini

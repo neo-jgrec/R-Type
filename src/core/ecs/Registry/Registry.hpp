@@ -106,6 +106,19 @@ namespace core::ecs
             }
         }
 
+        template <typename... Components>
+        std::vector<Entity> get_entities()
+        {
+            std::vector<Entity> entities;
+            auto &first_component = get_components<std::tuple_element_t<0, std::tuple<Components...>>>();
+            for (size_t i = 0; i < first_component.size(); ++i) {
+                if (are_components_present<Components...>(i)) {
+                    entities.emplace_back(i);
+                }
+            }
+            return entities;
+        }
+
     private:
         template <typename... Components, typename Function, std::size_t... Is>
         void call_system(Function &&f, Registry &r, std::index_sequence<Is...>)

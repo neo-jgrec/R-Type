@@ -1,5 +1,6 @@
 #include "Game/Game.hpp"
 #include "../../core/ecs/Registry/Registry.hpp"
+#include "../../core/network/NetworkService.hpp"
 
 int main()
 {

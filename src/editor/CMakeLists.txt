@@ -41,6 +41,8 @@ if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 find_package(SFML COMPONENTS graphics window system audio network REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+find_package(ImGui-SFML CONFIG REQUIRED)
 
 file(GLOB_RECURSE SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
@@ -57,9 +59,9 @@ target_include_directories(r-type_editor
     PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/includes
+    ${IMGUI_SFML_INCLUDE_DIR}
 )
 
-# Link Vulkan and GLFW libraries
 target_link_libraries(r-type_editor
     PRIVATE
     sfml-graphics
@@ -67,10 +69,16 @@ target_link_libraries(r-type_editor
     sfml-system
     sfml-audio
     sfml-network
+    nlohmann_json::nlohmann_json
+    ImGui-SFML::ImGui-SFML
 )
 
 # Install the target
-install(TARGETS r-type_editor DESTINATION bin)
+install(TARGETS r-type_editor DESTINATION . COMPONENT editor)
+cpack_add_component(editor
+    DISPLAY_NAME "R-Type Editor"
+    DESCRIPTION "The R-Type Editor that allows you to create levels"
+)
 
 # Add subdirectory for tests
 # add_subdirectory(tests)

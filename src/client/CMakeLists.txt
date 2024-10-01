@@ -44,8 +44,8 @@ find_package(asio REQUIRED)
 find_package(SFML COMPONENTS graphics window system audio network REQUIRED)
 
 file(GLOB_RECURSE SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/includes)
@@ -55,19 +55,24 @@ add_executable(r-type_client ${SOURCES})
 
 # Include directories
 target_include_directories(r-type_client
-    PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_SOURCE_DIR}/includes
+        PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_SOURCE_DIR}/includes
 )
 
 target_link_libraries(r-type_client
-    PRIVATE
-    asio::asio
-    sfml-graphics sfml-window sfml-system sfml-audio sfml-network
+        PRIVATE
+        asio::asio
+        sfml-graphics sfml-window sfml-system sfml-audio sfml-network
 )
 
 # Install the target
-install(TARGETS r-type_client DESTINATION bin)
+install(TARGETS r-type_client DESTINATION . COMPONENT client)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/assets DESTINATION . COMPONENT client)
+cpack_add_component(client
+    DISPLAY_NAME "R-Type Client"
+    DESCRIPTION "The R-Type Client made in SFML"
+)
 
 # Add subdirectory for tests
 # add_subdirectory(tests)

@@ -41,6 +41,7 @@ if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 find_package(asio REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
 
 file(GLOB_RECURSE SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
@@ -63,10 +64,15 @@ target_include_directories(r-type_server
 target_link_libraries(r-type_server
     PRIVATE
     asio::asio
+    nlohmann_json::nlohmann_json
 )
 
 # Install the target
-install(TARGETS r-type_server DESTINATION bin)
+install(TARGETS r-type_server DESTINATION . COMPONENT server)
+cpack_add_component(server
+    DISPLAY_NAME "R-Type Server"
+    DESCRIPTION "The server program of the R-Type game"
+)
 
 # Add subdirectory for tests
 # add_subdirectory(tests)
