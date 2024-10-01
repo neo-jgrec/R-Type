@@ -157,7 +157,7 @@ void Window::handleZoom(float zoomFactor) {
 void Window::run() {
     sf::Clock deltaClock;
     while (_window.isOpen()) {
-        sf::Event event;
+        sf::Event event = sf::Event();
         while (_window.pollEvent(event)) {
             ImGui::SFML::ProcessEvent(event);
             _eventManager.handleEvent(event);
@@ -172,7 +172,7 @@ void Window::run() {
 
         renderUI();
 
-        _window.clear();
+        _window.clear(sf::Color(50, 50, 50));
         _window.setView(_view);
         _map.draw(_window);
 
@@ -224,7 +224,7 @@ void Window::setupMainMenuBar() {
     _mainMenuBar.onExit = [this]() { _window.close(); };
     _mainMenuBar.onUndo = []() { undo(); };
     _mainMenuBar.onRedo = []() { redo(); };
-    _mainMenuBar.onResetView = []() { resetView(); };
+    _mainMenuBar.onResetView = [this]() { resetView(); };
     _mainMenuBar.onLoadTileSet = [this]() {
         _popupLoaderIsOpen = true;
     };
@@ -360,7 +360,9 @@ void Window::redo() {
 
 void Window::resetView() {
     std::cout << "Reset view" << std::endl;
-    // TODO: Implement reset view functionality
+    _zoomLevel = 1.0f;
+    _viewOffset = sf::Vector2f(0.0f, 0.0f);
+    _view = _window.getDefaultView();
 }
 
 void Window::handleMouseButtonPressed(const sf::Event& event) {
@@ -381,7 +383,7 @@ void Window::handleMouseButtonPressed(const sf::Event& event) {
         _map.removeTile(gridX, gridY);
 }
 
-void Window::handleMouseButtonReleased(const sf::Event& event) {
+void Window::handleMouseButtonReleased(const sf::Event& /*event*/) {
     // No need for implementation in tile-based system
 }
 

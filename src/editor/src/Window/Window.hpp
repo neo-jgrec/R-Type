@@ -64,7 +64,7 @@ namespace Editor {
         void saveMap();
         static void undo();
         static void redo();
-        static void resetView();
+        void resetView();
         void openMapDialog();
         bool _openMapDialogIsOpen = false;
         void newMapDialog();
