@@ -31,17 +31,19 @@ namespace Editor {
 
             [[nodiscard]]
             bool isObjectSelected() const;
-            void setOnObjectSelected(std::function<void(const std::string&)> callback);
+            void setOnObjectSelected(std::function<void(const std::string&, int)> callback);
             void setSelectedTileSetIndex(int index);
             void clearObjects();
             void updateObjectSelector(const std::vector<std::unique_ptr<TileSet>>& tileSets);
             static void renderTileSetInformation(const std::unique_ptr<TileSet>& tileSet);
+            void clearSelectedTileIds();
 
         private:
             std::vector<std::string> _objects;
             int _selectedIndex;
+            std::vector<int> _selectedTileIds;
             int _selectedTileSetIndex;
-            std::function<void(const std::string&)> _onObjectSelected;
+            std::function<void(const std::string&, int)> _onObjectSelected;
             sf::RenderTexture _renderTexture;
             static constexpr float TILE_DISPLAY_SIZE = 50.0f;  // Size of the tile preview
     };
