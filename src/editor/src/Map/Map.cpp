@@ -195,9 +195,8 @@ const Tile& Map::getTileById(int tileId) const {
     for (const auto& tileSet : _tileSets) {
         for (int i = 0; i < static_cast<int>(tileSet->getTileCount()); ++i) {
             const Tile& tile = tileSet->getTile(i);
-            if (tile.getId() == tileId) {
+            if (tile.getId() == tileId)
                 return tile;
-            }
         }
     }
     throw Editor::Exception("Tile not found");
@@ -207,20 +206,20 @@ const std::vector<std::unique_ptr<TileSet>>& Map::getTileSets() const {
     return _tileSets;
 }
 
-void Map::draw(sf::RenderWindow& window) const {
-    _grid.draw(window);
-    if (_tileMap.empty())
-        return;
-    for (int y = 0; y < _height; ++y) {
-        for (int x = 0; x < _width; ++x) {
-            int tileId = _tileMap[y][x];
-            if (tileId == -1)
-                continue;
-            const auto& tile = getTileById(tileId);
-            sf::Vector2f position(static_cast<float>(x * _cellSize), static_cast<float>(y * _cellSize));
-            tile.draw(window, position.x, position.y);
+void Map::draw(sf::RenderWindow& window, std::vector<sf::Vector2i>& selectedTiles) const {
+    if (!_tileMap.empty()) {
+        for (int y = 0; y < _height; ++y) {
+            for (int x = 0; x < _width; ++x) {
+                int tileId = _tileMap[y][x];
+                if (tileId == -1)
+                    continue;
+                const auto& tile = getTileById(tileId);
+                sf::Vector2f position(static_cast<float>(x * _cellSize), static_cast<float>(y * _cellSize));
+                tile.draw(window, position.x, position.y);
+            }
         }
     }
+    _grid.draw(window, selectedTiles);
 }
 
 Grid& Map::getGrid() {
@@ -236,7 +235,7 @@ void Map::drawPreviewTile(int x, int y, int tileIndex, sf::RenderWindow& window)
 }
 
 bool Map::isPositionValid(int x, int y) const {
-    return x >= 0 && x < _width * _cellSize && y >= 0 && y < _height * _cellSize;
+    return x >= 0 && x < _width && y >= 0 && y < _height;
 }
 
 void Map::setWidth(int width) {
