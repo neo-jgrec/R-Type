@@ -1,41 +1,30 @@
-#include <SFML/Graphics.hpp>
-#include <imgui-SFML.h>
-#include <imgui.h>
+/*
+** EPITECH PROJECT, 2024
+** R-Type
+** File description:
+** main
+*/
+
+#include "Window/Window.hpp"
+#include "Exceptions.hpp"
 #include <iostream>
+#include <imgui.h>
+#include <imgui-SFML.h>
+#include <SFML/Graphics.hpp>
 
-int main()
-{
-    sf::RenderWindow window(sf::VideoMode(800, 600), "Editor");
+int main(int argc, char **argv) {
+    try {
+        // Determine the map path
+        std::string mapPath = (argc > 1) ? argv[1] : "";
 
-    if (!ImGui::SFML::Init(window)) {
-        std::cerr << "Failed to initialize ImGui-SFML" << std::endl;
-        return -1;
+        std::cout << "mapPataah: " << mapPath << std::endl;
+
+        Editor::Window window("R-Type Map Editor", mapPath);
+
+        window.run();
+    } catch (const Editor::Exception &e) {
+        std::cerr << e.what() << std::endl;
+        return 84;
     }
-
-    sf::Clock deltaClock;
-
-    while (window.isOpen())
-    {
-        sf::Event event{};
-        while (window.pollEvent(event))
-        {
-            ImGui::SFML::ProcessEvent(event);
-
-            if (event.type == sf::Event::Closed)
-                window.close();
-        }
-
-        ImGui::SFML::Update(window, deltaClock.restart());
-
-        ImGui::Begin("Hello, world!");
-        ImGui::Button("Look at this pretty button");
-        ImGui::End();
-
-        window.clear();
-        ImGui::SFML::Render(window);
-        window.display();
-    }
-
-    ImGui::SFML::Shutdown();
     return 0;
 }
