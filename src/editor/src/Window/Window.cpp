@@ -43,7 +43,10 @@ Window::Window(
     _toolPanel.setOnToolSelected([this](Tool tool) {
         switch (tool) {
             case Tool::ERASER:
+            case Tool::SELECTOR:
                 _currentTile = nullptr;
+                _currentTiles.clear();
+                _objectSelector.clearSelectedTileIds();
                 break;
             default:
                 break;
@@ -70,16 +73,26 @@ void Window::loadTileSet(const std::string& filePath, int tileWidth, int tileHei
 void Window::updateObjectSelector() {
     std::cout << "Updating object selector" << std::endl;
     _objectSelector.updateObjectSelector(_map.getTileSets());
-    _objectSelector.setOnObjectSelected([this](const std::string& objectName) {
+    _objectSelector.setOnObjectSelected([this](const std::string& objectName, int tileY) {
         std::cout << "Object selected: " << objectName << std::endl;
         if (objectName == "Erase") {
             _currentTileSetIndex = -1;
             _currentTile = nullptr;
+            _currentTiles.clear();
         } else {
             int tileId = std::stoi(objectName);
             try {
                 const auto& tile = _map.getTileById(tileId);
-                _currentTile = std::make_unique<Tile>(tile);
+                int Ylength = static_cast<int>(_currentTiles.size());
+                if (tileY >= Ylength)
+                    _currentTiles.resize(tileY + 1);
+                auto it = std::find_if(_currentTiles[tileY].begin(), _currentTiles[tileY].end(), [&tile](const std::unique_ptr<Tile>& t) {
+                    return t->getId() == tile.getId();
+                });
+                if (it == _currentTiles[tileY].end())
+                    _currentTiles[tileY].push_back(std::make_unique<Tile>(tile));
+                else
+                    _currentTiles[tileY].erase(it);
                 _currentTileSetIndex = _map.getTileSets().size() - 1;
             } catch (const Editor::Exception& e) {
                 std::cerr << e.what() << std::endl;
@@ -179,7 +192,7 @@ void Window::run() {
 
         _window.clear(sf::Color(50, 50, 50));
         _window.setView(_view);
-        _map.draw(_window);
+        _map.draw(_window, _selectedTiles);
 
         drawPreviewTile();
 
@@ -193,6 +206,7 @@ void Window::renderUI() {
     _mainMenuBar.render();
     _objectSelector.render(_map.getTileSets());
     _toolPanel.render();
+    _tileInfoPanel.render(_map, _selectedTiles);
     loadTileSetDialog();
     openMapDialog();
     newMapDialog();
@@ -209,13 +223,19 @@ void Window::renderUI() {
 }
 
 void Window::drawPreviewTile() {
-    if (!_currentTile)
+    if (_currentTiles.empty())
         return;
     sf::Vector2i mousePos = sf::Mouse::getPosition(_window);
     sf::Vector2f worldPos = _window.mapPixelToCoords(mousePos, _view);
     int gridX = static_cast<int>(worldPos.x / static_cast<float>(_map.getGrid().getCellSize()));
     int gridY = static_cast<int>(worldPos.y / static_cast<float>(_map.getGrid().getCellSize()));
-    _map.drawPreviewTile(gridX, gridY, _currentTile->getId(), _window);
+
+    for (int i = 0; i < static_cast<int>(_currentTiles.size()); ++i) {
+        for (int j = 0; j < static_cast<int>(_currentTiles[i].size()); ++j) {
+            const auto& tile = _currentTiles[i][j];
+            _map.drawPreviewTile(gridX + j, gridY + i, tile->getId(), _window);
+        }
+    }
 }
 
 void Window::setupMainMenuBar() {
@@ -375,17 +395,36 @@ void Window::handleMouseButtonPressed(const sf::Event& event) {
         _openMapDialogIsOpen || _newMapDialogIsOpen || _popupLoaderIsOpen || _aboutDialogIsOpen)
         return;
 
-    sf::Vector2f worldPos = _window.mapPixelToCoords(sf::Vector2i(event.mouseButton.x, event.mouseButton.y), _view);
+    sf::Vector2i mousePos = sf::Mouse::getPosition(_window);
+    sf::Vector2f worldPos = _window.mapPixelToCoords(mousePos, _view);
     int gridX = static_cast<int>(worldPos.x / static_cast<float>(_map.getGrid().getCellSize()));
     int gridY = static_cast<int>(worldPos.y / static_cast<float>(_map.getGrid().getCellSize()));
 
     if (!_map.isPositionValid(gridX, gridY))
         return;
 
-    if (_currentTile)
-        _map.placeTile(gridX, gridY, _currentTile->getId());
-    else
-        _map.removeTile(gridX, gridY);
+    int tileId = _map.getTile(gridX, gridY);
+    if (_toolPanel.getSelectedTool() == Tool::SELECTOR) {
+        if (tileId == -1)
+            return;
+        auto it = std::find(_selectedTiles.begin(), _selectedTiles.end(), sf::Vector2i(gridX, gridY));
+        if (it == _selectedTiles.end())
+            _selectedTiles.emplace_back(gridX, gridY);
+        else
+            _selectedTiles.erase(it);
+    }
+
+    if (!_currentTiles.empty()) {
+        for (int i = 0; i < static_cast<int>(_currentTiles.size()); ++i) {
+            for (int j = 0; j < static_cast<int>(_currentTiles[i].size()); ++j) {
+                const auto& tile = _currentTiles[i][j];
+                _map.placeTile(gridX + j, gridY + i, tile->getId());
+            }
+        }
+    } else {
+        if (_toolPanel.getSelectedTool() == Tool::ERASER)
+            _map.removeTile(gridX, gridY);
+    }
 }
 
 void Window::handleMouseButtonReleased(const sf::Event& /*event*/) {
@@ -398,10 +437,16 @@ void Window::handleMouseMoved(const sf::Event& event) {
         int gridX = static_cast<int>(worldPos.x / static_cast<float>(_map.getGrid().getCellSize()));
         int gridY = static_cast<int>(worldPos.y / static_cast<float>(_map.getGrid().getCellSize()));
 
-        if (_currentTile) {
-            _map.placeTile(gridX, gridY, _currentTile->getId());
+        if (!_currentTiles.empty()) {
+            for (int i = 0; i < static_cast<int>(_currentTiles.size()); ++i) {
+                for (int j = 0; j < static_cast<int>(_currentTiles[i].size()); ++j) {
+                    const auto& tile = _currentTiles[i][j];
+                    _map.placeTile(gridX + j, gridY + i, tile->getId());
+                }
+            }
         } else {
-            _map.removeTile(gridX, gridY);
+            if (_toolPanel.getSelectedTool() == Tool::ERASER)
+                _map.removeTile(gridX, gridY);
         }
     }
 }
