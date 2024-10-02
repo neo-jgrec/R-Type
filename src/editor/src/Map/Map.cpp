@@ -67,7 +67,7 @@ void Map::loadMapConfig(const std::string &mapPath) {
             int x = tile["x"];
             int y = tile["y"];
             int tileIndex = tile["tileIndex"];
-            if (x < 0 || x >= _width / _cellSize || y < 0 || y >= _height / _cellSize)
+            if (x < 0 || x >= _width * _cellSize || y < 0 || y >= _height * _cellSize)
                 throw Editor::Exception("Invalid tile position: (" + std::to_string(x) + ", " + std::to_string(y) + ")");
             _tileMap[y][x] = tileIndex;
             std::cout << "Tile at (" << x << ", " << y << "): " << tileIndex << std::endl;
