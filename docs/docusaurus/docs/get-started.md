@@ -21,3 +21,7 @@ You can achieve some cool images like this one:
 ## Features 🎉
 
 - [x] Super project
+
+## Documentation 📚
+
+- [Map Editor](map-editor.md): Learn how to use the map editor to create and edit maps for the R-Type game.

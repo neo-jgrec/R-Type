@@ -1,0 +1,68 @@
+{
+    "cellSize": 24,
+    "editorVersion": "0.1",
+    "height": 20,
+    "name": "Jean Yannis map",
+    "tileSets": [
+        {
+            "filePath": "assets/Obstacles/Ripped/Obstacle Bottom Claw.png",
+            "tileCount": 96,
+            "tileHeight": 24,
+            "tileWidth": 24
+        },
+        {
+            "filePath": "assets/Obstacles/Ripped/Obstacle Bottom Ramp Left.png",
+            "tileCount": 10,
+            "tileHeight": 24,
+            "tileWidth": 24
+        }
+    ],
+    "tiles": [
+        {
+            "tileIndex": 101,
+            "x": 41,
+            "y": 4
+        },
+        {
+            "tileIndex": 97,
+            "x": 18,
+            "y": 18
+        },
+        {
+            "tileIndex": 98,
+            "x": 19,
+            "y": 18
+        },
+        {
+            "tileIndex": 99,
+            "x": 20,
+            "y": 18
+        },
+        {
+            "tileIndex": 102,
+            "x": 18,
+            "y": 19
+        },
+        {
+            "tileIndex": 103,
+            "x": 19,
+            "y": 19
+        },
+        {
+            "tileIndex": 104,
+            "x": 20,
+            "y": 19
+        },
+        {
+            "tileIndex": 105,
+            "x": 21,
+            "y": 19
+        },
+        {
+            "tileIndex": 106,
+            "x": 22,
+            "y": 19
+        }
+    ],
+    "width": 200
+}

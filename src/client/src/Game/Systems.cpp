@@ -79,11 +79,17 @@ void Systems::projectileMovementSystem(core::ecs::Registry& registry) {
             
             transform.position.x += velocity.dx;
 
-            // Si le projectile sort de la fenêtre, il est détruit ??
+            auto projectilesToCheck = registry.get_entities<Projectile>();
+
+            for (const auto &projectile : projectilesToCheck) {
+                if (transform.position.x > 800.0f || transform.position.x < 0.0f) {
+                    registry.kill_entity(projectile);
+                }
+            }
         });
 }
 
-void Systems::enemyMovementSystem(core::ecs::Registry& registry, sf::RenderWindow& window) {
+void Systems::enemyMovementSystem(core::ecs::Registry& registry) {
     registry.add_system<TransformComponent, VelocityComponent, Enemy>(
         [&](TransformComponent &transform, VelocityComponent &velocity, Enemy&) {
 
@@ -92,10 +98,9 @@ void Systems::enemyMovementSystem(core::ecs::Registry& registry, sf::RenderWindo
             auto enemiesToCheck = registry.get_entities<Enemy>();
 
             for (const auto &enemy : enemiesToCheck) {
-                // if (transform.position.x > static_cast<float>(window.getSize().x) || transform.position.x < 0.0f) {
-                //     registry.kill_entity(enemy);
-                // }
+                if (transform.position.x > 800.0f || transform.position.x < 0.0f) {
                     registry.kill_entity(enemy);
+                }
             }
         });
 }

@@ -14,6 +14,22 @@
 
 namespace core::ecs
 {
+    class IComponentArray {
+    public:
+        virtual ~IComponentArray() = default;
+        virtual void erase(size_t id) = 0;
+    };
+
+    template <typename Component>
+    class ComponentArray : public IComponentArray {
+    public:
+        SparseArray<std::shared_ptr<Component>> data;
+
+        void erase(size_t id) override {
+            data.erase(id);
+        }
+    };
+
     class Registry {
     public:
         template <class Component>
@@ -22,22 +38,21 @@ namespace core::ecs
             std::type_index index = typeid(Component);
             auto it = _components_arrays.find(index);
             if (it == _components_arrays.end()) {
-                _components_arrays[index] = SparseArray<std::shared_ptr<Component>>();
+                _components_arrays[index] = std::make_shared<ComponentArray<Component>>();
             }
-            return std::any_cast<SparseArray<std::shared_ptr<Component>> &>(_components_arrays[index]);
+            return static_cast<ComponentArray<Component>&>(*_components_arrays[index]).data;
         }
 
         template <class Component>
         SparseArray<std::shared_ptr<Component>> &get_components()
         {
-            return std::any_cast<SparseArray<std::shared_ptr<Component>> &>(_components_arrays[typeid(Component)]);
+            return static_cast<ComponentArray<Component>&>(*_components_arrays[typeid(Component)]).data;
         }
 
         template <class Component>
         SparseArray<std::shared_ptr<Component>> const &get_components() const
         {
-            return std::any_cast<SparseArray<std::shared_ptr<Component>> const &>(
-                _components_arrays.at(typeid(Component)));
+            return static_cast<const ComponentArray<Component>&>(*_components_arrays.at(typeid(Component))).data;
         }
 
         Entity spawn_entity()
@@ -48,7 +63,7 @@ namespace core::ecs
 
         void kill_entity(Entity const &e)
         {
-            if (std::find(_entities_to_kill.begin(), _entities_to_kill.end(), e) == _entities_to_kill.end()) {
+            if (std::ranges::find(_entities_to_kill, e) == _entities_to_kill.end()) {
                 _entities_to_kill.push_back(e);
             }
         }
@@ -103,6 +118,7 @@ namespace core::ecs
                     system(*this);
                 }
             }
+            cleanup_dead_entities();
         }
 
         template <typename... Components>
@@ -133,7 +149,6 @@ namespace core::ecs
             }
         }
 
-
         template <typename... Components>
         bool are_components_present(size_t id) const
         {
@@ -145,14 +160,13 @@ namespace core::ecs
             for (const auto &entity : _entities_to_kill) {
                 // Remove components for the entity
                 for (auto &[type, array] : _components_arrays) {
-                    auto &component_array = std::any_cast<SparseArray<std::shared_ptr<void>> &>(array);
-                    component_array.erase(static_cast<size_t>(entity));
+                    array->erase(static_cast<size_t>(entity));
                 }
             }
             _entities_to_kill.clear();
         }
 
-        std::unordered_map<std::type_index, std::any> _components_arrays;
+        std::unordered_map<std::type_index, std::shared_ptr<IComponentArray>> _components_arrays;
         size_t _next_entity_id = 0;
         std::vector<std::pair<std::function<void(Registry &)>, std::vector<std::type_index>>> _systems;
         std::vector<Entity> _entities_to_kill;

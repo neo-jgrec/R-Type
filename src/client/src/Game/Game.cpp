@@ -34,7 +34,7 @@ void Game::init() {
     Systems::animationSystem(_registry);
     Systems::projectileMovementSystem(_registry);
     Systems::collisionSystem(_registry);
-    Systems::enemyMovementSystem(_registry, _window);
+    Systems::enemyMovementSystem(_registry);
     Systems::soundSystem(_registry);
 }
 
