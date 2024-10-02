@@ -1,6 +1,6 @@
-#pragma once
+#ifndef REGISTRY_HPP
+#define REGISTRY_HPP
 
-#include <any>
 #include <functional>
 #include <memory>
 #include <typeindex>
@@ -157,6 +157,7 @@ namespace core::ecs
         void cleanup_dead_entities()
         {
             for (const auto &entity : _entities_to_kill) {
+                // Remove components for the entity
                 for (auto &[type, array] : _components_arrays) {
                     array->erase(static_cast<size_t>(entity));
                 }
@@ -170,3 +171,5 @@ namespace core::ecs
         std::vector<Entity> _entities_to_kill;
     };
 } // namespace core::ecs
+
+#endif /* !REGISTRY_HPP */
