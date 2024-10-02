@@ -2,6 +2,7 @@
 #include "Components.hpp"
 #include "Systems.hpp"
 #include "EntityFactory.hpp"
+#include "MapFactory.hpp"
 
 void Server::init()
 {
@@ -14,6 +15,7 @@ void Server::init()
     _registry.register_component<Player>();
     _registry.register_component<Enemy>();
     _registry.register_component<Projectile>();
+    _registry.register_component<MapData>();
 
     _world = EntityFactory::createWorld(_registry);
 
