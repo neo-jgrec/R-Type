@@ -1,12 +1,9 @@
 #include "Game/Game.hpp"
-#include "../../core/ecs/Registry/Registry.hpp"
-#include "../../core/network/NetworkService.hpp"
 
 int main()
 {
-    core::ecs::Registry registry;
-    Game game(registry);
+    Game game;
     game.run();
+
     return 0;
 }
-

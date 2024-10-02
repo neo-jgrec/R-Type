@@ -1,83 +1,69 @@
 #include "Game.hpp"
 #include <SFML/System/Time.hpp>
 #include "EntityFactory.hpp"
-#include "Systems.hpp"
-#include "Components.hpp"
+#include "../../../game/Components.hpp"
 
 void Game::init() {
-    _window.create(sf::VideoMode(800, 600), "R-Type");
-    _window.setFramerateLimit(60);
-    _window.setKeyRepeatEnabled(true);
+    _gameEngine.window.setFramerateLimit(60);
+    _gameEngine.window.setKeyRepeatEnabled(true);
 
-    _registry.register_component<TransformComponent>();
-    _registry.register_component<VelocityComponent>();
-    _registry.register_component<DrawableComponent>();
-    _registry.register_component<InputStateComponent>();
-    _registry.register_component<KeyBinding>();
-    _registry.register_component<HealthComponent>();
-    _registry.register_component<ScoreComponent>();
-    _registry.register_component<AnimationComponent>();
-    _registry.register_component<TextureComponent>();
-    _registry.register_component<Player>();
-    _registry.register_component<Enemy>();
-    _registry.register_component<Projectile>();
-    _registry.register_component<DamageComponent>();
-    _registry.register_component<CollisionComponent>();
-    _registry.register_component<SoundComponent>();
+    _gameEngine.registry.register_component<VelocityComponent>();
+    _gameEngine.registry.register_component<InputStateComponent>();
+    _gameEngine.registry.register_component<HealthComponent>();
+    _gameEngine.registry.register_component<ScoreComponent>();
+    _gameEngine.registry.register_component<Player>();
+    _gameEngine.registry.register_component<Enemy>();
+    _gameEngine.registry.register_component<Projectile>();
+    _gameEngine.registry.register_component<DamageComponent>();
 
-    _playerEntity = EntityFactory::createPlayer(_registry, sf::Vector2f(100.0f, 100.0f));
-    _enemyEntity = EntityFactory::createEnemy(_registry, sf::Vector2f(700.0f, 100.0f));
+    _playerEntity = EntityFactory::createPlayer(_gameEngine.registry, sf::Vector2f(100.0f, 100.0f));
+    _enemyEntity = EntityFactory::createEnemy(_gameEngine.registry, sf::Vector2f(700.0f, 100.0f));
 
-    Systems::positionSystem(_registry);
-    Systems::inputSystem(_registry);
-    Systems::renderSystem(_registry, _window);
-    Systems::animationSystem(_registry);
-    Systems::projectileMovementSystem(_registry);
-    Systems::collisionSystem(_registry);
-    Systems::enemyMovementSystem(_registry);
-    Systems::soundSystem(_registry);
+    inputSystem(_gameEngine.registry);
+    projectileMovementSystem(_gameEngine.registry);
+    enemyMovementSystem(_gameEngine.registry);
 }
 
 void Game::update() {
-    _registry.run_system<TransformComponent, VelocityComponent, InputStateComponent, Player>();
-    _registry.run_system<DrawableComponent, TransformComponent>();
-    _registry.run_system<DrawableComponent, AnimationComponent>();
+    _gameEngine.registry.run_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, Player>();
+    _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::TransformComponent>();
+    _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::AnimationComponent>();
 
     // Sound
-    _registry.run_system<SoundComponent>();
+    _gameEngine.registry.run_system<core::ge::SoundComponent>();
 
     // Projectile movement
-    _registry.run_system<TransformComponent, VelocityComponent, Projectile>();
+    _gameEngine.registry.run_system<core::ge::TransformComponent, VelocityComponent, Projectile>();
 
     // Enemy movement
-    _registry.run_system<TransformComponent, VelocityComponent, Enemy>();
+    _gameEngine.registry.run_system<core::ge::TransformComponent, VelocityComponent, Enemy>();
 
     // Collision detection
-    _registry.run_system<TransformComponent, CollisionComponent>();
+    _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent>();
 }
 
 void Game::render() {
-    _window.clear();
-    _registry.run_system<DrawableComponent>();
-    _window.display();
+    _gameEngine.window.clear();
+    _gameEngine.registry.run_system<core::ge::DrawableComponent>();
+    _gameEngine.window.display();
 }
 
 void Game::processEvents() {
     sf::Event event{};
-    while (_window.pollEvent(event)) {
+    while (_gameEngine.window.pollEvent(event)) {
         if (event.type == sf::Event::Closed) {
             _windowOpen = false;
-            _window.close();
+            _gameEngine.window.close();
         }
 
         if (event.type == sf::Event::KeyPressed) {
             if (event.key.code == sf::Keyboard::Escape) {
                 _windowOpen = false;
-                _window.close();
+                _gameEngine.window.close();
             }
 
-            auto &inputStateOpt = _registry.get_components<InputStateComponent>()[_playerEntity];
-            auto &keyBindingOpt = _registry.get_components<KeyBinding>()[_playerEntity];
+            auto &inputStateOpt = _gameEngine.registry.get_components<InputStateComponent>()[_playerEntity];
+            auto &keyBindingOpt = _gameEngine.registry.get_components<core::ge::KeyBinding>()[_playerEntity];
 
             if (inputStateOpt.has_value()) {
                 auto &keyBinding = *keyBindingOpt.value();
@@ -101,12 +87,11 @@ void Game::processEvents() {
 
 void Game::run() {
     while (_windowOpen) {
-        sf::Time elapsed = _clock.restart();
-        DELTA_T = elapsed.asSeconds();
+        sf::Time elapsed = _gameEngine.clock.restart();
+        _gameEngine.delta_t = elapsed.asSeconds();
 
         processEvents();
         update();
         render();
     }
 }
-

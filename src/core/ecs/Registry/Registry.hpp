@@ -1,8 +1,7 @@
-#pragma once
+#ifndef REGISTRY_HPP
+#define REGISTRY_HPP
 
-#include <any>
 #include <functional>
-#include <iostream>
 #include <memory>
 #include <typeindex>
 #include <unordered_map>
@@ -172,3 +171,5 @@ namespace core::ecs
         std::vector<Entity> _entities_to_kill;
     };
 } // namespace core::ecs
+
+#endif /* !REGISTRY_HPP */

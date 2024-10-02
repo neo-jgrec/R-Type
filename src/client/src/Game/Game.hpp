@@ -1,13 +1,13 @@
 #pragma once
 
-#include "../../../core/ecs/Registry/Registry.hpp"
 #include "../../../core/ecs/Entity/Entity.hpp"
-#include "Globals.hpp"
+#include "../../../core/ecs/GameEngine/GameEngine.hpp"
+
 #include <SFML/Graphics.hpp>
 
 class Game {
 public:
-    Game(core::ecs::Registry &registry) : _registry(registry)
+    Game()
     {
         init();
     }
@@ -21,11 +21,14 @@ private:
     void addSystems();
     void init();
 
-    core::ecs::Registry _registry;
     core::ecs::Entity _playerEntity = core::ecs::Entity();
     core::ecs::Entity _enemyEntity = core::ecs::Entity();
-    sf::RenderWindow _window;
-    sf::Clock _clock;
+
+    core::GameEngine _gameEngine;
 
     bool _windowOpen = true;
+
+    static void inputSystem(core::ecs::Registry& registry);
+    static void projectileMovementSystem(core::ecs::Registry& registry);
+    static void enemyMovementSystem(core::ecs::Registry& registry);
 };
