@@ -1,0 +1,22 @@
+{
+    "cellSize": 24,
+    "editorVersion": "0.1",
+    "height": 20,
+    "name": "Default map",
+    "tileSets": [
+        {
+            "filePath": "oak_woods_tileset.png",
+            "tileCount": 315,
+            "tileHeight": 24,
+            "tileWidth": 24
+        }
+    ],
+    "tiles": [
+        {
+            "tileIndex": 1,
+            "x": 0,
+            "y": 0
+        }
+    ],
+    "width": 100
+}
