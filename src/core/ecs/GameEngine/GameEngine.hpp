@@ -5,7 +5,6 @@
 #include "./GameEngineComponents.hpp"
 #include <SFML/Graphics.hpp>
 #include <SFML/System/Clock.hpp>
-#include <iostream>
 
 namespace core {
     class GameEngine {
@@ -44,7 +43,7 @@ namespace core {
         protected:
             void renderSystems()
             {
-                registry.add_system<core::ge::DrawableComponent>([&window = window](core::ge::DrawableComponent &drawable) {
+                registry.add_system<core::ge::DrawableComponent>([&window = window](core::ecs::Entity, core::ge::DrawableComponent &drawable) {
                     window.draw(drawable.shape);
                 });
             }
@@ -52,7 +51,7 @@ namespace core {
             void positionSystem()
             {
                 registry.add_system<core::ge::DrawableComponent, core::ge::TransformComponent>(
-                    [](core::ge::DrawableComponent &drawable, const core::ge::TransformComponent &transform) {
+                    []([[maybe_unused]] core::ecs::Entity entity, core::ge::DrawableComponent &drawable, const core::ge::TransformComponent &transform) {
                         drawable.shape.setPosition(transform.position);
                         drawable.shape.setSize(transform.size);
                         drawable.shape.setRotation(transform.rotation);
@@ -63,7 +62,7 @@ namespace core {
             void animationSystem()
             {
                 registry.add_system<core::ge::DrawableComponent, core::ge::AnimationComponent>(
-                    [this](core::ge::DrawableComponent &drawable, core::ge::AnimationComponent &anim) {
+                    [this]([[maybe_unused]] core::ecs::Entity entity, core::ge::DrawableComponent &drawable, core::ge::AnimationComponent &anim) {
                         anim.elapsedTime += delta_t;
 
                         if (anim.elapsedTime >= anim.frameTime) {
@@ -77,7 +76,7 @@ namespace core {
 
             void soundSystem()
             {
-                registry.add_system<core::ge::SoundComponent>([](core::ge::SoundComponent &sound) {
+                registry.add_system<core::ge::SoundComponent>([](core::ecs::Entity, core::ge::SoundComponent &sound) {
                     if (sound.playOnce && !sound.isPlaying) {
                         sound.sound.play();
                         sound.isPlaying = true;
@@ -88,7 +87,7 @@ namespace core {
             void collisionSystem()
             {
                 registry.add_system<core::ge::TransformComponent, core::ge::CollisionComponent>(
-                    [&](core::ge::TransformComponent &transform1, core::ge::CollisionComponent &collision1) {
+                    [&](core::ecs::Entity entity, core::ge::TransformComponent &transform1, core::ge::CollisionComponent &collision1) {
                         auto &collisionComponents = registry.get_components<core::ge::CollisionComponent>();
                         auto &transformComponents = registry.get_components<core::ge::TransformComponent>();
 
@@ -96,17 +95,17 @@ namespace core {
                             if (!collisionComponents[i].has_value() || !transformComponents[i].has_value())
                                 continue;
 
+                            core::ecs::Entity entity2{i};
                             auto &collision2 = *collisionComponents[i];
                             auto &transform2 = *transformComponents[i];
 
-                            if (&collision1 == collisionComponents[i]->get())
+                            if (entity == entity2)
                                 continue;
 
                             for (const auto &box1 : collision1.collisionBoxes) {
                                 sf::FloatRect rect1 = box1;
                                 rect1.left += transform1.position.x;
                                 rect1.top += transform1.position.y;
-
                                 rect1.width *= transform1.scale.x;
                                 rect1.height *= transform1.scale.y;
 
@@ -114,12 +113,16 @@ namespace core {
                                     sf::FloatRect rect2 = box2;
                                     rect2.left += transform2->position.x;
                                     rect2.top += transform2->position.y;
-
                                     rect2.width *= transform2->scale.x;
                                     rect2.height *= transform2->scale.y;
 
                                     if (rect1.intersects(rect2)) {
-                                        std::cout << "Collision detected between two entities!" << std::endl;
+                                        if (collision1.onCollision) {
+                                            collision1.onCollision(entity, entity2);
+                                        }
+                                        if (collision2->onCollision) {
+                                            collision2->onCollision(entity2, entity);
+                                        }
                                     }
                                 }
                             }

@@ -5,7 +5,7 @@
 void Game::inputSystem(core::ecs::Registry& registry)
 {
     registry.add_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, Player>
-    ([&](core::ge::TransformComponent &transform, const VelocityComponent &vel, InputStateComponent &input, Player&) {
+    ([&](core::ecs::Entity, core::ge::TransformComponent &transform, const VelocityComponent &vel, InputStateComponent &input, Player&) {
             if (input.up) {
                 transform.position.y -= vel.dy;
                 input.up = false;
@@ -41,7 +41,7 @@ void Game::inputSystem(core::ecs::Registry& registry)
 void Game::projectileMovementSystem(core::ecs::Registry& registry)
 {
     registry.add_system<core::ge::TransformComponent, VelocityComponent, Projectile>(
-        [&](core::ge::TransformComponent &transform, VelocityComponent &velocity, Projectile&) {
+        [&](core::ecs::Entity, core::ge::TransformComponent &transform, VelocityComponent &velocity, Projectile&) {
 
             transform.position.x += velocity.dx;
 
@@ -58,7 +58,7 @@ void Game::projectileMovementSystem(core::ecs::Registry& registry)
 void Game::enemyMovementSystem(core::ecs::Registry& registry)
 {
     registry.add_system<core::ge::TransformComponent, VelocityComponent, Enemy>(
-        [&](core::ge::TransformComponent &transform, VelocityComponent &velocity, Enemy&) {
+        [&](core::ecs::Entity, core::ge::TransformComponent &transform, VelocityComponent &velocity, Enemy&) {
 
             transform.position.x -= velocity.dx;
 

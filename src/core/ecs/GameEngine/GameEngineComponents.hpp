@@ -7,6 +7,8 @@
 #include <functional>
 #include <memory>
 
+#include "../Entity/Entity.hpp"
+
 namespace core::ge {
     struct KeyBinding {
         sf::Keyboard::Key moveUpKey = sf::Keyboard::Up;
@@ -74,6 +76,7 @@ namespace core::ge {
 
     struct CollisionComponent {
         std::vector<sf::FloatRect> collisionBoxes;
+        std::function<void(core::ecs::Entity, core::ecs::Entity)> onCollision;
     };
 }
 
