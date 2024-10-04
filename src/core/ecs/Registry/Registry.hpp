@@ -133,6 +133,13 @@ namespace core::ecs
             return entities;
         }
 
+        template <typename Component>
+        bool has_component(Entity const &e) const
+        {
+            auto &comp_array = get_components<Component>();
+            return comp_array.size() > static_cast<size_t>(e) && comp_array[static_cast<size_t>(e)].has_value();
+        }
+
     private:
         template <typename... Components, typename Function, std::size_t... Is>
         void call_system(Function &&f, Registry &r, std::index_sequence<Is...>)
