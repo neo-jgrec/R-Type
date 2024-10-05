@@ -14,8 +14,12 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, con
         .collisionBoxes = {sf::FloatRect(0.0f, 0.0f, 33.0f, 17.0f)},
         .onCollision = [&](core::ecs::Entity self, core::ecs::Entity other) {
             if (registry.has_component<Enemy>(other)) {
-                std::cout << "Player hit by enemy!" << std::endl;
-                registry.kill_entity(self);
+                auto &damageDone = registry.get_components<DamageComponent>() [other];
+                auto &health = registry.get_components<HealthComponent>() [self];
+                health->get()->health -= damageDone->get()->damage;
+                if (health->get()->health <= 0) {
+                    registry.kill_entity(self);
+                }
                 registry.kill_entity(other);
             }
         }
@@ -107,7 +111,6 @@ core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry &registry, cons
                 auto &health = registry.get_components<HealthComponent>() [self];
                 health->get()->health -= damageDone->get()->damage;
                 if (health->get()->health <= 0) {
-                    std::cout << "Enemy killed!" << std::endl;
                     registry.kill_entity(self);
                 }
                 registry.kill_entity(other);
