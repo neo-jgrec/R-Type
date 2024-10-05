@@ -50,7 +50,7 @@ namespace Editor {
         [[nodiscard]]
         const std::vector<std::unique_ptr<TileSet>>& getTileSets() const;
 
-        void draw(sf::RenderWindow& window) const;
+        void draw(sf::RenderWindow& window, std::vector<sf::Vector2i>& selectedTiles) const;
         void drawPreviewTile(int x, int y, int tileIndex, sf::RenderWindow& window) const;
 
         [[nodiscard]]

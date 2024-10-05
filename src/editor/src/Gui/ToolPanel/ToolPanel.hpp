@@ -17,7 +17,6 @@
 namespace Editor {
     enum class Tool {
         NONE,
-        TILE_BRUSH,
         ERASER,
         SELECTOR
     };
@@ -26,6 +25,7 @@ namespace Editor {
     public:
         ToolPanel();
         void render();
+        [[nodiscard]]
         Tool getSelectedTool() const;
         void setOnToolSelected(std::function<void(Tool)> callback);
 

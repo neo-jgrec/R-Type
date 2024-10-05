@@ -64,7 +64,7 @@ void ObjectSelector::render(const std::vector<std::unique_ptr<TileSet>>& tileSet
             int tileIndex = (y / tileSize.y) * (static_cast<int>(textureSize.x) / tileSize.x) + (x / tileSize.x) + 1;
             int tilesetStartIndex = selectedTileSet->getNextId() - static_cast<int>(selectedTileSet->getTileCount());
             tileIndex += tilesetStartIndex - 1;
-            if (tileIndex == _selectedIndex) {
+            if (std::find(_selectedTileIds.begin(), _selectedTileIds.end(), tileIndex) != _selectedTileIds.end()) {
                 ImGui::GetWindowDrawList()->AddRect(
                     ImVec2(imagePos.x + static_cast<float>(x) * imageSizeMultiplier, imagePos.y + static_cast<float>(y) * imageSizeMultiplier),
                     ImVec2(imagePos.x + static_cast<float>(x + tileSize.x) * imageSizeMultiplier, imagePos.y + static_cast<float>(y + tileSize.y) * imageSizeMultiplier),
@@ -77,7 +77,7 @@ void ObjectSelector::render(const std::vector<std::unique_ptr<TileSet>>& tileSet
         }
     }
 
-    if (ImGui::IsItemClicked()) {
+    if (ImGui::IsItemClicked(ImGuiMouseButton_Left)) {
         ImVec2 mousePos = ImGui::GetMousePos();
         int clickedX = static_cast<int>((mousePos.x - imagePos.x) / imageSizeMultiplier);
         int clickedY = static_cast<int>((mousePos.y - imagePos.y) / imageSizeMultiplier);
@@ -88,8 +88,13 @@ void ObjectSelector::render(const std::vector<std::unique_ptr<TileSet>>& tileSet
             int tilesetStartIndex = selectedTileSet->getNextId() - static_cast<int>(selectedTileSet->getTileCount());
             tileIndex += tilesetStartIndex;
             _selectedIndex = tileIndex;
+            auto it = std::find(_selectedTileIds.begin(), _selectedTileIds.end(), tileIndex);
+            if (it != _selectedTileIds.end())
+                _selectedTileIds.erase(it);
+            else
+                _selectedTileIds.push_back(tileIndex);
             if (_onObjectSelected)
-                _onObjectSelected(std::to_string(tileIndex));
+                _onObjectSelected(std::to_string(tileIndex), tileY);
         }
     }
 
@@ -126,7 +131,7 @@ bool ObjectSelector::isObjectSelected() const {
     return _selectedIndex != -1;
 }
 
-void ObjectSelector::setOnObjectSelected(std::function<void(const std::string&)> callback) {
+void ObjectSelector::setOnObjectSelected(std::function<void(const std::string&, int)> callback) {
     _onObjectSelected = std::move(callback);
 }
 
@@ -140,6 +145,7 @@ void ObjectSelector::clearObjects() {
 
 void ObjectSelector::updateObjectSelector(const std::vector<std::unique_ptr<TileSet>>& tileSets) {
     clearObjects();
+    _selectedTileIds.clear();
     addObject("Erase");
 
     if (_selectedTileSetIndex >= 0 && _selectedTileSetIndex < static_cast<int>(tileSets.size())) {
@@ -149,4 +155,8 @@ void ObjectSelector::updateObjectSelector(const std::vector<std::unique_ptr<Tile
             addObject(std::to_string(tile.getId()));
         }
     }
+}
+
+void ObjectSelector::clearSelectedTileIds() {
+    _selectedTileIds.clear();
 }
