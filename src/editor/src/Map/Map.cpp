@@ -92,8 +92,8 @@ void Map::loadMapConfig(const std::string &mapPath) {
 }
 
 void Map::createNewMap(int width, int height, int cellSize) {
-    _width = width * cellSize;
-    _height = height * cellSize;
+    _width = width;
+    _height = height;
     _cellSize = cellSize;
     _tileMap.clear();
     _tileSets.clear();
