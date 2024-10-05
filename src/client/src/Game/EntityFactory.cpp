@@ -10,7 +10,20 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, con
     core::ecs::Entity player = registry.spawn_entity();
 
     registry.add_component(player, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 17.0f), sf::Vector2f(4.0f, 4.0f), 0.0f});
-    registry.add_component(player, core::ge::CollisionComponent{.collisionBoxes = {sf::FloatRect(0.0f, 0.0f, 33.0f, 17.0f)}, .onCollision = nullptr});
+    registry.add_component(player, core::ge::CollisionComponent{
+        .collisionBoxes = {sf::FloatRect(0.0f, 0.0f, 33.0f, 17.0f)},
+        .onCollision = [&](core::ecs::Entity self, core::ecs::Entity other) {
+            if (registry.has_component<Enemy>(other)) {
+                auto &damageDone = registry.get_components<DamageComponent>() [other];
+                auto &health = registry.get_components<HealthComponent>() [self];
+                health->get()->health -= damageDone->get()->damage;
+                if (health->get()->health <= 0) {
+                    registry.kill_entity(self);
+                }
+                registry.kill_entity(other);
+            }
+        }
+    });
     registry.add_component(player, VelocityComponent{10.0f, 10.0f});
     registry.add_component(player, InputStateComponent{});
     registry.add_component(player, core::ge::KeyBinding{});
@@ -51,13 +64,7 @@ core::ecs::Entity EntityFactory::createPlayerProjectile(core::ecs::Registry& reg
     registry.add_component(projectile, core::ge::TransformComponent{startPosition, sf::Vector2f(18.0f, 5.0f), sf::Vector2f(4.0f, 4.0f), 0.0f});
     registry.add_component(projectile, core::ge::CollisionComponent{
         .collisionBoxes = {sf::FloatRect(0.0f, 0.0f, 18.0f, 5.0f)},
-        .onCollision = [&](core::ecs::Entity self, core::ecs::Entity other) {
-            if (registry.has_component<Enemy>(other)) {
-                std::cout << "Projectile hit enemy! Both disappear." << std::endl;
-                registry.kill_entity(self);
-                registry.kill_entity(other);
-            }
-        }
+        .onCollision = nullptr
     });
     registry.add_component(projectile, VelocityComponent{10.0f, 10.0f});
     registry.add_component(projectile, DamageComponent{10});
@@ -100,14 +107,19 @@ core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry &registry, cons
         .collisionBoxes = {sf::FloatRect(0.0f, 0.0f, 33.0f, 36.0f)},
         .onCollision = [&](core::ecs::Entity self, core::ecs::Entity other) {
             if (registry.has_component<Projectile>(other)) {
-                std::cout << "Enemy hit by projectile! Both disappear." << std::endl;
-                registry.kill_entity(self);
+                auto &damageDone = registry.get_components<DamageComponent>() [other];
+                auto &health = registry.get_components<HealthComponent>() [self];
+                health->get()->health -= damageDone->get()->damage;
+                if (health->get()->health <= 0) {
+                    registry.kill_entity(self);
+                }
                 registry.kill_entity(other);
             }
         }
     });
     registry.add_component(enemy, VelocityComponent{10.0f, 10.0f});
-    registry.add_component(enemy, HealthComponent{100});
+    registry.add_component(enemy, HealthComponent{10});
+    registry.add_component(enemy, DamageComponent{10});
     registry.add_component(enemy, Enemy{});
 
     std::string relativePath = "assets/basic_enemy_sprite.png";
