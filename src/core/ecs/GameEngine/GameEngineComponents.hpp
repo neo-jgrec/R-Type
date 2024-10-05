@@ -76,7 +76,7 @@ namespace core::ge {
 
     struct CollisionComponent {
         std::vector<sf::FloatRect> collisionBoxes;
-        std::function<void(core::ecs::Entity, core::ecs::Entity)> onCollision;
+        std::function<void(ecs::Entity, ecs::Entity)> onCollision = [](ecs::Entity, ecs::Entity) {};
     };
 }
 
