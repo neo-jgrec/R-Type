@@ -13,9 +13,33 @@ Grid::Grid(int width, int height, int cellSize)
     defineGrid();
 }
 
-void Grid::draw(sf::RenderWindow &window) const {
+void Grid::draw(sf::RenderWindow &window, std::vector<sf::Vector2i>& selectedTiles) const {
+    sf::Color highlightColor(0, 255, 0, 255); // Green color with some transparency
+    std::vector<sf::Vertex> highlightVertices;
+
+    for (const auto& tile : selectedTiles) {
+        float left = tile.x * _cellSize;
+        float top = tile.y * _cellSize;
+        float right = left + _cellSize;
+        float bottom = top + _cellSize;
+
+        highlightVertices.push_back(sf::Vertex(sf::Vector2f(left, top), highlightColor));
+        highlightVertices.push_back(sf::Vertex(sf::Vector2f(right, top), highlightColor));
+
+        highlightVertices.push_back(sf::Vertex(sf::Vector2f(right, top), highlightColor));
+        highlightVertices.push_back(sf::Vertex(sf::Vector2f(right, bottom), highlightColor));
+
+        highlightVertices.push_back(sf::Vertex(sf::Vector2f(right, bottom), highlightColor));
+        highlightVertices.push_back(sf::Vertex(sf::Vector2f(left, bottom), highlightColor));
+
+        highlightVertices.push_back(sf::Vertex(sf::Vector2f(left, bottom), highlightColor));
+        highlightVertices.push_back(sf::Vertex(sf::Vector2f(left, top), highlightColor));
+    }
+
     window.draw(&_gridLines[0], _gridLines.size(), sf::Lines);
     window.draw(&_vertices[0], _vertices.size(), sf::Lines);
+    if (!highlightVertices.empty())
+        window.draw(&highlightVertices[0], highlightVertices.size(), sf::Lines);
 }
 
 void Grid::updateGrid(float zoomLevel) {

@@ -14,16 +14,22 @@
 namespace Editor {
     class Tile {
         public:
+            Tile();
             Tile(const sf::Texture& texture, const sf::IntRect& textureRect, int id);
+            Tile(const Tile& other);
+
             void draw(sf::RenderWindow& window, float x, float y) const;
 
             [[nodiscard]] const sf::Sprite& getSprite() const;
 
             [[nodiscard]] int getId() const;
             [[nodiscard]] ImTextureID getTextureId() const;
+            [[nodiscard]] bool isDestructible() const;
+            void setDestructible(bool isDestructible);
         private:
             sf::Sprite _sprite;
             int _id;
+            bool _isDestructible = false;
     };
 }
 

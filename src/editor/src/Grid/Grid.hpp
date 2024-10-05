@@ -14,7 +14,7 @@ namespace Editor {
     class Grid {
         public:
             Grid(int width, int height, int cellSize);
-            void draw(sf::RenderWindow &window) const;
+            void draw(sf::RenderWindow &window, std::vector<sf::Vector2i>& selectedTiles) const;
             void updateGrid(float zoomLevel);
             void setGridSize(int width, int height);
 

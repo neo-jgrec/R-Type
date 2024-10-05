@@ -1,6 +1,6 @@
-#pragma once
+#ifndef REGISTRY_HPP
+#define REGISTRY_HPP
 
-#include <any>
 #include <functional>
 #include <memory>
 #include <typeindex>
@@ -62,8 +62,8 @@ namespace core::ecs
 
         void kill_entity(Entity const &e)
         {
-            if (std::ranges::find(_entities_to_kill, e) == _entities_to_kill.end()) {
-                _entities_to_kill.push_back(e);
+            for (auto &[_, component_array] : _components_arrays) {
+                component_array->erase(static_cast<size_t>(e));
             }
         }
 
@@ -104,7 +104,6 @@ namespace core::ecs
             for (auto &[system, components] : _systems) {
                 system(*this);
             }
-            cleanup_dead_entities();
         }
 
         template <class... Components>
@@ -117,7 +116,6 @@ namespace core::ecs
                     system(*this);
                 }
             }
-            cleanup_dead_entities();
         }
 
         template <typename... Components>
@@ -133,6 +131,13 @@ namespace core::ecs
             return entities;
         }
 
+        template <typename Component>
+        bool has_component(Entity const &e) const
+        {
+            auto &comp_array = get_components<Component>();
+            return comp_array.size() > static_cast<size_t>(e) && comp_array[static_cast<size_t>(e)].has_value();
+        }
+
     private:
         template <typename... Components, typename Function, std::size_t... Is>
         void call_system(Function &&f, Registry &r, std::index_sequence<Is...>)
@@ -143,7 +148,7 @@ namespace core::ecs
 
             for (size_t i = 0; i < array_size; ++i) {
                 if (are_components_present<Components...>(i)) {
-                    std::apply([i, &f](auto &...arrays) { f(*(arrays[i].value())...); }, component_arrays);
+                    std::apply([i, &f](auto &...arrays) { f(Entity{i}, *(arrays[i].value())...); }, component_arrays);
                 }
             }
         }
@@ -154,19 +159,10 @@ namespace core::ecs
             return (... && get_components<Components>()[id].has_value());
         }
 
-        void cleanup_dead_entities()
-        {
-            for (const auto &entity : _entities_to_kill) {
-                for (auto &[type, array] : _components_arrays) {
-                    array->erase(static_cast<size_t>(entity));
-                }
-            }
-            _entities_to_kill.clear();
-        }
-
         std::unordered_map<std::type_index, std::shared_ptr<IComponentArray>> _components_arrays;
         size_t _next_entity_id = 0;
         std::vector<std::pair<std::function<void(Registry &)>, std::vector<std::type_index>>> _systems;
-        std::vector<Entity> _entities_to_kill;
     };
 } // namespace core::ecs
+
+#endif /* !REGISTRY_HPP */

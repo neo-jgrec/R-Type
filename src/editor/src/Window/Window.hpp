@@ -17,6 +17,7 @@
 #include "../Gui/ObjectSelector/ObjectSelector.hpp"
 #include "../Map/Map.hpp"
 #include "src/Gui/MapPropertiesPanel/MapPropertiesPanel.hpp"
+#include "src/Gui/TileInfo/TileInfoPanel.hpp"
 #include "src/Gui/ToolPanel/ToolPanel.hpp"
 
 using json = nlohmann::json;
@@ -48,6 +49,7 @@ namespace Editor {
         void updateObjectSelector();
 
         size_t _currentTileSetIndex;
+        std::vector<std::vector<std::unique_ptr<Tile>>> _currentTiles;
         std::unique_ptr<Tile> _currentTile;
         void loadTileSetDialog();
         void loadTileSet(const std::string& filePath, int tileWidth, int tileHeight);
@@ -72,7 +74,10 @@ namespace Editor {
         void aboutDialog();
         bool _aboutDialogIsOpen = false;
 
+        std::vector<sf::Vector2i> _selectedTiles;
+
         ToolPanel _toolPanel;
+        TileInfoPanel _tileInfoPanel;
 
         void drawPreviewTile();
         void renderUI();
