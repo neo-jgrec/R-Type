@@ -14,20 +14,14 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, con
         .collisionBoxes = {sf::FloatRect(0.0f, 0.0f, 33.0f, 17.0f)},
         .onCollision = [&](core::ecs::Entity self, core::ecs::Entity other) {
             if (registry.has_component<Enemy>(other)) {
-                auto &damageDone = registry.get_components<DamageComponent>() [other];
-                auto &health = registry.get_components<HealthComponent>() [self];
-                health->get()->health -= damageDone->get()->damage;
-                if (health->get()->health <= 0) {
-                    registry.kill_entity(self);
-                }
-                registry.kill_entity(other);
+                registry.kill_entity(self);
             }
         }
     });
     registry.add_component(player, VelocityComponent{10.0f, 10.0f});
     registry.add_component(player, InputStateComponent{});
     registry.add_component(player, core::ge::KeyBinding{});
-    registry.add_component(player, HealthComponent{100});
+    registry.add_component(player, HealthComponent{10});
     registry.add_component(player, ScoreComponent{0});
     registry.add_component(player, Player{});
 
