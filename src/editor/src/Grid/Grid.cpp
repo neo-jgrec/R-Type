@@ -98,5 +98,4 @@ int Grid::getCellSize() const {
 
 void Grid::setCellSize(int cellSize) {
     _cellSize = cellSize;
-    defineGrid();
 }
