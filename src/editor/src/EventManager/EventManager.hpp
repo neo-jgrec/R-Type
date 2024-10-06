@@ -18,7 +18,7 @@ namespace Editor {
         public:
             using EventCallback = std::function<void(const sf::Event&)>;
 
-            void registerEvent(sf::Event::EventType type, EventCallback callback);
+            void registerEvent(sf::Event::EventType type, const EventCallback& callback);
             void handleEvent(const sf::Event &event) const;
 
         private:

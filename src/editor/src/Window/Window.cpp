@@ -29,8 +29,12 @@ Window::Window(
     registerEvents();
 
     if (!mapPath.empty()) {
-        _map.clearMap();
-        _map.loadMapConfig(mapPath);
+        try {
+            _map.clearMap();
+            _map.loadMapConfig(mapPath);
+        } catch (const std::exception& e) {
+            std::cerr << "Failed to load map config: " << e.what() << std::endl;
+        }
     } else
         _newMapDialogIsOpen = true;
     updateObjectSelector();
@@ -119,6 +123,12 @@ void Window::registerEvents() {
         // Check for Alt+F4 (Exit)
         if (event.key.alt && event.key.code == sf::Keyboard::F4)
             _window.close();
+        // Check for Ctrl+Z (Undo)
+        if (event.key.control && event.key.code == sf::Keyboard::Z)
+            undo();
+        // Check for Ctrl+Y (Redo)
+        if (event.key.control && event.key.code == sf::Keyboard::Y)
+            redo();
 
         if (event.key.control)
             return;
@@ -206,7 +216,7 @@ void Window::renderUI() {
     _mainMenuBar.render();
     _objectSelector.render(_map.getTileSets());
     _toolPanel.render();
-    _tileInfoPanel.render(_map, _selectedTiles);
+    Editor::TileInfoPanel::render(_map, _selectedTiles);
     loadTileSetDialog();
     openMapDialog();
     newMapDialog();
@@ -247,8 +257,8 @@ void Window::setupMainMenuBar() {
     };
     _mainMenuBar.onSaveMap = [this]() { saveMap(); };
     _mainMenuBar.onExit = [this]() { _window.close(); };
-    _mainMenuBar.onUndo = []() { undo(); };
-    _mainMenuBar.onRedo = []() { redo(); };
+    _mainMenuBar.onUndo = [this]() { undo(); };
+    _mainMenuBar.onRedo = [this]() { redo(); };
     _mainMenuBar.onResetView = [this]() { resetView(); };
     _mainMenuBar.onLoadTileSet = [this]() {
         _popupLoaderIsOpen = true;
@@ -283,6 +293,11 @@ void Window::loadTileSetDialog() {
         ImGui::InputInt("Tile Width", &tileWidth);
         ImGui::InputInt("Tile Height", &tileHeight);
 
+        if (tileWidth < 1)
+            tileWidth = 1;
+        if (tileHeight < 1)
+            tileHeight = 1;
+
         if (ImGui::Button("Load")) {
             loadTileSet(path, tileWidth, tileHeight);
             _popupLoaderIsOpen = false;
@@ -308,6 +323,13 @@ void Window::newMapDialog() {
         ImGui::InputInt("Map Height", &mapHeight);
         ImGui::InputInt("Cell Size", &cellSize);
         ImGui::InputText("File Path", path, IM_ARRAYSIZE(path));
+
+        if (mapWidth < 1)
+            mapWidth = 1;
+        if (mapHeight < 1)
+            mapHeight = 1;
+        if (cellSize < 1)
+            cellSize = 1;
 
         if (ImGui::Button("Create")) {
             try {
@@ -374,13 +396,21 @@ std::string Window::openSaveFileDialog() {
 }
 
 void Window::undo() {
-    std::cout << "Undo" << std::endl;
-    // TODO: Implement undo functionality
+    if (!_undoStack.empty()) {
+        auto action = std::move(_undoStack.top());
+        action->undo(_map);
+        _redoStack.push(std::move(action));
+        _undoStack.pop();
+    }
 }
 
 void Window::redo() {
-    std::cout << "Redo" << std::endl;
-    // TODO: Implement redo functionality
+    if (!_redoStack.empty()) {
+        auto action = std::move(_redoStack.top());
+        action->execute(_map);
+        _undoStack.push(std::move(action));
+        _redoStack.pop();
+    }
 }
 
 void Window::resetView() {
@@ -419,11 +449,13 @@ void Window::handleMouseButtonPressed(const sf::Event& event) {
             for (int j = 0; j < static_cast<int>(_currentTiles[i].size()); ++j) {
                 const auto& tile = _currentTiles[i][j];
                 _map.placeTile(gridX + j, gridY + i, tile->getId());
+                _undoStack.push(std::make_unique<AddTileAction>(gridX + j, gridY + i, tile->getId()));
             }
         }
     } else {
-        if (_toolPanel.getSelectedTool() == Tool::ERASER)
+        if (_toolPanel.getSelectedTool() == Tool::ERASER) {
             _map.removeTile(gridX, gridY);
+        }
     }
 }
 
@@ -442,11 +474,13 @@ void Window::handleMouseMoved(const sf::Event& event) {
                 for (int j = 0; j < static_cast<int>(_currentTiles[i].size()); ++j) {
                     const auto& tile = _currentTiles[i][j];
                     _map.placeTile(gridX + j, gridY + i, tile->getId());
+                    _undoStack.push(std::make_unique<AddTileAction>(gridX + j, gridY + i, tile->getId()));
                 }
             }
         } else {
-            if (_toolPanel.getSelectedTool() == Tool::ERASER)
+            if (_toolPanel.getSelectedTool() == Tool::ERASER) {
                 _map.removeTile(gridX, gridY);
+            }
         }
     }
 }

@@ -1,6 +1,10 @@
 {
+    "background": {
+        "height": 24,
+        "path": "assets/Background/image.png"
+    },
     "cellSize": 24,
-    "editorVersion": "0.1",
+    "editorVersion": "0.2",
     "height": 20,
     "name": "Jean Yannis map",
     "tileSets": [
