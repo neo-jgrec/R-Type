@@ -7,11 +7,10 @@
 
 #include "TileInfoPanel.hpp"
 #include <imgui.h>
-#include <iostream>
 
 using namespace Editor;
 
-TileInfoPanel::TileInfoPanel() {}
+TileInfoPanel::TileInfoPanel() = default;
 
 void TileInfoPanel::render(Map& map, std::vector<sf::Vector2i>& selectedTiles) {
     ImGui::Begin("Tile Information");
