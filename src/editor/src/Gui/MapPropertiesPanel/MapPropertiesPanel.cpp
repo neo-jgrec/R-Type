@@ -27,15 +27,21 @@ void MapPropertiesPanel::render(Map& map) {
     int cellSize = map.getGrid().getCellSize();
 
     if (ImGui::InputInt("Width", &width)) {
+        if (width < 1)
+            width = 1;
         map.setWidth(width);
         if (_onPropertyChanged) _onPropertyChanged();
     }
     if (ImGui::InputInt("Height", &height)) {
+        if (height < 1)
+            height = 1;
         map.setHeight(height);
         if (_onPropertyChanged) _onPropertyChanged();
     }
     if (ImGui::InputInt("Cell Size", &cellSize)) {
-        map.getGrid().setCellSize(cellSize);
+        if (cellSize < 1)
+            cellSize = 1;
+        map.setCellSize(cellSize);
         if (_onPropertyChanged) _onPropertyChanged();
     }
 
