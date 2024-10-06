@@ -29,6 +29,7 @@ void Map::loadMapConfig(const std::string &mapPath) {
     std::ifstream file(mapPath);
     if (!file.is_open())
         throw Editor::Exception("Failed to open map file: " + mapPath);
+    std::cout << "Loading map file: " << mapPath << std::endl;
 
     json data;
     try {
@@ -240,19 +241,21 @@ bool Map::isPositionValid(int x, int y) const {
 
 void Map::setWidth(int width) {
     _width = width;
-    _tileMap.resize(_height, std::vector<int>(_width, -1));
-    _grid.setGridSize(_width, _height);
+    for (auto& row : _tileMap)
+        row.resize(_width, -1);
+    _grid.setGridSize(_width * _cellSize, _height * _cellSize);
 }
 
 void Map::setHeight(int height) {
     _height = height;
     _tileMap.resize(_height, std::vector<int>(_width, -1));
-    _grid.setGridSize(_width, _height);
+    _grid.setGridSize(_width * _cellSize, _height * _cellSize);
 }
 
 void Map::setCellSize(int cellSize) {
     _cellSize = cellSize;
     _grid.setCellSize(_cellSize);
+    _grid.setGridSize(_width * _cellSize, _height * _cellSize);
 }
 
 void Map::setName(const std::string& name) {
