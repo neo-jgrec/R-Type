@@ -4,6 +4,8 @@ sidebar_position: 1
 
 # Get Started
 
+![Editor Screenshoot](image.png)
+
 The R-Type Map Editor is a powerful tool designed to create and edit maps for the R-Type game. This editor allows you to place tiles, set spawn points, and configure various map properties.
 
 ## Features
