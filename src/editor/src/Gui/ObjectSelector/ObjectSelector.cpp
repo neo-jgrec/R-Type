@@ -9,7 +9,6 @@
 #include <imgui.h>
 #include <memory>
 #include "src/TileSet/TileSet.hpp"
-#include <iostream>
 using namespace Editor;
 
 ObjectSelector::ObjectSelector() : _selectedIndex(-1), _selectedTileSetIndex(-1) {}
@@ -31,7 +30,6 @@ void ObjectSelector::render(const std::vector<std::unique_ptr<TileSet>>& tileSet
         for (int i = 0; i < static_cast<int>(tileSets.size()); ++i) {
             bool isSelected = (i == _selectedTileSetIndex);
             if (ImGui::Selectable(tileSets[i]->getName().c_str(), isSelected)) {
-                std::cout << "Selected TileSet: " << tileSets[i]->getName() << std::endl;
                 _selectedTileSetIndex = i;
                 updateObjectSelector(tileSets);
             }
