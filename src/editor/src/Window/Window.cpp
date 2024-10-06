@@ -29,8 +29,12 @@ Window::Window(
     registerEvents();
 
     if (!mapPath.empty()) {
-        _map.clearMap();
-        _map.loadMapConfig(mapPath);
+        try {
+            _map.clearMap();
+            _map.loadMapConfig(mapPath);
+        } catch (const std::exception& e) {
+            std::cerr << "Failed to load map config: " << e.what() << std::endl;
+        }
     } else
         _newMapDialogIsOpen = true;
     updateObjectSelector();
@@ -283,6 +287,11 @@ void Window::loadTileSetDialog() {
         ImGui::InputInt("Tile Width", &tileWidth);
         ImGui::InputInt("Tile Height", &tileHeight);
 
+        if (tileWidth < 1)
+            tileWidth = 1;
+        if (tileHeight < 1)
+            tileHeight = 1;
+
         if (ImGui::Button("Load")) {
             loadTileSet(path, tileWidth, tileHeight);
             _popupLoaderIsOpen = false;
@@ -308,6 +317,13 @@ void Window::newMapDialog() {
         ImGui::InputInt("Map Height", &mapHeight);
         ImGui::InputInt("Cell Size", &cellSize);
         ImGui::InputText("File Path", path, IM_ARRAYSIZE(path));
+
+        if (mapWidth < 1)
+            mapWidth = 1;
+        if (mapHeight < 1)
+            mapHeight = 1;
+        if (cellSize < 1)
+            cellSize = 1;
 
         if (ImGui::Button("Create")) {
             try {
