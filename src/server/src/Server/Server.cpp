@@ -2,7 +2,6 @@
 #include "Components.hpp"
 #include "Systems.hpp"
 #include "EntityFactory.hpp"
-#include "MapFactory.hpp"
 
 Server::Server()
 {
@@ -11,9 +10,8 @@ Server::Server()
     _gameEngine.registry.register_component<Player>();
     _gameEngine.registry.register_component<Enemy>();
     _gameEngine.registry.register_component<Projectile>();
-    _gameEngine.registry.register_component<MapData>();
 
-    _world = EntityFactory::createWorld(_gameEngine.registry);
+    _world = EntityFactory::createWorld(_gameEngine.registry, "JY_map.json");
 
     Systems::worldSystem(_gameEngine.registry);
 }

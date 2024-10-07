@@ -1,15 +1,40 @@
 #include "EntityFactory.hpp"
+
+#include <fstream>
+#include <iostream>
+#include <nlohmann/json.hpp>
+
 #include "Components.hpp"
 #include "../../../core/ecs/GameEngine/GameEngineComponents.hpp"
 
-core::ecs::Entity EntityFactory::createWorld(core::ecs::Registry& registry)
+core::ecs::Entity EntityFactory::createWorld(core::ecs::Registry& registry, const std::string& filePath)
 {
     const core::ecs::Entity world = registry.spawn_entity();
 
     registry.add_component(world, Network{});
     registry.add_component(world, core::ge::TransformComponent{sf::Vector2f(0, 0), sf::Vector2f(800, 600), sf::Vector2f(1, 1), 0});
     registry.add_component(world, core::ge::CollisionComponent{WORLD, std::vector{sf::FloatRect(0, 0, 800, 600)}});
-    registry.add_component(world, World{1, 0});
+
+    nlohmann::json json;
+    {
+        std::ifstream file(filePath);
+        if (!file.is_open()) {
+            throw std::runtime_error("Cannot open file: " + filePath);
+        }
+        file >> json;
+    }
+
+    World worldComponent = {1, 0,
+        { json["width"], json["height"] },
+        std::vector(json["width"], std::vector<uint8_t>(json["height"], 0)) };
+    for (const auto& tile : json["tiles"]) {
+        if (tile["x"] < 0 || tile["x"] >= worldComponent.size.first
+            || tile["y"] < 0 || tile["y"] >= worldComponent.size.second) {
+            throw std::out_of_range("Tile coordinates out of bounds");
+        }
+        worldComponent.tiles[tile["x"]][tile["y"]] = static_cast<uint8_t>(tile["tileIndex"]);
+    }
+    registry.add_component(world, std::move(worldComponent));
 
     return world;
 }

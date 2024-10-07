@@ -5,7 +5,7 @@
 
 class EntityFactory {
 public:
-    static core::ecs::Entity createWorld(core::ecs::Registry& registry);
+    static core::ecs::Entity createWorld(core::ecs::Registry& registry, const std::string& filePath);
     static core::ecs::Entity createPlayer(core::ecs::Registry& registry);
     static core::ecs::Entity createEnemy(core::ecs::Registry& registry);
 };
