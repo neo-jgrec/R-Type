@@ -24,12 +24,14 @@ namespace Editor {
         Map();
         void loadMapConfig(const std::string &mapPath);
         void saveMap(const std::string &fileName);
-        void placeTile(int x, int y, int tileIndex);
+        bool placeTile(int x, int y, int tileIndex);
         void removeTile(int x, int y);
         void createNewMap(int width, int height, int cellSize);
 
         [[nodiscard]]
         int getTile(int x, int y) const;
+        [[nodiscard]]
+        const Tile& getTileObject(int x, int y) const;
         [[nodiscard]]
         int getWidth() const;
         [[nodiscard]]
@@ -67,19 +69,30 @@ namespace Editor {
         [[nodiscard]]
         int getBackgroundHeight() const;
 
+        [[nodiscard]]
+        std::string getEditorVersion() const;
+
+        void setMapEditorVersion(const std::string& version);
+        [[nodiscard]]
+        std::string getMapEditorVersion() const;
+
     private:
         std::string _name;
         std::string _filePath;
         int _width;
         int _height;
         int _cellSize;
-        std::vector<std::vector<int>> _tileMap;
+        std::string _editorVersion;
+        std::string _mapEditorVersion;
+        std::vector<std::vector<std::unique_ptr<Tile>>> _tileMap;
         std::vector<std::unique_ptr<TileSet>> _tileSets;
         Grid _grid;
         std::string _backgroundPath;
         sf::Texture _backgroundTexture;
         sf::Sprite _backgroundSprite;
         int _backgroundHeight;
+
+        void resizeMap();
     };
 }
 
