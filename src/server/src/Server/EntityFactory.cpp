@@ -5,6 +5,7 @@
 #include <nlohmann/json.hpp>
 
 #include "Components.hpp"
+#include "../../../game/CollisionMask.hpp"
 #include "../../../core/ecs/GameEngine/GameEngineComponents.hpp"
 
 core::ecs::Entity EntityFactory::createWorld(core::ecs::Registry& registry, const std::string& filePath)

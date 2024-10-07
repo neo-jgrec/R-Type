@@ -7,12 +7,6 @@ struct Network {
     NetworkingService &service = NetworkingService::getInstance();
 };
 
-enum CollisionMask {
-    WORLD = 0b0001,
-    PLAYER = 0b0010,
-    ENEMY = 0b0100
-};
-
 struct World {
     uint8_t speed = 0;
     uint32_t scroll = 0;
@@ -29,7 +23,6 @@ struct Player {
 struct Enemy {
     uint8_t id = 0;
 };
-
 
 struct Projectile {};
 

@@ -4,8 +4,8 @@
 #include <iostream>
 
 #include "../../../game/Components.hpp"
+#include "../../../game/CollisionMask.hpp"
 #include "../../../core/ecs/GameEngine/GameEngineComponents.hpp"
-#include "CollisionMask.hpp"
 
 core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, const sf::Vector2f& position)
 {
