@@ -1,11 +1,12 @@
+#include <iostream>
 #include "Game.hpp"
 #include "../../../game/Components.hpp"
 #include "EntityFactory.hpp"
 
 void Game::inputSystem(core::ecs::Registry& registry)
 {
-    registry.add_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, Player>
-    ([&](core::ecs::Entity, core::ge::TransformComponent &transform, const VelocityComponent &vel, InputStateComponent &input, Player&) {
+    registry.add_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, ShootCounterComponent>
+    ([&](core::ecs::Entity, core::ge::TransformComponent &transform, const VelocityComponent &vel, InputStateComponent &input, ShootCounterComponent &shootCounter) {
             if (input.up) {
                 transform.position.y -= vel.dy;
                 input.up = false;
@@ -32,7 +33,16 @@ void Game::inputSystem(core::ecs::Registry& registry)
 
                 float projectileHeight = 5.0f;
                 projectilePosition.y += (playerHeight / 2.0f) - (projectileHeight / 2.0f);
-                EntityFactory::createPlayerProjectile(registry, projectilePosition);
+                // EntityFactory::createPlayerProjectile(registry, projectilePosition);
+                if (shootCounter.shotCount >= 6) {
+                    EntityFactory::createPlayerMissile(registry, projectilePosition);
+
+                    shootCounter.shotCount = 0;
+                } else {
+                    EntityFactory::createPlayerProjectile(registry, projectilePosition);
+    
+                    shootCounter.shotCount++;
+                }
                 input.fire = false;
             }
     });

@@ -24,6 +24,7 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, con
     registry.add_component(player, HealthComponent{10});
     registry.add_component(player, ScoreComponent{0});
     registry.add_component(player, Player{});
+    registry.add_component(player, ShootCounterComponent{0});
 
     std::string relativePath = "assets/player_sprite.png";
     std::string absolutePath = std::filesystem::absolute(relativePath).string();
@@ -90,6 +91,54 @@ core::ecs::Entity EntityFactory::createPlayerProjectile(core::ecs::Registry& reg
     registry.add_component(projectile, core::ge::TextureComponent{texture});
 
     return projectile;
+}
+
+core::ecs::Entity EntityFactory::createPlayerMissile(core::ecs::Registry &registry, const sf::Vector2f &startPosition)
+{
+    core::ecs::Entity missile = registry.spawn_entity();
+
+    registry.add_component(missile, core::ge::TransformComponent{startPosition, sf::Vector2f(34.5f, 12.0f), sf::Vector2f(4.0f, 4.0f), 0.0f});
+    registry.add_component(missile, core::ge::CollisionComponent{
+        .collisionBoxes = {sf::FloatRect(0.0f, 0.0f, 34.5f, 12.0f)},
+        .onCollision = nullptr
+    });
+    registry.add_component(missile, VelocityComponent{10.0f, 10.0f});
+    registry.add_component(missile, DamageComponent{20});
+    registry.add_component(missile, Projectile{});
+
+    auto buffer = std::make_shared<sf::SoundBuffer>();
+    std::string soundPath = "assets/shooting_sound.ogg";
+    if (!buffer->loadFromFile(soundPath)) {
+        std::cerr << "Failed to load sound: " << soundPath << std::endl;
+        return missile;
+    }
+
+    sf::Sound sound;
+    sound.setBuffer(*buffer);
+    registry.add_component(missile, core::ge::SoundComponent{sound, buffer, true, false});
+
+    std::string relativePath = "assets/player_missile.png";
+    std::string absolutePath = std::filesystem::absolute(relativePath).string();
+    auto texture = std::make_shared<sf::Texture>();
+    if (!texture->loadFromFile(absolutePath)) {
+        std::cerr << "Failed to load texture: " << absolutePath << std::endl;
+        return missile;
+    }
+
+    sf::RectangleShape missileShape(sf::Vector2f(34.5f, 12.0f));
+    missileShape.setTexture(texture.get());
+    missileShape.setTextureRect(sf::IntRect(0, 0, 34, 12));
+    registry.add_component(missile, core::ge::DrawableComponent{missileShape});
+    registry.add_component(missile, core::ge::TextureComponent{texture});
+
+    std::vector<sf::IntRect> frames;
+    frames.reserve(2);
+    for (int i = 0; i < 2; i++) {
+        frames.emplace_back(i * 34, 0, 34, 12);
+    }
+    registry.add_component(missile, core::ge::AnimationComponent{frames, 0.1f, 0.0f, 0});
+
+    return missile;
 }
 
 core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry &registry, const sf::Vector2f &position)

@@ -18,6 +18,8 @@ void Game::init() {
     _gameEngine.registry.register_component<Player>();
     _gameEngine.registry.register_component<Enemy>();
     _gameEngine.registry.register_component<Projectile>();
+    _gameEngine.registry.register_component<Missile>();
+    _gameEngine.registry.register_component<ShootCounterComponent>();
     _gameEngine.registry.register_component<DamageComponent>();
 
     _playerEntity = EntityFactory::createPlayer(_gameEngine.registry, sf::Vector2f(100.0f, 100.0f));
@@ -29,7 +31,7 @@ void Game::init() {
 }
 
 void Game::update() {
-    _gameEngine.registry.run_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, Player>();
+    _gameEngine.registry.run_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, ShootCounterComponent>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::TransformComponent>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::AnimationComponent>();
 
