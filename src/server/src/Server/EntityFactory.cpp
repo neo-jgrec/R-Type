@@ -3,10 +3,24 @@
 #include <fstream>
 #include <iostream>
 #include <nlohmann/json.hpp>
+#include <utility>
 
 #include "Components.hpp"
 #include "../../../game/CollisionMask.hpp"
 #include "../../../core/ecs/GameEngine/GameEngineComponents.hpp"
+
+core::ecs::Entity EntityFactory::createConnectionHub(core::ecs::Registry &registry, std::vector<core::ecs::Entity> &players)
+{
+    const core::ecs::Entity connectionHub = registry.spawn_entity();
+
+    Network network;
+    network.service.run();
+
+    registry.add_component(connectionHub, std::move(network));
+    registry.add_component(connectionHub, ConnectionHub{players});
+
+    return connectionHub;
+}
 
 core::ecs::Entity EntityFactory::createWorld(core::ecs::Registry& registry, const std::string& filePath)
 {

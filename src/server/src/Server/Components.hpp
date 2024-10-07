@@ -15,6 +15,10 @@ struct World {
     std::vector<std::vector<uint8_t>> tiles;
 };
 
+struct ConnectionHub {
+    std::vector<core::ecs::Entity> &players;
+};
+
 struct Player {
     // asio::ip::udp::endpoint& endpoint;
     uint8_t id = 0;

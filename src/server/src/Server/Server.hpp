@@ -8,7 +8,9 @@ class Server {
 private:
     core::GameEngine _gameEngine;
 
+    core::ecs::Entity _connectionHub;
     core::ecs::Entity _world;
+
     std::vector<core::ecs::Entity> _players;
     std::vector<core::ecs::Entity> _enemies;
 
