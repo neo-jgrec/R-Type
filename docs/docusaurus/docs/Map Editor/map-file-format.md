@@ -39,6 +39,10 @@ Here's an example of a minimal map file:
             "y": 0
         }
     ],
+    "background": {
+        "height": 24,
+        "path": "assets/Background/image.png"
+    },
     "width": 100
 }
 ```
@@ -70,11 +74,14 @@ The `tiles` field is an array of objects, each representing a tile placed on the
 - `x`: The x-coordinate of the tile placement (integer)
 - `y`: The y-coordinate of the tile placement (integer)
 
+### Background
+
+- `height`: The height of the background image in pixels (integer)
+- `path`: The file path to the background image (string)
+
 ## Notes
 
 - Coordinates (x, y) are in cell units, not pixels.
 - The `tileIndex` refers to the index of the tile within its tileset, starting from 0.
 - Multiple tilesets can be used in a single map.
 - The `editorVersion` field can be used to handle backwards compatibility if the file format changes in future versions.
-
-For more information on how to use this file format with the R-Type Map Editor, please refer to the [Map Editor documentation](map-editor.md).

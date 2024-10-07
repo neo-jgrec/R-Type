@@ -14,6 +14,7 @@
 #include <SFML/Graphics.hpp>
 #include "../TileSet/TileSet.hpp"
 #include "../Grid/Grid.hpp"
+#include <memory>
 
 using json = nlohmann::json;
 
@@ -58,6 +59,14 @@ namespace Editor {
 
         Grid& getGrid();
 
+        void setBackground(const std::string& backgroundPath);
+        void setBackgroundHeight(int height);
+
+        [[nodiscard]]
+        std::string getBackgroundPath() const;
+        [[nodiscard]]
+        int getBackgroundHeight() const;
+
     private:
         std::string _name;
         std::string _filePath;
@@ -67,6 +76,10 @@ namespace Editor {
         std::vector<std::vector<int>> _tileMap;
         std::vector<std::unique_ptr<TileSet>> _tileSets;
         Grid _grid;
+        std::string _backgroundPath;
+        sf::Texture _backgroundTexture;
+        sf::Sprite _backgroundSprite;
+        int _backgroundHeight;
     };
 }
 

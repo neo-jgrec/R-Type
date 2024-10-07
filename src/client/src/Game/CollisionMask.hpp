@@ -1,0 +1,11 @@
+#ifndef COLLISIONMASK_HPP
+#define COLLISIONMASK_HPP
+
+enum CollisionMask {
+    WORLD = 0b0001,
+    PLAYER = 0b0010,
+    ENEMY = 0b0100,
+    PLAYER_PROJECTILE = 0b1000,
+};
+
+#endif //COLLISIONMASK_HPP

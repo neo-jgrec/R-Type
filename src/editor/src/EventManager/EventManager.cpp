@@ -9,7 +9,7 @@
 
 using namespace Editor;
 
-void EventManager::registerEvent(sf::Event::EventType type, EventCallback callback) {
+void EventManager::registerEvent(sf::Event::EventType type, const EventCallback& callback) {
     _callbacks[type].push_back(callback);
 }
 

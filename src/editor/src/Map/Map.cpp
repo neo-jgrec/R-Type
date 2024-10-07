@@ -10,6 +10,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <SFML/Graphics.hpp>
 
 using namespace Editor;
 
@@ -29,6 +30,7 @@ void Map::loadMapConfig(const std::string &mapPath) {
     std::ifstream file(mapPath);
     if (!file.is_open())
         throw Editor::Exception("Failed to open map file: " + mapPath);
+    std::cout << "Loading map file: " << mapPath << std::endl;
 
     json data;
     try {
@@ -89,6 +91,14 @@ void Map::loadMapConfig(const std::string &mapPath) {
             std::cout << "Tile set loaded: " << filePath << std::endl;
         }
     }
+
+    if (data.contains("background")) {
+        if (!data["background"].contains("height") || !data["background"].contains("path"))
+            throw Editor::Exception("Invalid background data: missing height or path");
+        _backgroundHeight = data["background"]["height"];
+        _backgroundPath = data["background"]["path"];
+        setBackground(_backgroundPath);
+    }
 }
 
 void Map::createNewMap(int width, int height, int cellSize) {
@@ -115,7 +125,7 @@ void Map::saveMap(const std::string &fileName) {
     mapData["width"] = _width;
     mapData["height"] = _height;
     mapData["cellSize"] = _cellSize;
-    mapData["editorVersion"] = "0.1";
+    mapData["editorVersion"] = "0.2";
     mapData["name"] = _name;
 
     json tilesArray = json::array();
@@ -143,6 +153,11 @@ void Map::saveMap(const std::string &fileName) {
         tileSetsArray.push_back(tileSetData);
     }
     mapData["tileSets"] = tileSetsArray;
+
+    json backgroundData;
+    backgroundData["height"] = _backgroundHeight;
+    backgroundData["path"] = _backgroundPath;
+    mapData["background"] = backgroundData;
 
     std::ofstream file(fileName);
     if (file.is_open()) {
@@ -207,16 +222,26 @@ const std::vector<std::unique_ptr<TileSet>>& Map::getTileSets() const {
 }
 
 void Map::draw(sf::RenderWindow& window, std::vector<sf::Vector2i>& selectedTiles) const {
-    if (!_tileMap.empty()) {
-        for (int y = 0; y < _height; ++y) {
-            for (int x = 0; x < _width; ++x) {
-                int tileId = _tileMap[y][x];
-                if (tileId == -1)
-                    continue;
-                const auto& tile = getTileById(tileId);
-                sf::Vector2f position(static_cast<float>(x * _cellSize), static_cast<float>(y * _cellSize));
-                tile.draw(window, position.x, position.y);
-            }
+    if (_backgroundTexture.getSize().x > 0 && _backgroundTexture.getSize().y > 0) {
+        sf::Sprite tempSprite = _backgroundSprite;
+        int backgroundHeightNeeded = _backgroundHeight * _cellSize;
+        float scaleY = static_cast<float>(backgroundHeightNeeded) / static_cast<float>(_backgroundTexture.getSize().y);
+        float scaleX = scaleY;
+        tempSprite.setScale(scaleX, scaleY);
+
+        for (int x = 0; x < _width * _cellSize; x += _backgroundTexture.getSize().x * scaleX) {
+            tempSprite.setPosition(static_cast<float>(x), 0);
+            window.draw(tempSprite);
+        }
+    }
+
+    for (int y = 0; y < _height; ++y) {
+        for (int x = 0; x < _width; ++x) {
+            int tileId = _tileMap[y][x];
+            if (tileId == -1) continue;
+            const auto& tile = getTileById(tileId);
+            sf::Vector2f position(static_cast<float>(x * _cellSize), static_cast<float>(y * _cellSize));
+            tile.draw(window, position.x, position.y);
         }
     }
     _grid.draw(window, selectedTiles);
@@ -240,19 +265,21 @@ bool Map::isPositionValid(int x, int y) const {
 
 void Map::setWidth(int width) {
     _width = width;
-    _tileMap.resize(_height, std::vector<int>(_width, -1));
-    _grid.setGridSize(_width, _height);
+    for (auto& row : _tileMap)
+        row.resize(_width, -1);
+    _grid.setGridSize(_width * _cellSize, _height * _cellSize);
 }
 
 void Map::setHeight(int height) {
     _height = height;
     _tileMap.resize(_height, std::vector<int>(_width, -1));
-    _grid.setGridSize(_width, _height);
+    _grid.setGridSize(_width * _cellSize, _height * _cellSize);
 }
 
 void Map::setCellSize(int cellSize) {
     _cellSize = cellSize;
     _grid.setCellSize(_cellSize);
+    _grid.setGridSize(_width * _cellSize, _height * _cellSize);
 }
 
 void Map::setName(const std::string& name) {
@@ -261,4 +288,25 @@ void Map::setName(const std::string& name) {
 
 std::string Map::getName() const {
     return _name;
+}
+
+void Map::setBackground(const std::string& backgroundPath) {
+    if (!_backgroundTexture.loadFromFile(backgroundPath)) {
+        std::cerr << "Failed to load background texture: " << backgroundPath << std::endl;
+    } else {
+        _backgroundSprite.setTexture(_backgroundTexture);
+        _backgroundPath = backgroundPath;
+    }
+}
+
+void Map::setBackgroundHeight(int height) {
+    _backgroundHeight = height;
+}
+
+std::string Map::getBackgroundPath() const {
+    return _backgroundPath;
+}
+
+int Map::getBackgroundHeight() const {
+    return _backgroundHeight;
 }
