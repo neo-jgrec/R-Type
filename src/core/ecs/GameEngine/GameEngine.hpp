@@ -3,6 +3,8 @@
 
 #include "../Registry/Registry.hpp"
 #include "./GameEngineComponents.hpp"
+
+#include <iostream>
 #include <SFML/Graphics.hpp>
 #include <SFML/System/Clock.hpp>
 
@@ -86,43 +88,46 @@ namespace core {
 
             void collisionSystem()
             {
-                registry.add_system<core::ge::TransformComponent, core::ge::CollisionComponent>(
-                    [&](core::ecs::Entity entity, core::ge::TransformComponent &transform1, core::ge::CollisionComponent &collision1) {
-                        auto &collisionComponents = registry.get_components<core::ge::CollisionComponent>();
-                        auto &transformComponents = registry.get_components<core::ge::TransformComponent>();
+                registry.add_system<ge::TransformComponent, ge::CollisionComponent>(
+                    [&](const ecs::Entity entity, const ge::TransformComponent &transform, ge::CollisionComponent &collision) {
+                        auto &collisionComponents = registry.get_components<ge::CollisionComponent>();
+                        auto &transformComponents = registry.get_components<ge::TransformComponent>();
 
                         for (size_t i = 0; i < collisionComponents.size(); ++i) {
                             if (!collisionComponents[i].has_value() || !transformComponents[i].has_value())
                                 continue;
 
-                            core::ecs::Entity entity2{i};
-                            auto &collision2 = *collisionComponents[i];
-                            auto &transform2 = *transformComponents[i];
-
-                            if (entity == entity2)
+                            ecs::Entity otherEntity{i};
+                            if (entity == otherEntity)
                                 continue;
 
-                            for (const auto &box1 : collision1.collisionBoxes) {
-                                sf::FloatRect rect1 = box1;
-                                rect1.left += transform1.position.x;
-                                rect1.top += transform1.position.y;
-                                rect1.width *= transform1.scale.x;
-                                rect1.height *= transform1.scale.y;
+                            const auto &otherCollision = *collisionComponents[i];
+                            const auto &otherTransform = *transformComponents[i];
 
-                                for (const auto &box2 : collision2->collisionBoxes) {
-                                    sf::FloatRect rect2 = box2;
-                                    rect2.left += transform2->position.x;
-                                    rect2.top += transform2->position.y;
-                                    rect2.width *= transform2->scale.x;
-                                    rect2.height *= transform2->scale.y;
 
-                                    if (rect1.intersects(rect2)) {
-                                        if (collision1.onCollision) {
-                                            collision1.onCollision(entity, entity2);
-                                        }
-                                        if (collision2->onCollision) {
-                                            collision2->onCollision(entity2, entity);
-                                        }
+                            for (const auto &box : collision.collisionBoxes) {
+                                sf::FloatRect rect = {
+                                    box.left + transform.position.x,
+                                    box.top + transform.position.y,
+                                    box.width * transform.scale.x,
+                                    box.height * transform.scale.y
+                                };
+
+                                for (const auto &otherBox : otherCollision->collisionBoxes) {
+                                    sf::FloatRect otherRect = {
+                                        otherBox.left + otherTransform->position.x,
+                                        otherBox.top + otherTransform->position.y,
+                                        otherBox.width * otherTransform->scale.x,
+                                        otherBox.height * otherTransform->scale.y
+                                    };
+
+                                    if (!rect.intersects(otherRect))
+                                        continue;
+
+                                    for (auto &[mask, onCollision] : collision.onCollision) {
+                                        if ((mask & otherCollision->collisionMask) == 0)
+                                            continue;
+                                        onCollision(entity, otherEntity);
                                     }
                                 }
                             }

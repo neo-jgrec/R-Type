@@ -75,8 +75,9 @@ namespace core::ge {
     };
 
     struct CollisionComponent {
+        uint32_t collisionMask = 0;
         std::vector<sf::FloatRect> collisionBoxes;
-        std::function<void(core::ecs::Entity, core::ecs::Entity)> onCollision;
+        std::vector<std::pair<uint32_t, std::function<void(const ecs::Entity&, const ecs::Entity&)>>> onCollision = {};
     };
 }
 

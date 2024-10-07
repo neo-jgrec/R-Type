@@ -3,8 +3,6 @@
 #include "../../../core/ecs/Entity/Entity.hpp"
 #include "../../../core/ecs/GameEngine/GameEngine.hpp"
 
-#include <SFML/Graphics.hpp>
-
 class Game {
 public:
     Game()
@@ -18,7 +16,6 @@ private:
     void processEvents();
     void update();
     void render();
-    void addSystems();
     void init();
 
     core::ecs::Entity _playerEntity = core::ecs::Entity();

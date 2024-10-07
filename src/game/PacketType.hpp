@@ -1,5 +1,5 @@
 #ifndef PACKETTYPE_HPP
-    #define PACKETTYPE_HPP
+#define PACKETTYPE_HPP
 
 enum PacketType {
     ConnectionRequest = 0,

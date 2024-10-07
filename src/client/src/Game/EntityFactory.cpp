@@ -1,29 +1,27 @@
 #include "EntityFactory.hpp"
-#include <SFML/Graphics.hpp>
+
 #include <filesystem>
 #include <iostream>
+
 #include "../../../game/Components.hpp"
 #include "../../../core/ecs/GameEngine/GameEngineComponents.hpp"
+#include "CollisionMask.hpp"
 
 core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, const sf::Vector2f& position)
 {
     core::ecs::Entity player = registry.spawn_entity();
 
     registry.add_component(player, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 17.0f), sf::Vector2f(4.0f, 4.0f), 0.0f});
-    registry.add_component(player, core::ge::CollisionComponent{
-        .collisionBoxes = {sf::FloatRect(0.0f, 0.0f, 33.0f, 17.0f)},
-        .onCollision = [&](core::ecs::Entity self, core::ecs::Entity other) {
-            if (registry.has_component<Enemy>(other)) {
-                auto &damageDone = registry.get_components<DamageComponent>() [other];
-                auto &health = registry.get_components<HealthComponent>() [self];
-                health->get()->health -= damageDone->get()->damage;
-                if (health->get()->health <= 0) {
-                    registry.kill_entity(self);
-                }
-                registry.kill_entity(other);
+    registry.add_component(player, core::ge::CollisionComponent{PLAYER, {sf::FloatRect(0.0f, 0.0f, 33.0f, 17.0f)}, {
+        { ENEMY, [&](const core::ecs::Entity self, const core::ecs::Entity other) {
+            const auto &damageDone = registry.get_components<DamageComponent>() [other];
+            const auto &health = registry.get_components<HealthComponent>() [self];
+            health->get()->health -= damageDone->get()->damage;
+            if (health->get()->health <= 0) {
+                registry.kill_entity(self);
             }
-        }
-    });
+            registry.kill_entity(other);
+        }}}});
     registry.add_component(player, VelocityComponent{10.0f, 10.0f});
     registry.add_component(player, InputStateComponent{});
     registry.add_component(player, core::ge::KeyBinding{});
@@ -62,10 +60,7 @@ core::ecs::Entity EntityFactory::createPlayerProjectile(core::ecs::Registry& reg
     core::ecs::Entity projectile = registry.spawn_entity();
 
     registry.add_component(projectile, core::ge::TransformComponent{startPosition, sf::Vector2f(18.0f, 5.0f), sf::Vector2f(4.0f, 4.0f), 0.0f});
-    registry.add_component(projectile, core::ge::CollisionComponent{
-        .collisionBoxes = {sf::FloatRect(0.0f, 0.0f, 18.0f, 5.0f)},
-        .onCollision = nullptr
-    });
+    registry.add_component(projectile, core::ge::CollisionComponent{PLAYER_PROJECTILE, {sf::FloatRect(0.0f, 0.0f, 18.0f, 5.0f)}});
     registry.add_component(projectile, VelocityComponent{10.0f, 10.0f});
     registry.add_component(projectile, DamageComponent{10});
     registry.add_component(projectile, Projectile{});
@@ -103,20 +98,16 @@ core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry &registry, cons
     core::ecs::Entity enemy = registry.spawn_entity();
 
     registry.add_component(enemy, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 36.0f), sf::Vector2f(4.0f, 4.0f), 0.0f});
-    registry.add_component(enemy, core::ge::CollisionComponent{
-        .collisionBoxes = {sf::FloatRect(0.0f, 0.0f, 33.0f, 36.0f)},
-        .onCollision = [&](core::ecs::Entity self, core::ecs::Entity other) {
-            if (registry.has_component<Projectile>(other)) {
-                auto &damageDone = registry.get_components<DamageComponent>() [other];
-                auto &health = registry.get_components<HealthComponent>() [self];
-                health->get()->health -= damageDone->get()->damage;
-                if (health->get()->health <= 0) {
-                    registry.kill_entity(self);
-                }
-                registry.kill_entity(other);
+    registry.add_component(enemy, core::ge::CollisionComponent{ENEMY, {sf::FloatRect(0.0f, 0.0f, 33.0f, 36.0f)}, {
+        { PLAYER_PROJECTILE, [&](const core::ecs::Entity self, const core::ecs::Entity other) {
+            const auto &damageDone = registry.get_components<DamageComponent>() [other];
+            const auto &health = registry.get_components<HealthComponent>() [self];
+            health->get()->health -= damageDone->get()->damage;
+            if (health->get()->health <= 0) {
+                registry.kill_entity(self);
             }
-        }
-    });
+            registry.kill_entity(other);
+        }}}});
     registry.add_component(enemy, VelocityComponent{10.0f, 10.0f});
     registry.add_component(enemy, HealthComponent{10});
     registry.add_component(enemy, DamageComponent{10});
