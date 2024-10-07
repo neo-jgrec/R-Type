@@ -1,9 +1,9 @@
 #include "EntityFactory.hpp"
 #include <SFML/Graphics.hpp>
+#include <SFML/System/Vector2.hpp>
 #include <filesystem>
 #include <iostream>
 #include "../../../game/Components.hpp"
-#include "../../../core/ecs/GameEngine/GameEngineComponents.hpp"
 
 core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, const sf::Vector2f& position)
 {
@@ -52,11 +52,19 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, con
     return player;
 }
 
-core::ecs::Entity EntityFactory::createPlayerProjectile(core::ecs::Registry& registry, const sf::Vector2f& startPosition)
+core::ecs::Entity EntityFactory::createPlayerProjectile(core::ecs::Registry& registry, core::ge::TransformComponent& playerTransform)
 {
     core::ecs::Entity projectile = registry.spawn_entity();
 
-    registry.add_component(projectile, core::ge::TransformComponent{startPosition, sf::Vector2f(18.0f, 5.0f), sf::Vector2f(4.0f, 4.0f), 0.0f});
+    sf::Vector2f projectileSize(18.0f, 5.0f);
+    sf::Vector2f startPosition = playerTransform.position;
+    sf::Vector2f scale(4.0f, 4.0f);
+    float playerWidth = playerTransform.size.x * playerTransform.scale.x;
+    float playerHeight = playerTransform.size.y * playerTransform.scale.y;
+    startPosition.x += playerWidth;
+    startPosition.y += (playerHeight / 2.0f) - (projectileSize.y / 2.0f);
+
+    registry.add_component(projectile, core::ge::TransformComponent{startPosition, projectileSize, scale, 0.0f});
     registry.add_component(projectile, core::ge::CollisionComponent{
         .collisionBoxes = {sf::FloatRect(0.0f, 0.0f, 18.0f, 5.0f)},
         .onCollision = nullptr
@@ -93,11 +101,20 @@ core::ecs::Entity EntityFactory::createPlayerProjectile(core::ecs::Registry& reg
     return projectile;
 }
 
-core::ecs::Entity EntityFactory::createPlayerMissile(core::ecs::Registry &registry, const sf::Vector2f &startPosition)
+core::ecs::Entity EntityFactory::createPlayerMissile(core::ecs::Registry &registry, core::ge::TransformComponent &playerTransform)
 {
     core::ecs::Entity missile = registry.spawn_entity();
 
-    registry.add_component(missile, core::ge::TransformComponent{startPosition, sf::Vector2f(34.5f, 12.0f), sf::Vector2f(4.0f, 4.0f), 0.0f});
+    sf::Vector2f missileSize(34.5f, 12.0f);
+    sf::Vector2f scale(4.0f, 4.0f);
+    sf::Vector2f startPosition = playerTransform.position;
+    float playerWidth = playerTransform.size.x * playerTransform.scale.x;
+    float playerHeight = playerTransform.size.y * playerTransform.scale.y;
+    startPosition.x += playerWidth;
+    startPosition.y += (playerHeight / 2.0f) - ((missileSize.y / 2.0f) * scale.y);
+
+
+    registry.add_component(missile, core::ge::TransformComponent{startPosition, missileSize, scale, 0.0f});
     registry.add_component(missile, core::ge::CollisionComponent{
         .collisionBoxes = {sf::FloatRect(0.0f, 0.0f, 34.5f, 12.0f)},
         .onCollision = nullptr
@@ -189,3 +206,4 @@ core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry &registry, cons
 
     return enemy;
 }
+

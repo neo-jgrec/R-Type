@@ -24,22 +24,12 @@ void Game::inputSystem(core::ecs::Registry& registry)
                 input.right = false;
             }
             if (input.fire) {
-                sf::Vector2f projectilePosition = transform.position;
-
-                float playerWidth = transform.size.x * transform.scale.x;
-                float playerHeight = transform.size.y * transform.scale.y;
-
-                projectilePosition.x += playerWidth ;
-
-                float projectileHeight = 5.0f;
-                projectilePosition.y += (playerHeight / 2.0f) - (projectileHeight / 2.0f);
-                // EntityFactory::createPlayerProjectile(registry, projectilePosition);
                 if (shootCounter.shotCount >= 6) {
-                    EntityFactory::createPlayerMissile(registry, projectilePosition);
+                    EntityFactory::createPlayerMissile(registry, transform);
 
                     shootCounter.shotCount = 0;
                 } else {
-                    EntityFactory::createPlayerProjectile(registry, projectilePosition);
+                    EntityFactory::createPlayerProjectile(registry, transform);
     
                     shootCounter.shotCount++;
                 }
