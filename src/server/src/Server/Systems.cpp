@@ -5,7 +5,7 @@
 void Systems::worldSystem(core::ecs::Registry &registry)
 {
     registry.add_system<Network, World>(
-        [&](const Network &network, World &world) {
+        [&]([[maybe_unused]] const core::ecs::Entity &entity, [[maybe_unused]] Network &network, World &world) {
             world.scroll += world.speed;
 
             const std::vector payload = {
@@ -15,13 +15,13 @@ void Systems::worldSystem(core::ecs::Registry &registry)
                 static_cast<uint8_t>(world.scroll)
             };
 
-            for (const auto &playerEntity : registry.get_entities<Player>()) {
-                const auto player = std::any_cast<std::shared_ptr<Player>>(playerEntity);
-
-                network.service.sendRequest(
-                    player->endpoint,
-                    MapScrolling,
-                    payload);
-            }
+            // for (const auto &playerEntity : registry.get_entities<Player>()) {
+            //     const auto &player =
+            //
+            //     network.service.sendRequest(
+            //         player->endpoint,
+            //         MapScrolling,
+            //         payload);
+            // }
         });
 }

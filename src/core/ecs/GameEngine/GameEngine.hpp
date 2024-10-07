@@ -3,6 +3,8 @@
 
 #include "../Registry/Registry.hpp"
 #include "./GameEngineComponents.hpp"
+
+#include <iostream>
 #include <SFML/Graphics.hpp>
 #include <SFML/System/Clock.hpp>
 
@@ -102,6 +104,7 @@ namespace core {
                             const auto &otherCollision = *collisionComponents[i];
                             const auto &otherTransform = *transformComponents[i];
 
+
                             for (const auto &box : collision.collisionBoxes) {
                                 sf::FloatRect rect = {
                                     box.left + transform.position.x,
@@ -121,8 +124,11 @@ namespace core {
                                     if (!rect.intersects(otherRect))
                                         continue;
 
-                                    collision.onCollision(entity, otherEntity);
-                                    otherCollision->onCollision(otherEntity, entity);
+                                    for (auto &[mask, onCollision] : collision.onCollision) {
+                                        if ((mask & otherCollision->collisionMask) == 0)
+                                            continue;
+                                        onCollision(entity, otherEntity);
+                                    }
                                 }
                             }
                         }
