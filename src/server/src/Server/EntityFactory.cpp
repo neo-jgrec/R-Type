@@ -70,12 +70,16 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry)
 
     registry.add_component(player, Network{});
     registry.add_component(player, core::ge::TransformComponent{sf::Vector2f(0, 0), sf::Vector2f(32, 32), sf::Vector2f(1, 1), 0});
-
     registry.add_component(player, core::ge::CollisionComponent{PLAYER, std::vector{sf::FloatRect(0, 0, 32, 32)},{
-        { ENEMY, [id]([[maybe_unused]] const core::ecs::Entity& entity, [[maybe_unused]] const core::ecs::Entity& otherEntity) {
+        { ENEMY, [&]([[maybe_unused]] const core::ecs::Entity& entity, [[maybe_unused]] const core::ecs::Entity& otherEntity) {
             std::cout << "Player " << static_cast<int>(id) << " collided with enemy" << std::endl;
+            const auto &playerComponent = registry.get_component<Player>(entity);
+            playerComponent->health -= 1;
+            if (playerComponent->health <= 0)
+                registry.kill_entity(entity);
+            registry.kill_entity(otherEntity);
         }}}});
-    registry.add_component(player, Player{id});
+    registry.add_component(player, Player{id, 3});
 
     std::cout << "Player " << static_cast<int>(id) << " created" << std::endl;
     return player;
@@ -88,7 +92,7 @@ core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry& registry)
     registry.add_component(enemy, Network{});
     registry.add_component(enemy, core::ge::TransformComponent{sf::Vector2f(0, 0), sf::Vector2f(32, 32), sf::Vector2f(1, 1), 0});
     registry.add_component(enemy, core::ge::CollisionComponent{ENEMY, std::vector{sf::FloatRect(0, 0, 32, 32)},{
-        {PLAYER, []([[maybe_unused]] const core::ecs::Entity& entity, [[maybe_unused]] const core::ecs::Entity& otherEntity) {
+        { PLAYER, []([[maybe_unused]] const core::ecs::Entity& entity, [[maybe_unused]] const core::ecs::Entity& otherEntity) {
             std::cout << "Enemy collided with player" << std::endl;
         }}}});
     registry.add_component(enemy, Enemy{});
