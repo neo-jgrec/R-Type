@@ -1,5 +1,6 @@
 #ifndef NETWORKSERVICE_HPP
     #define NETWORKSERVICE_HPP32
+
 /**
  * @file NetworkingService.hpp
  * @brief Defines the NetworkingService class, which provides UDP-based networking functionality.
@@ -14,7 +15,6 @@
     #include <vector>
     #include <map>
     #include "./includes/RequestHeader.hpp"
-
 
 /**
  * @class NetworkingService
@@ -51,7 +51,7 @@ public:
      */
     static NetworkingService& getInstance(
         const std::string& server_ip = "127.0.0.1",
-        int port = 12345
+        const int port = 12345
     ) {
         static NetworkingService instance(server_ip, port);
         return instance;
@@ -60,6 +60,7 @@ public:
     // Interdire la copie et l'affectation de l'instance
     NetworkingService(const NetworkingService&) = delete;
     NetworkingService& operator=(const NetworkingService&) = delete;
+
     /**
     * @brief Constructs a NetworkingService object and starts receiving packets on the specified IP and port.
     * @param server_ip The IP address of the server.
@@ -75,36 +76,37 @@ public:
     }
 
     /**
- * @brief Sets the handler function for a specific GDTP message type.
- *
- * This method allows the user to assign a handler function that will be called when a message
- * of a specific GDTP message type is received. The handler processes the received message's header,
- * payload, and client endpoint information.
- *
- * @param messageType The GDTP message type for which the handler is being set.
- * @param handler The function that will process the message. The handler function takes three arguments:
- * - `const GDTPHeader& header`: The header of the received message.
- * - `const std::vector<uint8_t>& payload`: The payload of the received message.
- * - `const asio::ip::udp::endpoint& client_endpoint`: The endpoint of the client that sent the message.
- *
- * @code
- * // Example usage:
- * networkService.setMessageHandler(uint8_t::PlayerMovement, [](const GDTPHeader& header, const std::vector<uint8_t>& payload, const asio::ip::udp::endpoint& client_endpoint) {
- *     // Handle PlayerMovement message
- *     std::cout << "Received PlayerMovement message" << std::endl;
- * });
- * @endcode
- */
+     * @brief Sets the handler function for a specific GDTP message type.
+     *
+     * This method allows the user to assign a handler function that will be called when a message
+     * of a specific GDTP message type is received. The handler processes the received message's header,
+     * payload, and client endpoint information.
+     *
+     * @param messageType The GDTP message type for which the handler is being set.
+     * @param handler The function that will process the message. The handler function takes three arguments:
+     * - `const GDTPHeader& header`: The header of the received message.
+     * - `const std::vector<uint8_t>& payload`: The payload of the received message.
+     * - `const asio::ip::udp::endpoint& client_endpoint`: The endpoint of the client that sent the message.
+     *
+     * @code
+     * // Example usage:
+     * networkService.setMessageHandler(uint8_t::PlayerMovement, [](const GDTPHeader& header, const std::vector<uint8_t>& payload, const asio::ip::udp::endpoint& client_endpoint) {
+     *     // Handle PlayerMovement message
+     *     std::cout << "Received PlayerMovement message" << std::endl;
+     * });
+     * @endcode
+     */
     void addEvent(const uint8_t messageType,
-        const std::function<void(const GDTPHeader&, const std::vector<uint8_t>&, const asio::ip::udp::endpoint&)>& handler) {
+        const std::function<void(const GDTPHeader&, const std::vector<uint8_t>&, const asio::ip::udp::endpoint&)>& handler) const
+    {
         (*message_handlers)[messageType] = handler;
     }
 
     /**
- * @brief Gets the IP address and port the server is currently listening on.
- * @return A string representing the IP address and port in the format "IP:Port".
- */
-    std::string getLocalEndpoint() const {
+     * @brief Gets the IP address and port the server is currently listening on.
+     * @return A string representing the IP address and port in the format "IP:Port".
+     */
+    [[nodiscard]] std::string getLocalEndpoint() const {
         asio::ip::udp::endpoint local_endpoint = socket_.local_endpoint();
         return local_endpoint.address().to_string() + ":" + std::to_string(local_endpoint.port());
     }
@@ -113,8 +115,8 @@ public:
      * @brief Gets the IP address the server is currently listening on.
      * @return A string representing the IP address.
      */
-    std::string getIp() const {
-        asio::ip::udp::endpoint local_endpoint = socket_.local_endpoint();
+    [[nodiscard]] std::string getIp() const {
+        const asio::ip::udp::endpoint local_endpoint = socket_.local_endpoint();
         return local_endpoint.address().to_string();
     }
 
@@ -122,7 +124,7 @@ public:
      * @brief Gets the Port the server is currently listening on.
      * @return unsigned short representing the port number.
      */
-    unsigned short getPort() const
+    [[nodiscard]] uint32_t getPort() const
     {
         return socket_.local_endpoint().port();
     }
@@ -130,9 +132,10 @@ public:
     /**
     * @brief Destructor for NetworkingService. Closes the socket and stops the service.
     */
-    ~NetworkingService() {
+    ~NetworkingService()
+    {
         socket_.close();
-        this->stop();
+        stop();
     }
 
     /**
@@ -250,7 +253,7 @@ void sendRequest(
      * This method starts the ASIO I/O context in a separate thread, allowing the service to handle network I/O asynchronously.
      */
     void run() {
-        this->thread = std::jthread([this]() {
+        thread = std::jthread([this] {
             io_context_.run();
         });
     }
@@ -263,7 +266,7 @@ void sendRequest(
     void stop()
     {
         io_context_.stop();
-        this->thread.request_stop();
+        thread.request_stop();
     }
 
     /**
@@ -276,24 +279,25 @@ void sendRequest(
         thread.join();
     }
 
-    //create errror for unkown payload message
     /**
      * @brief Exception class for handling unknown payload messages.
      */
     class UnknownPayloadMessage : public std::exception {
-        public:
-            UnknownPayloadMessage() = delete;
-            UnknownPayloadMessage(uint8_t messageType) : messageType(messageType)
-            {
+    private:
+        uint8_t messageType;
 
-            }
-            const char *what() const noexcept override
-            {
-                return "Payload Message handlers is missing for this message type: " + static_cast<int>(this->messageType);
-            };
-        private:
-            uint8_t messageType;
+    public:
+        UnknownPayloadMessage() = delete;
+
+        explicit UnknownPayloadMessage(const uint8_t messageType)
+            : messageType(messageType) {}
+
+        [[nodiscard]] const char *what() const noexcept override
+        {
+            return "Payload Message handlers is missing for this message type: " + static_cast<int>(this->messageType);
+        }
     };
+
 private:
     asio::io_context io_context_;                   ///< ASIO I/O context for handling asynchronous network operations.
     asio::ip::udp::socket socket_;                  ///< ASIO UDP socket for sending and receiving packets.
@@ -335,7 +339,7 @@ private:
         const std::array<uint8_t, 1400>& packet,
         const std::size_t length,
         const asio::ip::udp::endpoint& client_endpoint
-    ) {
+    ) const {
         std::cout << "Received packet of length: " << length << std::endl;
 
         if (length < HEADER_SIZE) {
@@ -344,8 +348,7 @@ private:
         }
 
         std::vector packetData(packet.begin(), packet.begin() + length);
-
-        GDTPHeader header = GDTPHeader::fromBuffer(packetData);
+        const GDTPHeader header = GDTPHeader::fromBuffer(packetData);
 
         std::cout << "Packet details - Version: " << static_cast<int>(header.version)
                   << ", Message Type: " << static_cast<int>(header.messageType)
@@ -361,7 +364,7 @@ private:
 
         const std::vector payload(packetData.begin() + HEADER_SIZE, packetData.begin() + HEADER_SIZE + header.payloadSize);
 
-        processMessage(static_cast<uint8_t>(header.messageType), payload, header, client_endpoint);
+        processMessage(header.messageType, payload, header, client_endpoint);
     }
 
     /**
@@ -372,7 +375,7 @@ private:
      * @param client_endpoint The endpoint of the client that sent the message.
      */
     void processMessage(
-        uint8_t messageType,
+        const uint8_t messageType,
         const std::vector<uint8_t>& payload,
         const GDTPHeader& header,
         const asio::ip::udp::endpoint& client_endpoint
