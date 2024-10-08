@@ -8,7 +8,6 @@
 #include "EventPool.hpp"
 #include <iostream>
 
-#include "../core/network/includes/RequestType.hpp"
 #include "EventFactory.hpp"
 
 EventPool& EventPool::getInstance(){
@@ -88,13 +87,11 @@ std::shared_ptr<std::map<uint8_t, std::function<void(
     std::function<void(const GDTPHeader &header, const std::vector<uint8_t> &payload,
     const asio::ip::udp::endpoint &client_endpoint)>>>();
 
-    #define X(name, value) \
-    handlers->emplace(static_cast<uint8_t>(value), \
-    [](const GDTPHeader &header, const std::vector<uint8_t> &payload, const asio::ip::udp::endpoint &client_endpoint) { \
-    EventPool::getInstance().handler(header, payload, client_endpoint); \
-    });
-    EVENT_TYPE_LIST
-    #undef X
+    for (int i = 0; i < 0x1A; i++) {
+        handlers->emplace(i, [](const GDTPHeader &header, const std::vector<uint8_t> &payload, const asio::ip::udp::endpoint &client_endpoint) {
+            EventPool::getInstance().handler(header, payload, client_endpoint);
+        });
+    }
 
     return handlers;
 }

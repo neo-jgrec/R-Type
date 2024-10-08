@@ -14,7 +14,7 @@ Grid::Grid(int width, int height, int cellSize)
 }
 
 void Grid::draw(sf::RenderWindow &window, std::vector<sf::Vector2i>& selectedTiles) const {
-    sf::Color highlightColor(0, 255, 0, 255); // Green color with some transparency
+    sf::Color highlightColor(0, 255, 0, 255);
     std::vector<sf::Vertex> highlightVertices;
 
     for (const auto& tile : selectedTiles) {

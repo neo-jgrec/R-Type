@@ -45,3 +45,17 @@ bool Tile::isDestructible() const {
 void Tile::setDestructible(bool isDestructible) {
     _isDestructible = isDestructible;
 }
+
+void Tile::setId(int id) {
+    _id = id;
+}
+
+void Tile::update(
+    const sf::Texture& texture,
+    const sf::IntRect& textureRect,
+    int id
+) {
+    _sprite.setTexture(texture);
+    _sprite.setTextureRect(textureRect);
+    _id = id;
+}
