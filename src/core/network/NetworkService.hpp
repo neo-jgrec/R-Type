@@ -7,7 +7,7 @@
 #pragma once
 
 #ifndef NETWORKSERVICE_HPP
-    #define NETWORKSERVICE_HPP
+    #define NETWORKSERVICE_HPP329
 /**
  * @file NetworkingService.hpp
  * @brief Defines the NetworkingService class, which provides UDP-based networking functionality.
@@ -66,7 +66,7 @@ public:
         const std::shared_ptr<std::map<uint8_t, std::function<std::vector<uint8_t>(std::vector<std::string>)>>>& payload_handlers = Payload::payloadMap()
 
     ) {
-        static NetworkingService instance(server_ip, port, message_handlers, payload_handlers);
+        static NetworkingService instance(server_ip, port);
         return instance;
     }
 
@@ -82,11 +82,9 @@ public:
     */
     NetworkingService(
         const std::string& server_ip,
-        const int port,
-        const std::shared_ptr<std::map<uint8_t, std::function<void(const GDTPHeader& header, const std::vector<uint8_t>& payload, const asio::ip::udp::endpoint& client_endpoint)>>>& message_handlers = Receive::handlersMap(),
-        const std::shared_ptr<std::map<uint8_t, std::function<std::vector<uint8_t>(std::vector<std::string>)>>>& payload_handlers = Payload::payloadMap()
+        const int port
     )
-        : socket_(io_context_, asio::ip::udp::endpoint(asio::ip::udp::v4(), port)), message_handlers(message_handlers), payload_handlers(payload_handlers) {
+        : socket_(io_context_, asio::ip::udp::endpoint(asio::ip::udp::v4(), port)) {
         std::cout << "Server listening on " << server_ip << ":" << port << std::endl;
         startReceive(); // Commence l'écoute des paquets dès l'initialisation
     }
@@ -112,66 +110,9 @@ public:
  * });
  * @endcode
  */
-    void setMessageHandler(const uint8_t messageType,
+    void addEvent(const uint8_t messageType,
                            const std::function<void(const GDTPHeader&, const std::vector<uint8_t>&, const asio::ip::udp::endpoint&)>& handler) {
         (*message_handlers)[messageType] = handler;
-    }
-
-    /**
- * @brief Sets the handler function for preparing the payload for a specific GDTP message type.
- *
- * This method allows the user to assign a function that will prepare the payload
- * for a specific GDTP message type before sending. The function is responsible for converting
- * the input arguments into a binary payload that matches the message type specification.
- *
- * @param messageType The GDTP message type for which the payload handler is being set.
- * @param handler The function that will generate the payload. The handler function takes a single argument:
- * - `std::vector<std::string> args`: A vector of arguments (as strings) to be converted into a payload.
- * The function returns a `std::vector<uint8_t>` representing the binary payload.
- *
- * @code
- * // Example usage:
- * networkService.setPayloadHandler(uint8_t::PlayerMovement, [](std::vector<std::string> args) -> std::vector<uint8_t> {
- *     std::vector<uint8_t> payload;
- *     // Prepare payload from args...
- *     return payload;
- * });
- * @endcode
- */
-    void setPayloadHandler(const uint8_t messageType, std::function<std::vector<uint8_t>(std::vector<std::string>)> &handler) {
-        (*payload_handlers)[messageType] = handler;
-    }
-
-    /**
-     * @brief Sets the shared pointer to the map of message handlers.
-     *
-     * This function allows setting a shared pointer to a map where each GDTP message type is associated
-     * with a handler function. The handler functions process incoming messages of the given type.
-     * The existing pointer to the handlers map is replaced by the new one.
-     *
-     * Each handler function takes the following parameters:
-     * - `const GDTPHeader& header`: The header of the received message.
-     * - `const std::vector<uint8_t>& payload`: The payload of the received message.
-     * - `const asio::ip::udp::endpoint& client_endpoint`: The endpoint of the client that sent the message.
-     *
-     * @param message_handlers A shared pointer to a map that associates GDTP message types (`uint8_t`)
-     * with their corresponding handler functions.
-     *
-     * @note This function replaces the current shared pointer to the message handlers map with the new one provided.
-     *
-     * @code
-     * auto newMessageHandlers = std::make_shared<std::map<uint8_t, std::function<void(const GDTPHeader&, const std::vector<uint8_t>&, const asio::ip::udp::endpoint&)>>>();
-     * newMessageHandlers->emplace(uint8_t::PlayerMovement, [](const GDTPHeader& header, const std::vector<uint8_t>& payload, const asio::ip::udp::endpoint& client_endpoint) {
-     *     // Handle PlayerMovement message
-     * });
-     * networkService.setMessagesHandler(newMessageHandlers);
-     * @endcode
-     */
-    void setMessagesHandler(
-        std::shared_ptr<std::map<uint8_t, std::function<void(const GDTPHeader&, const std::vector<uint8_t>&, const asio::ip::udp::endpoint&)>>> message_handlers
-    )
-    {
-        this->message_handlers = std::move(message_handlers);
     }
 
     /**
@@ -202,41 +143,6 @@ public:
     }
 
     /**
-     * @brief Sets the shared pointer to the map of payload preparation handlers.
-     *
-     * This function allows setting a shared pointer to a map where each GDTP message type is associated
-     * with a function that prepares the payload before sending it. The existing pointer to the payload
-     * handlers map is replaced by the new one.
-     *
-     * Each handler function takes the following parameter:
-     * - `std::vector<std::string> args`: A vector of string arguments that will be converted into a binary payload.
-     *
-     * The handler function returns:
-     * - `std::vector<uint8_t>`: A binary representation of the payload for the message type.
-     *
-     * @param payload_handlers A shared pointer to a map that associates GDTP message types (`uint8_t`)
-     * with their corresponding payload preparation functions.
-     *
-     * @note This function replaces the current shared pointer to the payload handlers map with the new one provided.
-     *
-     * @code
-     * auto newPayloadHandlers = std::make_shared<std::map<uint8_t, std::function<std::vector<uint8_t>(std::vector<std::string>)>>>();
-     * newPayloadHandlers->emplace(uint8_t::PlayerMovement, [](std::vector<std::string> args) -> std::vector<uint8_t> {
-     *     // Prepare the payload for PlayerMovement
-     *     return std::vector<uint8_t>;
-        * });
-        * networkService.setPayloadsHandler(newPayloadHandlers);
-        * @endcode
-        */
-void setPayloadsHandler(
-   std::shared_ptr<std::map<uint8_t, std::function<std::vector<uint8_t>(std::vector<std::string>)>>>& payload_handlers
-)
-{
-    this->payload_handlers = std::move(payload_handlers);
-}
-
-
-    /**
     * @brief Destructor for NetworkingService. Closes the socket and stops the service.
     */
     ~NetworkingService() {
@@ -245,81 +151,48 @@ void setPayloadsHandler(
     }
 
     /**
-     * @brief Sends a request to a specified recipient with the given message type and arguments.
-     * @param recipient The IP address of the recipient.
-     * @param port The port number of the recipient.
-     * @param messageType The type of the GDTP message to be sent.
-     * @param args Optional arguments for the payload of the message.
+     * @brief Sends a UDP request to the specified recipient with the given message type and payload.
+     *
+     * This function constructs a GDTP packet, consisting of a header and an optional payload, and sends it
+     * to the specified recipient's IP address and port. The header contains metadata such as the protocol version,
+     * message type, packet ID, payload size, and information on packet sequencing. The payload represents the
+     * data to be sent, such as game state updates or player actions.
+     *
+     * @param recipient The IP address of the recipient to which the packet will be sent.
+     * @param port The port number on the recipient's side where the packet will be sent.
+     * @param messageType The type of the GDTP message to be sent, represented as a `uint8_t`.
+     *                    The message type indicates what kind of data the packet contains (e.g., PlayerMovement, PingRequest).
+     * @param payload A vector of bytes (`std::vector<uint8_t>`) representing the payload data to be sent with the message.
+     *                If no payload is provided, the payload will be empty by default.
+     *
+     * @note The GDTP packet header is automatically constructed and includes:
+     * - Version (1 byte)
+     * - Message Type (1 byte)
+     * - Packet ID (8 bytes), generated using the current timestamp.
+     * - Payload Size (2 bytes)
+     * - Sequence Number (2 bytes), defaults to 1 (for unfragmented packets).
+     * - Total Packets (2 bytes), defaults to 1 (for unfragmented packets).
+     *
+     * @note The `messageType` indicates the nature of the message being sent (e.g., Player Movement, Chat, etc.),
+     * and the payload provides the data associated with this message.
+     *
+     * @warning The function does not handle packet fragmentation. If the payload exceeds the size of a typical UDP packet,
+     * consider splitting the payload into smaller packets before sending.
+     *
+     * @code
+     * // Example usage:
+     * std::vector<uint8_t> payload = {0x01, 0x02, 0x03}; // Payload data
+     * networkService.sendRequest("127.0.0.1", 12345, static_cast<uint8_t>(GDTPMessageType::PlayerMovement), payload);
+     * @endcode
+     *
+     * @see sendPacket() for how the constructed packet is sent.
      */
-    void sendRequest(
-        const std::string& recipient,
-        const int port,
-        uint8_t messageType,
-        const std::vector<std::string>& args = {}
-    ) {
-        std::vector<uint8_t> payload = preparePayload(messageType, args);
-        std::cout << "Payload size: " << payload.size() << std::endl;
-
-        GDTPHeader header{};
-        header.version = 0x01;
-        header.messageType = static_cast<uint8_t>(messageType);
-
-        header.packetId = std::chrono::system_clock::now().time_since_epoch().count();
-
-        header.payloadSize = static_cast<uint16_t>(payload.size());
-        header.sequenceNumber = 1;
-        header.totalPackets = 1;
-
-        std::vector<uint8_t> headerBuffer = header.toBuffer();
-
-        headerBuffer.insert(headerBuffer.end(), payload.begin(), payload.end());
-
-        sendPacket(headerBuffer, recipient, port);
-    }
-/**
- * @brief Sends a UDP request to the specified recipient with the given message type and payload.
- *
- * This function constructs a GDTP packet, consisting of a header and an optional payload, and sends it
- * to the specified recipient's IP address and port. The header contains metadata such as the protocol version,
- * message type, packet ID, payload size, and information on packet sequencing. The payload represents the
- * data to be sent, such as game state updates or player actions.
- *
- * @param recipient The IP address of the recipient to which the packet will be sent.
- * @param port The port number on the recipient's side where the packet will be sent.
- * @param messageType The type of the GDTP message to be sent, represented as a `uint8_t`.
- *                    The message type indicates what kind of data the packet contains (e.g., PlayerMovement, PingRequest).
- * @param payload A vector of bytes (`std::vector<uint8_t>`) representing the payload data to be sent with the message.
- *                If no payload is provided, the payload will be empty by default.
- *
- * @note The GDTP packet header is automatically constructed and includes:
- * - Version (1 byte)
- * - Message Type (1 byte)
- * - Packet ID (8 bytes), generated using the current timestamp.
- * - Payload Size (2 bytes)
- * - Sequence Number (2 bytes), defaults to 1 (for unfragmented packets).
- * - Total Packets (2 bytes), defaults to 1 (for unfragmented packets).
- *
- * @note The `messageType` indicates the nature of the message being sent (e.g., Player Movement, Chat, etc.),
- * and the payload provides the data associated with this message.
- *
- * @warning The function does not handle packet fragmentation. If the payload exceeds the size of a typical UDP packet,
- * consider splitting the payload into smaller packets before sending.
- *
- * @code
- * // Example usage:
- * std::vector<uint8_t> payload = {0x01, 0x02, 0x03}; // Payload data
- * networkService.sendRequest("127.0.0.1", 12345, static_cast<uint8_t>(GDTPMessageType::PlayerMovement), payload);
- * @endcode
- *
- * @see sendPacket() for how the constructed packet is sent.
- */
 void sendRequest(
     const std::string& recipient,
     const int port,
     uint8_t messageType,
     const std::vector<uint8_t>& payload = {}
 ) {
-        std::cout << "Payload size: " << payload.size() << std::endl;
 
         GDTPHeader header{};
         header.version = 0x01;
@@ -337,20 +210,6 @@ void sendRequest(
         headerBuffer.insert(headerBuffer.end(), payload.begin(), payload.end());
 
         sendPacket(headerBuffer, recipient, port);
-    }
-
-    /**
-     * @brief Sends a request to a client using its endpoint.
-     * @param client_endpoint The UDP endpoint of the client (contains IP and port).
-     * @param messageType The type of the GDTP message to be sent.
-     * @param args Optional arguments for the payload of the message.
-     */
-    void sendRequest(
-        const asio::ip::udp::endpoint& client_endpoint,
-        const uint8_t messageType,
-        const std::vector<std::string>& args = {}
-    ) {
-        sendRequest(client_endpoint.address().to_string(), client_endpoint.port(), messageType, args);
     }
 
     /**
@@ -457,25 +316,6 @@ private:
     std::array<uint8_t, 1400> recv_buffer_{};         ///< Buffer for receiving incoming packets.
     std::jthread thread;                            ///< Thread for running the ASIO I/O context.
     std::shared_ptr<std::map<uint8_t, std::function<void(const GDTPHeader&, const std::vector<uint8_t>&, const asio::ip::udp::endpoint&)>>> message_handlers; ///< Handlers for processing received messages.
-     std::shared_ptr<std::map<uint8_t, std::function<std::vector<uint8_t>(std::vector<std::string>)>>> payload_handlers; ///< Handlers for preparing message payloads.
-
-    /**
-    * @brief Prepares the payload based on the GDTP message type and arguments.
-    * @param messageType The type of the GDTP message.
-    * @param args The arguments required for the message's payload.
-    * @return A vector of bytes representing the payload.
-    */
-    std::vector<uint8_t> preparePayload(
-        const uint8_t messageType,
-        const std::vector<std::string>& args) const {
-        std::vector<uint8_t> payload;
-        if (this->payload_handlers->contains(messageType)) {
-            payload = (*this->payload_handlers)[messageType](args);
-        } else {
-            throw UnknownPayloadMessage(messageType);
-        }
-        return payload;
-    }
 
     /**
      * @brief Sends a UDP packet to the specified recipient.
@@ -515,7 +355,6 @@ private:
 
         if (length < HEADER_SIZE) {
             std::cerr << "Received malformed packet: insufficient header size" << std::endl;
-            this->sendRequest(client_endpoint, static_cast<uint8_t>(0x12), { "Invalid packet" });
             return;
         }
 
@@ -560,31 +399,6 @@ private:
         }
     }
 
-    /**
-     * @brief Sends a "Connection Accept" message to the client.
-     * @param client_endpoint The endpoint of the client to which the message is sent.
-     */
-    void sendConnectionAccept(
-        const asio::ip::udp::endpoint& client_endpoint
-    ) {
-        GDTPHeader header{};
-        header.version = 0x01; // Version du protocole
-        header.messageType = static_cast<uint8_t>(0x11); // Type de message
-        header.packetId = std::chrono::system_clock::now().time_since_epoch().count(); // Utilisation d'un timestamp comme ID
-        header.payloadSize = 0; // Pas de payload pour Connection Accept
-
-        std::vector<uint8_t> headerBuffer = header.toBuffer();
-
-        std::error_code ec;
-        socket_.send_to(asio::buffer(headerBuffer), client_endpoint, 0, ec);
-
-        if (ec) {
-            std::cerr << "Failed to send Connection Accept: " << ec.message() << std::endl;
-        } else {
-            std::cout << "Connection Accept sent to " << client_endpoint.address().to_string()
-                      << ":" << client_endpoint.port() << std::endl;
-        }
-    }
 };
 
 #endif // NETWORKSERVICE_HPP
