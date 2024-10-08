@@ -12,6 +12,12 @@ public:
     ~Game() = default;
 
     void run();
+
+    enum class GameState {
+        MainMenu = 0,
+        Playing = 1,
+        GameOver = 2
+    };
 private:
     void processEvents();
     void update();
@@ -24,6 +30,8 @@ private:
     core::GameEngine _gameEngine;
 
     bool _windowOpen = true;
+
+    GameState _currentState = GameState::MainMenu;
 
     static void inputSystem(core::ecs::Registry& registry);
     static void projectileMovementSystem(core::ecs::Registry& registry);
