@@ -21,7 +21,6 @@
     #include <thread>
     #include <vector>
     #include <map>
-    #include "./includes/RequestType.hpp"
     #include "./includes/RequestHeader.hpp"
     #include "../game/PreparePayload.hpp"
     #include "../game/HandlersReceive.hpp"
@@ -516,7 +515,7 @@ private:
 
         if (length < HEADER_SIZE) {
             std::cerr << "Received malformed packet: insufficient header size" << std::endl;
-            this->sendRequest(client_endpoint, static_cast<uint8_t>(GDTPMessageType::ConnectionReject), { "Invalid packet" });
+            this->sendRequest(client_endpoint, static_cast<uint8_t>(0x12), { "Invalid packet" });
             return;
         }
 
@@ -570,7 +569,7 @@ private:
     ) {
         GDTPHeader header{};
         header.version = 0x01; // Version du protocole
-        header.messageType = static_cast<uint8_t>(GDTPMessageType::ConnectionAccept); // Type de message
+        header.messageType = static_cast<uint8_t>(0x11); // Type de message
         header.packetId = std::chrono::system_clock::now().time_since_epoch().count(); // Utilisation d'un timestamp comme ID
         header.payloadSize = 0; // Pas de payload pour Connection Accept
 

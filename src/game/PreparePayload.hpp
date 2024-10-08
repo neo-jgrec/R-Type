@@ -13,7 +13,6 @@
     #include <vector>
     #include <cstring>
     #include <map>
-    #include "../core/network/includes/RequestType.hpp"
 
 namespace Payload {
    /**
@@ -161,13 +160,11 @@ namespace Payload {
 
         auto payloadMap = std::make_shared<std::map<uint8_t, std::function<std::vector<uint8_t>(std::vector<std::string>)>>>();
 
-        *payloadMap = {
-        {+GDTPMessageType::ErrorMessage, prepareErrorMessage},
-        {+GDTPMessageType::ConnectionRequest, prepareConnectionRequest},
-        {+GDTPMessageType::PlayerMovement, preparePlayerMovement},
-        {+GDTPMessageType::PlayerShoot, preparePlayerShoot},
-        {+GDTPMessageType::ChatMessage, prepareChatMessage}
-        };
+        payloadMap->emplace(0x14, prepareErrorMessage);
+        payloadMap->emplace(0x10, prepareConnectionRequest);
+        payloadMap->emplace(0x01, preparePlayerMovement);
+        payloadMap->emplace(0x05, preparePlayerShoot);
+        payloadMap->emplace(0x15, prepareChatMessage);
         return payloadMap;
     };
 }

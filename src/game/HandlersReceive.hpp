@@ -4,7 +4,6 @@
 #include <iostream>
 #include <vector>
 #include <map>
-#include "../core/network/includes/RequestType.hpp"
 
 namespace Receive {
     inline void handleConnectionRequest([[maybe_unused]] const GDTPHeader &header, [[maybe_unused]] const std::vector<uint8_t>& payload, [[maybe_unused]] const asio::ip::udp::endpoint& client_endpoint) {
@@ -25,8 +24,8 @@ namespace Receive {
     {
         auto handlers = std::make_shared<std::map<uint8_t, std::function<void(const GDTPHeader& header, const std::vector<uint8_t>& payload, const asio::ip::udp::endpoint& client_endpoint)>>>();
 
-        handlers->emplace(+GDTPMessageType::ConnectionRequest, handleConnectionRequest);
-        handlers->emplace(+GDTPMessageType::ConnectionAccept, handleConnectionAccept);
+        handlers->emplace(0x10, handleConnectionRequest);
+        handlers->emplace(0x11, handleConnectionAccept);
         return handlers;
     }
 }
