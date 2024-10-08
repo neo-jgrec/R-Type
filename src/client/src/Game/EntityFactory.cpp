@@ -124,7 +124,7 @@ core::ecs::Entity EntityFactory::createPlayerMissile(core::ecs::Registry &regist
     registry.add_component(missile, Projectile{});
 
     auto buffer = std::make_shared<sf::SoundBuffer>();
-    std::string soundPath = "assets/shooting_sound.ogg";
+    std::string soundPath = "assets/missile_sound.ogg";
     if (!buffer->loadFromFile(soundPath)) {
         std::cerr << "Failed to load sound: " << soundPath << std::endl;
         return missile;
