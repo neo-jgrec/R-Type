@@ -1,13 +1,5 @@
-/*
-** EPITECH PROJECT, 2024
-** R-Type
-** File description:
-** NetworkService.hpp
-*/
-#pragma once
-
 #ifndef NETWORKSERVICE_HPP
-    #define NETWORKSERVICE_HPP329
+    #define NETWORKSERVICE_HPP32
 /**
  * @file NetworkingService.hpp
  * @brief Defines the NetworkingService class, which provides UDP-based networking functionality.
