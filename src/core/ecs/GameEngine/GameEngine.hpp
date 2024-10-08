@@ -66,11 +66,11 @@ namespace core {
                         anim.elapsedTime += delta_t;
 
                         if (anim.elapsedTime >= anim.frameTime) {
-                            anim.currentFrame = (anim.currentFrame + 1) % anim.frames.size();
+                            anim.currentFrame = (anim.currentFrame + 1) % anim.animations[anim.currentState].size();
                             anim.elapsedTime -= anim.frameTime;
                         }
 
-                        drawable.shape.setTextureRect(anim.frames[anim.currentFrame]);
+                        drawable.shape.setTextureRect(anim.animations[anim.currentState][anim.currentFrame]);
                     });
             }
 
