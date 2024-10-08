@@ -29,34 +29,31 @@
 class NetworkingService {
 public:
     /**
- * @brief Returns the singleton instance of NetworkingService.
- *
- * This method ensures that there is only one instance of NetworkingService throughout the program.
- * If the instance is not yet created, it initializes it with the provided IP address and port.
- * If it has already been created, it returns the same instance.
- *
- * @param server_ip The IP address for the server (default is "127.0.0.1").
- * @param port The port number for the server (default is 12345).
- * @return A reference to the singleton instance of NetworkingService.
- *
- * @note The IP address and port are used only during the first call to this method. Subsequent calls
- * will return the existing instance without reinitializing the networking parameters.
- *
- * @warning This method ensures that only one instance of NetworkingService exists. Do not attempt to
- * create an instance manually outside this method, as it may lead to undefined behavior.
- *
- * @code
- * // Example usage:
- * NetworkingService& networkService = NetworkingService::getInstance("192.168.1.1", 8080);
- * networkService.sendRequest("127.0.0.1", 12345, uint8_t::PlayerMovement, {"1", "100.0", "200.0", "300.0"});
- * @endcode
- */
+     * @brief Returns the singleton instance of NetworkingService.
+     *
+     * This method ensures that there is only one instance of NetworkingService throughout the program.
+     * If the instance is not yet created, it initializes it with the provided IP address and port.
+     * If it has already been created, it returns the same instance.
+     *
+     * @param server_ip The IP address for the server (default is "127.0.0.1").
+     * @param port The port number for the server (default is 12345).
+     * @return A reference to the singleton instance of NetworkingService.
+     *
+     * @note The IP address and port are used only during the first call to this method. Subsequent calls
+     * will return the existing instance without reinitializing the networking parameters.
+     *
+     * @warning This method ensures that only one instance of NetworkingService exists. Do not attempt to
+     * create an instance manually outside this method, as it may lead to undefined behavior.
+     *
+     * @code
+     * // Example usage:
+     * NetworkingService& networkService = NetworkingService::getInstance("192.168.1.1", 8080);
+     * networkService.sendRequest("127.0.0.1", 12345, uint8_t::PlayerMovement, {"1", "100.0", "200.0", "300.0"});
+     * @endcode
+     */
     static NetworkingService& getInstance(
         const std::string& server_ip = "127.0.0.1",
-        int port = 12345,
-        const std::shared_ptr<std::map<uint8_t, std::function<void(const GDTPHeader& header, const std::vector<uint8_t>& payload, const asio::ip::udp::endpoint& client_endpoint)>>>& message_handlers = Receive::handlersMap(),
-        const std::shared_ptr<std::map<uint8_t, std::function<std::vector<uint8_t>(std::vector<std::string>)>>>& payload_handlers = Payload::payloadMap()
-
+        int port = 12345
     ) {
         static NetworkingService instance(server_ip, port);
         return instance;
@@ -69,8 +66,6 @@ public:
     * @brief Constructs a NetworkingService object and starts receiving packets on the specified IP and port.
     * @param server_ip The IP address of the server.
     * @param port The port number to listen on.
-    * @param message_handlers A shared pointer to a map of message handlers for different uint8_t.
-    * @param payload_handlers A shared pointer to a map of payload handlers for different uint8_t.
     */
     NetworkingService(
         const std::string& server_ip,
@@ -103,7 +98,7 @@ public:
  * @endcode
  */
     void addEvent(const uint8_t messageType,
-                           const std::function<void(const GDTPHeader&, const std::vector<uint8_t>&, const asio::ip::udp::endpoint&)>& handler) {
+        const std::function<void(const GDTPHeader&, const std::vector<uint8_t>&, const asio::ip::udp::endpoint&)>& handler) {
         (*message_handlers)[messageType] = handler;
     }
 
