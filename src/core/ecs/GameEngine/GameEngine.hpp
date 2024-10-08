@@ -4,9 +4,10 @@
 #include "../Registry/Registry.hpp"
 #include "./GameEngineComponents.hpp"
 
-#include <iostream>
 #include <SFML/Graphics.hpp>
 #include <SFML/System/Clock.hpp>
+
+#include <iostream>
 
 namespace core {
     class GameEngine {
@@ -27,12 +28,17 @@ namespace core {
                 registry.register_component<core::ge::ClickableComponent>();
                 registry.register_component<core::ge::ColorComponent>();
                 registry.register_component<core::ge::CollisionComponent>();
+                registry.register_component<core::ge::ButtonComponent>();
+                registry.register_component<core::ge::TextComponent>();
+                registry.register_component<core::ge::SceneComponent>();
 
                 positionSystem();
                 renderSystems();
                 animationSystem();
                 soundSystem();
                 collisionSystem();
+                buttonSystem();
+                textSystem();
             }
 
             ~GameEngine() = default;
@@ -40,12 +46,15 @@ namespace core {
             float delta_t = 0.0f;
             core::ecs::Registry registry;
             sf::RenderWindow window;
+            int currentScene = 0;
             sf::Clock clock;
 
         protected:
             void renderSystems()
             {
-                registry.add_system<core::ge::DrawableComponent>([&window = window](core::ecs::Entity, core::ge::DrawableComponent &drawable) {
+                registry.add_system<core::ge::DrawableComponent, core::ge::SceneComponent>([&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::DrawableComponent &drawable, core::ge::SceneComponent &scene) {
+                    if (scene.sceneName != currentScene)
+                        return;
                     window.draw(drawable.shape);
                 });
             }
@@ -133,6 +142,45 @@ namespace core {
                             }
                         }
                     });
+            }
+
+            void buttonSystem()
+            {
+                registry.add_system<core::ge::ButtonComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent>([&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::ButtonComponent &button, core::ge::SceneComponent &scene, core::ge::DrawableComponent &drawable, core::ge::TextComponent &text) {
+                    if (scene.sceneName != currentScene)
+                        return;
+                    sf::Vector2i mousePosition = sf::Mouse::getPosition(window);
+                    sf::Vector2f worldPos = window.mapPixelToCoords(mousePosition);
+
+                    button.isHovered = button.shape.getGlobalBounds().contains(worldPos);
+                    button.isPressed = button.isHovered && sf::Mouse::isButtonPressed(sf::Mouse::Left);
+
+                    if (button.isPressed) {
+                        button.onClick();
+                        drawable.shape.setSize(button.shape.getSize() * 0.98f);
+                        text.text.setScale(sf::Vector2f(0.98f, 0.98f));
+                    } else if (button.isHovered) {
+                        drawable.shape.setSize(button.shape.getSize() * 1.02f);
+                        text.text.setScale(sf::Vector2f(1.02f, 1.02f));
+                    } else {
+                        drawable.shape.setSize(button.shape.getSize());
+                        text.text.setScale(sf::Vector2f(1.0f, 1.0f));
+                    }
+                });
+            }
+
+            void textSystem()
+            {
+                registry.add_system<core::ge::TextComponent, core::ge::SceneComponent>([&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::TextComponent &text, core::ge::SceneComponent &scene) {
+                    if (scene.sceneName != currentScene)
+                        return;
+                    if (text.text.getString().isEmpty()) {
+                        std::cerr << "Warning: Attempting to draw empty text" << std::endl;
+                        return;
+                    }
+                    text.text.setFont(text.font);
+                    window.draw(text.text);
+                });
             }
     };
 }

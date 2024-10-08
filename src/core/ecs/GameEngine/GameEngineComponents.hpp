@@ -79,6 +79,22 @@ namespace core::ge {
         std::vector<sf::FloatRect> collisionBoxes;
         std::vector<std::pair<uint32_t, std::function<void(const ecs::Entity&, const ecs::Entity&)>>> onCollision = {};
     };
+
+    struct ButtonComponent {
+        sf::RectangleShape shape;
+        std::function<void()> onClick;
+        bool isHovered = false;
+        bool isPressed = false;
+    };
+
+    struct TextComponent {
+        sf::Text text;
+        sf::Font font;
+    };
+
+    struct SceneComponent {
+        int sceneName;
+    };
 }
 
 #endif /* !GAMEENGINECOMPONENTS_HPP_ */
