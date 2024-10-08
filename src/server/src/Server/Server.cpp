@@ -3,6 +3,8 @@
 #include "Systems.hpp"
 #include "EntityFactory.hpp"
 
+#include "../../../game/MessageType.hpp"
+
 Server::Server()
 {
     _gameEngine.registry.register_component<Network>();
@@ -12,10 +14,14 @@ Server::Server()
     _gameEngine.registry.register_component<Enemy>();
     _gameEngine.registry.register_component<Projectile>();
 
-    _connectionHub = EntityFactory::createConnectionHub(_gameEngine.registry, _players);
-    _world = EntityFactory::createWorld(_gameEngine.registry, "JY_map.json");
+    _connectionHub = EntityFactory::createConnectionHub(_gameEngine.registry, _networkingService, _players);
+    _world = EntityFactory::createWorld(_gameEngine.registry, _networkingService, "JY_map.json");
 
     Systems::worldSystem(_gameEngine.registry);
+
+    _networkingService.addEvent(EntitySpawn, [&](const GDTPHeader &, const std::vector<uint8_t> &, const asio::ip::udp::endpoint &) {
+        std::cout << "EntitySpawn" << std::endl;
+    });
 }
 
 void Server::update()
@@ -27,11 +33,15 @@ void Server::update()
 
 void Server::run()
 {
-    // _players.push_back(EntityFactory::createPlayer(_gameEngine.registry));
-    _enemies.push_back(EntityFactory::createEnemy(_gameEngine.registry));
+    std::cout << "Hello, World!" << std::endl;
 
+    // _players.push_back(EntityFactory::createPlayer(_gameEngine.registry));
+    _enemies.push_back(EntityFactory::createEnemy(_gameEngine.registry, _networkingService));
+
+    _networkingService.run();
     while (true) {
         update();
         sleep(1);
     }
+    _networkingService.stop();
 }

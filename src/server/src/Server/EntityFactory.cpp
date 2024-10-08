@@ -9,24 +9,21 @@
 #include "../../../game/CollisionMask.hpp"
 #include "../../../core/ecs/GameEngine/GameEngineComponents.hpp"
 
-core::ecs::Entity EntityFactory::createConnectionHub(core::ecs::Registry &registry, std::vector<core::ecs::Entity> &players)
+core::ecs::Entity EntityFactory::createConnectionHub(core::ecs::Registry &registry, const NetworkingService &networkingService, std::vector<core::ecs::Entity> &players)
 {
     const core::ecs::Entity connectionHub = registry.spawn_entity();
 
-    Network network;
-    network.service.run();
-
-    registry.add_component(connectionHub, std::move(network));
+    registry.add_component(connectionHub, Network{networkingService});
     registry.add_component(connectionHub, ConnectionHub{players});
 
     return connectionHub;
 }
 
-core::ecs::Entity EntityFactory::createWorld(core::ecs::Registry& registry, const std::string& filePath)
+core::ecs::Entity EntityFactory::createWorld(core::ecs::Registry& registry, const NetworkingService &networkingService, const std::string& filePath)
 {
     const core::ecs::Entity world = registry.spawn_entity();
 
-    registry.add_component(world, Network{});
+    registry.add_component(world, Network{networkingService});
     registry.add_component(world, core::ge::TransformComponent{sf::Vector2f(0, 0), sf::Vector2f(800, 600), sf::Vector2f(1, 1), 0});
     registry.add_component(world, core::ge::CollisionComponent{WORLD, std::vector{sf::FloatRect(0, 0, 800, 600)}});
 
@@ -54,7 +51,7 @@ core::ecs::Entity EntityFactory::createWorld(core::ecs::Registry& registry, cons
     return world;
 }
 
-core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry)
+core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, const NetworkingService &networkingService)
 {
     const core::ecs::Entity player = registry.spawn_entity();
 
@@ -68,7 +65,7 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry)
     if (id == 4)
         throw std::runtime_error("Maximum number of players reached");
 
-    registry.add_component(player, Network{});
+    registry.add_component(player, Network{networkingService});
     registry.add_component(player, core::ge::TransformComponent{sf::Vector2f(0, 0), sf::Vector2f(32, 32), sf::Vector2f(1, 1), 0});
     registry.add_component(player, core::ge::CollisionComponent{PLAYER, std::vector{sf::FloatRect(0, 0, 32, 32)},{
         { ENEMY, [&]([[maybe_unused]] const core::ecs::Entity& entity, [[maybe_unused]] const core::ecs::Entity& otherEntity) {
@@ -85,11 +82,11 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry)
     return player;
 }
 
-core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry& registry)
+core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry& registry, const NetworkingService &networkingService)
 {
     const core::ecs::Entity enemy = registry.spawn_entity();
 
-    registry.add_component(enemy, Network{});
+    registry.add_component(enemy, Network{networkingService});
     registry.add_component(enemy, core::ge::TransformComponent{sf::Vector2f(0, 0), sf::Vector2f(32, 32), sf::Vector2f(1, 1), 0});
     registry.add_component(enemy, core::ge::CollisionComponent{ENEMY, std::vector{sf::FloatRect(0, 0, 32, 32)},{
         { PLAYER, []([[maybe_unused]] const core::ecs::Entity& entity, [[maybe_unused]] const core::ecs::Entity& otherEntity) {
