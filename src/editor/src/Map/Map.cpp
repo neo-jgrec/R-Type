@@ -19,11 +19,22 @@ Map::Map() :
     _width(1),
     _height(1),
     _cellSize(24),
-    _grid(1, 1, 24)
+    _editorVersion("2.0"),
+    _grid(1, 1, 24),
+    _backgroundHeight(1)
 {
-    _tileMap.resize(_height, std::vector<int>(_width, -1));
+    resizeMap();
     _grid.setGridSize(_width * _cellSize, _height * _cellSize);
     _grid.setCellSize(_cellSize);
+}
+
+void Map::resizeMap() {
+    _tileMap.resize(_height);
+    for (auto& row : _tileMap) {
+        row.resize(_width);
+        for (auto& tile : row)
+            tile = std::make_unique<Tile>();
+    }
 }
 
 void Map::loadMapConfig(const std::string &mapPath) {
@@ -52,11 +63,12 @@ void Map::loadMapConfig(const std::string &mapPath) {
     _width = data["width"];
     _height = data["height"];
     _name = data["name"];
+    _mapEditorVersion = data["editorVersion"];
 
     if (_cellSize <= 0 || _width <= 0 || _height <= 0)
         throw Editor::Exception("Invalid values for cellSize, width, or height");
 
-    _tileMap.resize(_height, std::vector<int>(_width, -1));
+    resizeMap();
     _grid.setGridSize(_width * _cellSize, _height * _cellSize);
     _grid.setCellSize(_cellSize);
 
@@ -69,9 +81,13 @@ void Map::loadMapConfig(const std::string &mapPath) {
             int x = tile["x"];
             int y = tile["y"];
             int tileIndex = tile["tileIndex"];
+            bool isDestructible = false;
+            if (tile.contains("isDestructible"))
+                isDestructible = tile["isDestructible"];
+            _tileMap[y][x]->setDestructible(isDestructible);
             if (x < 0 || x >= _width * _cellSize || y < 0 || y >= _height * _cellSize)
                 throw Editor::Exception("Invalid tile position: (" + std::to_string(x) + ", " + std::to_string(y) + ")");
-            _tileMap[y][x] = tileIndex;
+            _tileMap[y][x]->setId(tileIndex);
             std::cout << "Tile at (" << x << ", " << y << "): " << tileIndex << std::endl;
         }
     }
@@ -107,7 +123,7 @@ void Map::createNewMap(int width, int height, int cellSize) {
     _cellSize = cellSize;
     _tileMap.clear();
     _tileSets.clear();
-    _tileMap.resize(_height, std::vector<int>(_width, -1));
+    resizeMap();
     _grid.setGridSize(_width * _cellSize, _height * _cellSize);
     _grid.setCellSize(cellSize);
 }
@@ -125,18 +141,19 @@ void Map::saveMap(const std::string &fileName) {
     mapData["width"] = _width;
     mapData["height"] = _height;
     mapData["cellSize"] = _cellSize;
-    mapData["editorVersion"] = "0.2";
+    mapData["editorVersion"] = _editorVersion;
     mapData["name"] = _name;
 
     json tilesArray = json::array();
     for (int y = 0; y < _height; ++y) {
         for (int x = 0; x < _width; ++x) {
-            int tileIndex = _tileMap[y][x];
-            if (tileIndex != -1) {
+            Tile& tileObject = const_cast<Tile&>(getTileObject(x, y));
+            if (tileObject.getId() != -1) {
                 json tile;
                 tile["x"] = x;
                 tile["y"] = y;
-                tile["tileIndex"] = tileIndex;
+                tile["tileIndex"] = tileObject.getId();
+                tile["isDestructible"] = tileObject.isDestructible();
                 tilesArray.push_back(tile);
             }
         }
@@ -168,21 +185,24 @@ void Map::saveMap(const std::string &fileName) {
     }
 }
 
-void Map::placeTile(int x, int y, int tileIndex) {
+bool Map::placeTile(int x, int y, int tileIndex) {
     if (!isPositionValid(x, y))
-        return;
-    _tileMap[y][x] = tileIndex;
+        return false;
+    if (_tileMap[y][x]->getId() == tileIndex)
+        return false;
+    _tileMap[y][x]->setId(tileIndex);
+    return true;
 }
 
 void Map::removeTile(int x, int y) {
     if (!isPositionValid(x, y))
         return;
-    _tileMap[y][x] = -1;
+    _tileMap[y][x]->setId(-1);
 }
 
 int Map::getTile(int x, int y) const {
     if (isPositionValid(x, y))
-        return _tileMap[y][x];
+        return _tileMap[y][x]->getId();
     return -1;
 }
 
@@ -237,7 +257,7 @@ void Map::draw(sf::RenderWindow& window, std::vector<sf::Vector2i>& selectedTile
 
     for (int y = 0; y < _height; ++y) {
         for (int x = 0; x < _width; ++x) {
-            int tileId = _tileMap[y][x];
+            int tileId = _tileMap[y][x]->getId();
             if (tileId == -1) continue;
             const auto& tile = getTileById(tileId);
             sf::Vector2f position(static_cast<float>(x * _cellSize), static_cast<float>(y * _cellSize));
@@ -265,14 +285,13 @@ bool Map::isPositionValid(int x, int y) const {
 
 void Map::setWidth(int width) {
     _width = width;
-    for (auto& row : _tileMap)
-        row.resize(_width, -1);
+    resizeMap();
     _grid.setGridSize(_width * _cellSize, _height * _cellSize);
 }
 
 void Map::setHeight(int height) {
     _height = height;
-    _tileMap.resize(_height, std::vector<int>(_width, -1));
+    resizeMap();
     _grid.setGridSize(_width * _cellSize, _height * _cellSize);
 }
 
@@ -309,4 +328,22 @@ std::string Map::getBackgroundPath() const {
 
 int Map::getBackgroundHeight() const {
     return _backgroundHeight;
+}
+
+std::string Map::getEditorVersion() const {
+    return _editorVersion;
+}
+
+std::string Map::getMapEditorVersion() const {
+    return _mapEditorVersion;
+}
+
+const Tile& Map::getTileObject(int x, int y) const {
+    if (!isPositionValid(x, y))
+        throw Editor::Exception("Invalid position");
+    return *_tileMap[y][x];
+}
+
+void Map::setMapEditorVersion(const std::string& version) {
+    _mapEditorVersion = version;
 }

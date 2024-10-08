@@ -194,7 +194,10 @@ void Window::run() {
         updateViewOffset();
 
         ImGuiIO& io = ImGui::GetIO();
-        io.FontGlobalScale = 2.0f;
+        float screenWidth = static_cast<float>(sf::VideoMode::getDesktopMode().width);
+        float screenHeight = static_cast<float>(sf::VideoMode::getDesktopMode().height);
+        float scaleFactor = std::min(screenWidth / 1920.0f, screenHeight / 1080.0f);
+        io.FontGlobalScale = scaleFactor;
 
         ImGui::SFML::Update(_window, deltaClock.restart());
 
@@ -212,6 +215,21 @@ void Window::run() {
 }
 
 void Window::renderUI() {
+    if (_map.getEditorVersion() != _map.getMapEditorVersion()) {
+        ImGui::OpenPopup("Map Editor Version Error");
+        if (ImGui::BeginPopupModal("Map Editor Version Error", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::Text("The map was created with a different version of the editor.");
+            ImGui::Text("Do you want to continue ?");
+            if (ImGui::Button("Yes")) {
+                _map.setMapEditorVersion(_map.getEditorVersion());
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Exit"))
+                _window.close();
+            ImGui::EndPopup();
+        }
+    }
     _mapPropertiesPanel.render(_map);
     _mainMenuBar.render();
     _objectSelector.render(_map.getTileSets());
@@ -293,10 +311,8 @@ void Window::loadTileSetDialog() {
         ImGui::InputInt("Tile Width", &tileWidth);
         ImGui::InputInt("Tile Height", &tileHeight);
 
-        if (tileWidth < 1)
-            tileWidth = 1;
-        if (tileHeight < 1)
-            tileHeight = 1;
+        tileWidth = std::clamp(tileWidth, 1, 1000);
+        tileHeight = std::clamp(tileHeight, 1, 1000);
 
         if (ImGui::Button("Load")) {
             loadTileSet(path, tileWidth, tileHeight);
@@ -324,12 +340,9 @@ void Window::newMapDialog() {
         ImGui::InputInt("Cell Size", &cellSize);
         ImGui::InputText("File Path", path, IM_ARRAYSIZE(path));
 
-        if (mapWidth < 1)
-            mapWidth = 1;
-        if (mapHeight < 1)
-            mapHeight = 1;
-        if (cellSize < 1)
-            cellSize = 1;
+        mapWidth = std::clamp(mapWidth, 1, 1000);
+        mapHeight = std::clamp(mapHeight, 1, 1000);
+        cellSize = std::clamp(cellSize, 1, 100);
 
         if (ImGui::Button("Create")) {
             try {
@@ -414,7 +427,6 @@ void Window::redo() {
 }
 
 void Window::resetView() {
-    std::cout << "Reset view" << std::endl;
     _zoomLevel = 1.0f;
     _viewOffset = sf::Vector2f(0.0f, 0.0f);
     _view = _window.getDefaultView();
@@ -433,9 +445,9 @@ void Window::handleMouseButtonPressed(const sf::Event& event) {
     if (!_map.isPositionValid(gridX, gridY))
         return;
 
-    int tileId = _map.getTile(gridX, gridY);
+    const Tile& tile = _map.getTileObject(gridX, gridY);
     if (_toolPanel.getSelectedTool() == Tool::SELECTOR) {
-        if (tileId == -1)
+        if (tile.getId() == -1)
             return;
         auto it = std::find(_selectedTiles.begin(), _selectedTiles.end(), sf::Vector2i(gridX, gridY));
         if (it == _selectedTiles.end())
@@ -448,13 +460,15 @@ void Window::handleMouseButtonPressed(const sf::Event& event) {
         for (int i = 0; i < static_cast<int>(_currentTiles.size()); ++i) {
             for (int j = 0; j < static_cast<int>(_currentTiles[i].size()); ++j) {
                 const auto& tile = _currentTiles[i][j];
-                _map.placeTile(gridX + j, gridY + i, tile->getId());
-                _undoStack.push(std::make_unique<AddTileAction>(gridX + j, gridY + i, tile->getId()));
+                if (_map.placeTile(gridX + j, gridY + i, tile->getId()))
+                    _undoStack.push(std::make_unique<AddTileAction>(gridX + j, gridY + i, tile->getId()));
             }
         }
     } else {
         if (_toolPanel.getSelectedTool() == Tool::ERASER) {
+            int tileIndex = _map.getTile(gridX, gridY);
             _map.removeTile(gridX, gridY);
+            _undoStack.push(std::make_unique<RemoveTileAction>(gridX, gridY, tileIndex));
         }
     }
 }
@@ -469,18 +483,25 @@ void Window::handleMouseMoved(const sf::Event& event) {
         int gridX = static_cast<int>(worldPos.x / static_cast<float>(_map.getGrid().getCellSize()));
         int gridY = static_cast<int>(worldPos.y / static_cast<float>(_map.getGrid().getCellSize()));
 
+        if (_toolPanel.getSelectedTool() == Tool::SELECTOR) {
+            if (_map.isPositionValid(gridX, gridY)) {
+                auto it = std::find(_selectedTiles.begin(), _selectedTiles.end(), sf::Vector2i(gridX, gridY));
+                if (it == _selectedTiles.end())
+                    _selectedTiles.emplace_back(gridX, gridY);
+            }
+        }
+
         if (!_currentTiles.empty()) {
             for (int i = 0; i < static_cast<int>(_currentTiles.size()); ++i) {
                 for (int j = 0; j < static_cast<int>(_currentTiles[i].size()); ++j) {
                     const auto& tile = _currentTiles[i][j];
-                    _map.placeTile(gridX + j, gridY + i, tile->getId());
-                    _undoStack.push(std::make_unique<AddTileAction>(gridX + j, gridY + i, tile->getId()));
+                    if (_map.placeTile(gridX + j, gridY + i, tile->getId()))
+                        _undoStack.push(std::make_unique<AddTileAction>(gridX + j, gridY + i, tile->getId()));
                 }
             }
         } else {
-            if (_toolPanel.getSelectedTool() == Tool::ERASER) {
+            if (_toolPanel.getSelectedTool() == Tool::ERASER)
                 _map.removeTile(gridX, gridY);
-            }
         }
     }
 }
@@ -489,9 +510,8 @@ const Tile& Window::getTile(int tileId) const {
     for (const auto& tileSet : _map.getTileSets()) {
         for (int i = 0; i < static_cast<int>(tileSet->getTileCount()); ++i) {
             const Tile& tile = tileSet->getTile(i);
-            if (tile.getId() == tileId) {
+            if (tile.getId() == tileId)
                 return tile;
-            }
         }
     }
     throw Editor::Exception("Tile not found: " + std::to_string(tileId));

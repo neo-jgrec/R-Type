@@ -16,7 +16,14 @@ void TileInfoPanel::render(Map& map, std::vector<sf::Vector2i>& selectedTiles) {
     ImGui::Begin("Tile Information");
 
     for (const auto& selectedTile : selectedTiles) {
-        ImGui::Text("Tile ID: %d", map.getTile(selectedTile.x, selectedTile.y));
+        Tile& tile = const_cast<Tile&>(map.getTileObject(selectedTile.x, selectedTile.y));
+        ImGui::Text("Tile ID: %d", tile.getId());
+        ImGui::Text("Position: %d, %d", selectedTile.x, selectedTile.y);
+        bool isDestructible = tile.isDestructible();
+        if (ImGui::Checkbox("Is Destructible", &isDestructible)) {
+            tile.setDestructible(isDestructible);
+        }
+        ImGui::Separator();
     }
 
     ImGui::End();
