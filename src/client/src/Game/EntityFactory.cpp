@@ -1,4 +1,5 @@
 #include "EntityFactory.hpp"
+#include "Game.hpp"
 
 #include <filesystem>
 #include <iostream>
@@ -42,6 +43,7 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, con
     playerShape.setTexture(texture.get());
     playerShape.setTextureRect(sf::IntRect(0, 0, 33, 17));
     registry.add_component(player, core::ge::DrawableComponent{playerShape});
+    registry.add_component(player, core::ge::SceneComponent{static_cast<int>(Game::GameState::Playing)});
     registry.add_component(player, core::ge::TextureComponent{texture});
 
     // Animation frames (first row)
@@ -88,6 +90,7 @@ core::ecs::Entity EntityFactory::createPlayerProjectile(core::ecs::Registry& reg
     projectileShape.setTexture(texture.get());
     projectileShape.setTextureRect(sf::IntRect(0, 0, 18, 5));
     registry.add_component(projectile, core::ge::DrawableComponent{projectileShape});
+    registry.add_component(projectile, core::ge::SceneComponent{static_cast<int>(Game::GameState::Playing)});
     registry.add_component(projectile, core::ge::TextureComponent{texture});
 
     return projectile;
@@ -136,4 +139,37 @@ core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry &registry, cons
     registry.add_component(enemy, core::ge::AnimationComponent{frames, 0.1f, 0.0f, 0});
 
     return enemy;
+}
+
+core::ecs::Entity EntityFactory::createButton(core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void()>& onClick, int scene)
+{
+    core::ecs::Entity button = registry.spawn_entity();
+
+    sf::RectangleShape shape(size);
+    shape.setPosition(position);
+    shape.setFillColor(sf::Color::White);
+    shape.setOutlineThickness(2);
+    shape.setOutlineColor(sf::Color::Black);
+
+    sf::Font font;
+    if (!font.loadFromFile("assets/Fonts/Arial.ttf")) {
+        std::cerr << "Failed to load font: " << "assets/Fonts/Arial.ttf" << std::endl;
+        return button;
+    }
+
+    sf::Text text;
+    text.setFont(font);
+    text.setString(label);
+    text.setCharacterSize(24);
+    text.setFillColor(sf::Color::Black);
+
+    sf::FloatRect textBounds = text.getLocalBounds();
+    text.setOrigin(textBounds.left + textBounds.width / 2.0f, textBounds.top + textBounds.height / 2.0f);
+    text.setPosition(position.x + size.x / 2.0f, position.y + size.y / 2.0f);
+
+    registry.add_component(button, core::ge::DrawableComponent{shape});
+    registry.add_component(button, core::ge::TextComponent{text, font});
+    registry.add_component(button, core::ge::ButtonComponent{shape, onClick, false, false});
+    registry.add_component(button, core::ge::SceneComponent{scene});
+    return button;
 }
