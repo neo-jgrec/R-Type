@@ -72,6 +72,7 @@ public:
     )
         : socket_(io_context_, asio::ip::udp::endpoint(asio::ip::udp::v4(), port)) {
         std::cout << "Server listening on " << server_ip << ":" << port << std::endl;
+        message_handlers = std::make_shared<std::map<uint8_t, std::function<void(const GDTPHeader&, const std::vector<uint8_t>&, const asio::ip::udp::endpoint&)>>>();
         startReceive(); // Commence l'écoute des paquets dès l'initialisation
     }
 
