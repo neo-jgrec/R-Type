@@ -14,8 +14,6 @@
     #include <string>
     #include <variant>
 
-    #include "../../../core/network/includes/RequestType.hpp"
-
 /**
  * @struct PlayerMovement
  * @brief Represents the data for a player movement event.
@@ -145,79 +143,75 @@ struct PlayerHealthUpdate {
  */
 class Event {
 public:
-    /**
- * @brief Alias for GDTPMessageType. EventType now inherits all values from GDTPMessageType.
- */
-    using EventType = GDTPMessageType;
 
     /**
      * @brief Constructor for an event with a PlayerMovement payload.
      * @param type The type of the event.
      * @param movement The PlayerMovement payload.
      */
-    Event(EventType type, const PlayerMovement& movement);
+    Event(uint8_t type, const PlayerMovement& movement);
 
     /**
      * @brief Constructor for an event with a ChatMessage payload.
      * @param type The type of the event.
      * @param message The ChatMessage payload.
      */
-    Event(EventType type, const ChatMessage& message);
+    Event(uint8_t type, const ChatMessage& message);
 
     /**
      * @brief Constructor for an event with a PlayerShoot payload.
      * @param type The type of the event.
      * @param shoot The PlayerShoot payload.
      */
-    Event(EventType type, const PlayerShoot& shoot);
+    Event(uint8_t type, const PlayerShoot& shoot);
 
     /**
      * @brief Constructor for an event with a PowerUpCollected payload.
      * @param type The type of the event.
      * @param powerUp The PowerUpCollected payload.
      */
-    Event(EventType type, const PowerUpCollected& powerUp);
+    Event(uint8_t type, const PowerUpCollected& powerUp);
 
     /**
      * @brief Constructor for an event with an EntityUpdate payload.
      * @param type The type of the event.
      * @param update The EntityUpdate payload.
      */
-    Event(EventType type, const EntityUpdate& update);
+    Event(uint8_t type, const EntityUpdate& update);
 
     /**
      * @brief Constructor for an event with an EntitySpawn payload.
      * @param type The type of the event.
      * @param spawn The EntitySpawn payload.
      */
-    Event(EventType type, const EntitySpawn& spawn);
+    Event(uint8_t type, const EntitySpawn& spawn);
 
     /**
      * @brief Constructor for an event with an EntityDestroy payload.
      * @param type The type of the event.
      * @param destroy The EntityDestroy payload.
      */
-    Event(EventType type, const EntityDestroy& destroy);
+    Event(uint8_t type, const EntityDestroy& destroy);
 
     /**
  * @brief Constructor for an event with a PlayerHealthUpdate payload.
  * @param type The type of the event.
  * @param healthUpdate The PlayerHealthUpdate payload.
  */
-    Event(EventType type, const PlayerHealthUpdate& healthUpdate);
+    Event(uint8_t type, const PlayerHealthUpdate& healthUpdate);
 
 
     /**
      * @brief Constructor for an event without a payload.
      * @param type The type of the event.
      */
-    Event(EventType type);
+    Event(uint8_t type);
 
     /**
      * @brief Returns the type of the event.
      * @return The EventType of the event.
      */
-    EventType getType() const;
+    uint8_t getType() const;
 
     /**
      * @brief Returns the payload of the event.
@@ -234,7 +228,7 @@ public:
     }
 
 private:
-    EventType type; ///< The type of the event.
+    uint8_t type; ///< The type of the event.
     std::variant<std::monostate, PlayerMovement, ChatMessage, PlayerShoot, PowerUpCollected, EntityUpdate, PlayerHealthUpdate, EntitySpawn, EntityDestroy, NoData> payload; ///< The payload of the event.
 };
 
