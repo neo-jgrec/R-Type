@@ -4,8 +4,8 @@
 
 void Game::inputSystem(core::ecs::Registry& registry)
 {
-    registry.add_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, Player>
-    ([&](core::ecs::Entity, core::ge::TransformComponent &transform, const VelocityComponent &vel, InputStateComponent &input, Player&) {
+    registry.add_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, ShootCounterComponent>
+    ([&](core::ecs::Entity, core::ge::TransformComponent &transform, const VelocityComponent &vel, InputStateComponent &input, ShootCounterComponent &shootCounter) {
             if (input.up) {
                 transform.position.y -= vel.dy;
                 input.up = false;
@@ -23,16 +23,15 @@ void Game::inputSystem(core::ecs::Registry& registry)
                 input.right = false;
             }
             if (input.fire) {
-                sf::Vector2f projectilePosition = transform.position;
+                if (shootCounter.shotCount >= 6) {
+                    EntityFactory::createPlayerMissile(registry, transform);
 
-                float playerWidth = transform.size.x * transform.scale.x;
-                float playerHeight = transform.size.y * transform.scale.y;
-
-                projectilePosition.x += playerWidth ;
-
-                float projectileHeight = 5.0f;
-                projectilePosition.y += (playerHeight / 2.0f) - (projectileHeight / 2.0f);
-                EntityFactory::createPlayerProjectile(registry, projectilePosition);
+                    shootCounter.shotCount = 0;
+                } else {
+                    EntityFactory::createPlayerProjectile(registry, transform);
+    
+                    shootCounter.shotCount++;
+                }
                 input.fire = false;
             }
     });
@@ -48,7 +47,9 @@ void Game::projectileMovementSystem(core::ecs::Registry& registry)
             auto projectilesToCheck = registry.get_entities<Projectile>();
 
             for (const auto &projectile : projectilesToCheck) {
-                if (transform.position.x > 800.0f || transform.position.x < 0.0f) {
+                float projectileWidth = transform.size.x * transform.scale.x;
+                float projectileHeight = transform.size.y * transform.scale.y;
+                if (projectileWidth > 800.0f || projectileWidth < 0.0f || projectileHeight > 600.0f || projectileHeight < 0.0f) {
                     registry.kill_entity(projectile);
                 }
             }
@@ -65,7 +66,9 @@ void Game::enemyMovementSystem(core::ecs::Registry& registry)
             auto enemiesToCheck = registry.get_entities<Enemy>();
 
             for (const auto &enemy : enemiesToCheck) {
-                if (transform.position.x > 800.0f || transform.position.x < 0.0f) {
+                float enemyWidth = transform.size.x * transform.scale.x;
+                float enemyHeight = transform.size.y * transform.scale.y;
+                if (enemyWidth > 800.0f || enemyWidth < 0.0f || enemyHeight > 600.0f || enemyHeight < 0.0f) {
                     registry.kill_entity(enemy);
                 }
             }

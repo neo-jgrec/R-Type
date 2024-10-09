@@ -1,5 +1,6 @@
 #include "EntityFactory.hpp"
-
+#include <SFML/Graphics.hpp>
+#include <SFML/System/Vector2.hpp>
 #include <filesystem>
 #include <iostream>
 
@@ -7,27 +8,22 @@
 #include "../../../game/CollisionMask.hpp"
 #include "../../../core/ecs/GameEngine/GameEngineComponents.hpp"
 
-core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, const sf::Vector2f& position)
+core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, const sf::Vector2f& position, int color)
 {
     core::ecs::Entity player = registry.spawn_entity();
 
     registry.add_component(player, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 17.0f), sf::Vector2f(4.0f, 4.0f), 0.0f});
     registry.add_component(player, core::ge::CollisionComponent{PLAYER, {sf::FloatRect(0.0f, 0.0f, 33.0f, 17.0f)}, {
-        { ENEMY, [&](const core::ecs::Entity self, const core::ecs::Entity other) {
-            const auto &damageDone = registry.get_components<DamageComponent>() [other];
-            const auto &health = registry.get_components<HealthComponent>() [self];
-            health->get()->health -= damageDone->get()->damage;
-            if (health->get()->health <= 0) {
+        { ENEMY, [&](const core::ecs::Entity self, [[maybe_unused]] const core::ecs::Entity other) {
                 registry.kill_entity(self);
-            }
-            registry.kill_entity(other);
         }}}});
     registry.add_component(player, VelocityComponent{10.0f, 10.0f});
     registry.add_component(player, InputStateComponent{});
     registry.add_component(player, core::ge::KeyBinding{});
-    registry.add_component(player, HealthComponent{100});
+    registry.add_component(player, HealthComponent{10});
     registry.add_component(player, ScoreComponent{0});
     registry.add_component(player, Player{});
+    registry.add_component(player, ShootCounterComponent{0});
 
     std::string relativePath = "assets/player_sprite.png";
     std::string absolutePath = std::filesystem::absolute(relativePath).string();
@@ -40,26 +36,44 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, con
 
     sf::RectangleShape playerShape(sf::Vector2f(33.0f, 17.0f));
     playerShape.setTexture(texture.get());
-    playerShape.setTextureRect(sf::IntRect(0, 0, 33, 17));
+
+    int row = color * 17;
+    playerShape.setTextureRect(sf::IntRect(0, row, 33, 17));
+
     registry.add_component(player, core::ge::DrawableComponent{playerShape});
     registry.add_component(player, core::ge::TextureComponent{texture});
 
-    // Animation frames (first row)
-    std::vector<sf::IntRect> frames;
-    frames.reserve(5);
+    std::vector<sf::IntRect> moveFrames;
+    moveFrames.reserve(5);
     for (int i = 0; i < 5; i++) {
-        frames.emplace_back(i * 33, 0, 33, 17);
+        moveFrames.emplace_back(i * 33, row, 33, 17);
     }
-    registry.add_component(player, core::ge::AnimationComponent{frames, 0.1f, 0.0f, 0});
+    registry.add_component(player, core::ge::AnimationComponent{
+        .animations = {
+            {core::ge::AnimationState::Moving, moveFrames}
+        },
+        .frameTime = 0.1f,
+        .elapsedTime = 0.0f,
+        .currentFrame = 0,
+        .loop = true
+    });
 
     return player;
 }
 
-core::ecs::Entity EntityFactory::createPlayerProjectile(core::ecs::Registry& registry, const sf::Vector2f& startPosition)
+core::ecs::Entity EntityFactory::createPlayerProjectile(core::ecs::Registry& registry, core::ge::TransformComponent& playerTransform)
 {
     core::ecs::Entity projectile = registry.spawn_entity();
 
-    registry.add_component(projectile, core::ge::TransformComponent{startPosition, sf::Vector2f(18.0f, 5.0f), sf::Vector2f(4.0f, 4.0f), 0.0f});
+    sf::Vector2f projectileSize(18.0f, 5.0f);
+    sf::Vector2f startPosition = playerTransform.position;
+    sf::Vector2f scale(4.0f, 4.0f);
+    float playerWidth = playerTransform.size.x * playerTransform.scale.x;
+    float playerHeight = playerTransform.size.y * playerTransform.scale.y;
+    startPosition.x += playerWidth;
+    startPosition.y += (playerHeight / 2.0f) - (projectileSize.y / 2.0f);
+
+    registry.add_component(projectile, core::ge::TransformComponent{startPosition, projectileSize, scale, 0.0f});
     registry.add_component(projectile, core::ge::CollisionComponent{PLAYER_PROJECTILE, {sf::FloatRect(0.0f, 0.0f, 18.0f, 5.0f)}});
     registry.add_component(projectile, VelocityComponent{10.0f, 10.0f});
     registry.add_component(projectile, DamageComponent{10});
@@ -91,6 +105,68 @@ core::ecs::Entity EntityFactory::createPlayerProjectile(core::ecs::Registry& reg
     registry.add_component(projectile, core::ge::TextureComponent{texture});
 
     return projectile;
+}
+
+core::ecs::Entity EntityFactory::createPlayerMissile(core::ecs::Registry &registry, core::ge::TransformComponent &playerTransform)
+{
+    core::ecs::Entity missile = registry.spawn_entity();
+
+    sf::Vector2f missileSize(34.5f, 12.0f);
+    sf::Vector2f scale(4.0f, 4.0f);
+    sf::Vector2f startPosition = playerTransform.position;
+    float playerWidth = playerTransform.size.x * playerTransform.scale.x;
+    float playerHeight = playerTransform.size.y * playerTransform.scale.y;
+    startPosition.x += playerWidth;
+    startPosition.y += (playerHeight / 2.0f) - ((missileSize.y / 2.0f) * scale.y);
+
+
+    registry.add_component(missile, core::ge::TransformComponent{startPosition, missileSize, scale, 0.0f});
+    registry.add_component(missile, core::ge::CollisionComponent{PLAYER_PROJECTILE, {sf::FloatRect(0.0f, 0.0f, 34.5f, 12.0f)}});
+    registry.add_component(missile, VelocityComponent{10.0f, 10.0f});
+    registry.add_component(missile, DamageComponent{20});
+    registry.add_component(missile, Projectile{});
+
+    auto buffer = std::make_shared<sf::SoundBuffer>();
+    std::string soundPath = "assets/missile_sound.ogg";
+    if (!buffer->loadFromFile(soundPath)) {
+        std::cerr << "Failed to load sound: " << soundPath << std::endl;
+        return missile;
+    }
+
+    sf::Sound sound;
+    sound.setBuffer(*buffer);
+    registry.add_component(missile, core::ge::SoundComponent{sound, buffer, true, false});
+
+    std::string relativePath = "assets/player_missile.png";
+    std::string absolutePath = std::filesystem::absolute(relativePath).string();
+    auto texture = std::make_shared<sf::Texture>();
+    if (!texture->loadFromFile(absolutePath)) {
+        std::cerr << "Failed to load texture: " << absolutePath << std::endl;
+        return missile;
+    }
+
+    sf::RectangleShape missileShape(sf::Vector2f(34.5f, 12.0f));
+    missileShape.setTexture(texture.get());
+    missileShape.setTextureRect(sf::IntRect(0, 0, 34, 12));
+    registry.add_component(missile, core::ge::DrawableComponent{missileShape});
+    registry.add_component(missile, core::ge::TextureComponent{texture});
+
+    std::vector<sf::IntRect> moveFrames;
+    moveFrames.reserve(2);
+    for (int i = 0; i < 2; i++) {
+        moveFrames.emplace_back(i * 34, 0, 34, 12);
+    }
+    registry.add_component(missile, core::ge::AnimationComponent{
+        .animations = {
+            {core::ge::AnimationState::Moving, moveFrames}
+        },
+        .frameTime = 0.1f,
+        .elapsedTime = 0.0f,
+        .currentFrame = 0,
+        .loop = true
+    });
+
+    return missile;
 }
 
 core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry &registry, const sf::Vector2f &position)
@@ -128,12 +204,21 @@ core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry &registry, cons
     registry.add_component(enemy, core::ge::DrawableComponent{enemyShape});
     registry.add_component(enemy, core::ge::TextureComponent{texture});
 
-    std::vector<sf::IntRect> frames;
-    frames.reserve(8);
+    std::vector<sf::IntRect> moveFrames;
+    moveFrames.reserve(8);
     for (int i = 0; i < 5; i++) {
-        frames.emplace_back(i * 33, 0, 33, 36);
+        moveFrames.emplace_back(i * 33, 0, 33, 36);
     }
-    registry.add_component(enemy, core::ge::AnimationComponent{frames, 0.1f, 0.0f, 0});
+    registry.add_component(enemy, core::ge::AnimationComponent{
+        .animations = {
+            {core::ge::AnimationState::Moving, moveFrames}
+        },
+        .frameTime = 0.1f,
+        .elapsedTime = 0.0f,
+        .currentFrame = 0,
+        .loop = true
+    });
 
     return enemy;
 }
+

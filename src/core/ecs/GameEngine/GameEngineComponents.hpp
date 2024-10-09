@@ -10,6 +10,12 @@
 #include "../Entity/Entity.hpp"
 
 namespace core::ge {
+
+    enum class AnimationState {
+        Moving,
+        Dying
+    };
+
     struct KeyBinding {
         sf::Keyboard::Key moveUpKey = sf::Keyboard::Up;
         sf::Keyboard::Key moveDownKey = sf::Keyboard::Down;
@@ -48,7 +54,9 @@ namespace core::ge {
     };
 
     struct AnimationComponent {
-        std::vector<sf::IntRect> frames;
+        // std::vector<sf::IntRect> frames;
+        std::map<AnimationState, std::vector<sf::IntRect>> animations;
+        AnimationState currentState = AnimationState::Moving;
         float frameTime;
         float elapsedTime;
         unsigned int currentFrame = 0;

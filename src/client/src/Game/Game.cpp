@@ -1,11 +1,16 @@
 #include "Game.hpp"
 #include <SFML/System/Time.hpp>
+#include <iostream>
 #include "EntityFactory.hpp"
 #include "../../../game/Components.hpp"
 
 void Game::init() {
     _gameEngine.window.setFramerateLimit(60);
     _gameEngine.window.setKeyRepeatEnabled(true);
+
+    _musicManager.loadMusic("level1", "assets/music/level1.ogg");
+    // TODO: load every level music
+    _musicManager.playMusic("level1");
 
     _gameEngine.registry.register_component<VelocityComponent>();
     _gameEngine.registry.register_component<InputStateComponent>();
@@ -14,9 +19,18 @@ void Game::init() {
     _gameEngine.registry.register_component<Player>();
     _gameEngine.registry.register_component<Enemy>();
     _gameEngine.registry.register_component<Projectile>();
+    _gameEngine.registry.register_component<Missile>();
+    _gameEngine.registry.register_component<ShootCounterComponent>();
     _gameEngine.registry.register_component<DamageComponent>();
 
-    _playerEntity = EntityFactory::createPlayer(_gameEngine.registry, sf::Vector2f(100.0f, 100.0f));
+    int player1Color = assignColor();
+    if (player1Color >= 0) {
+        _playerEntity = EntityFactory::createPlayer(_gameEngine.registry, sf::Vector2f(100.0f, 400.0f), player1Color);
+    }
+    int player2Color = assignColor();
+    if (player2Color >= 0) {
+        _playerEntity = EntityFactory::createPlayer(_gameEngine.registry, sf::Vector2f(100.0f, 100.0f), player2Color);
+    }
     _enemyEntity = EntityFactory::createEnemy(_gameEngine.registry, sf::Vector2f(700.0f, 100.0f));
 
     inputSystem(_gameEngine.registry);
@@ -25,7 +39,7 @@ void Game::init() {
 }
 
 void Game::update() {
-    _gameEngine.registry.run_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, Player>();
+    _gameEngine.registry.run_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, ShootCounterComponent>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::TransformComponent>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::AnimationComponent>();
 
@@ -83,6 +97,25 @@ void Game::processEvents() {
             }
         }
     }
+}
+
+void Game::setMusicVolume(float volume) {
+    _musicManager.setVolume(volume);
+}
+
+int Game::assignColor() {
+    if (!availableColors.empty()) {
+        int color = availableColors.back();
+        availableColors.pop_back();
+        return color;
+    } else {
+        std::cerr << "No available colors left!" << std::endl;
+        return -1;
+    }
+}
+
+void Game::releaseColor(int color) {
+    availableColors.push_back(color);
 }
 
 void Game::run() {
