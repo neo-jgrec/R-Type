@@ -19,8 +19,14 @@ Server::Server()
 
     Systems::worldSystem(_gameEngine.registry);
 
-    _networkingService.addEvent(EntitySpawn, [&](const GDTPHeader &, const std::vector<uint8_t> &, const asio::ip::udp::endpoint &) {
-        std::cout << "EntitySpawn" << std::endl;
+    _networkingService.addEvent(ConnectionAccept, [&](const GDTPHeader &, const std::vector<uint8_t> &, const asio::ip::udp::endpoint &endpoint) {
+        std::cout << "New connection from " << endpoint << std::endl;
+        for (uint8_t i = 0; i < 4; i++) {
+            if (_players[i].has_value())
+                continue;
+            _players[i].emplace(EntityFactory::createPlayer(_gameEngine.registry, _networkingService, endpoint, i));
+            return;
+        }
     });
 }
 
@@ -33,15 +39,14 @@ void Server::update()
 
 void Server::run()
 {
-    std::cout << "Hello, World!" << std::endl;
-
     // _players.push_back(EntityFactory::createPlayer(_gameEngine.registry));
     _enemies.push_back(EntityFactory::createEnemy(_gameEngine.registry, _networkingService));
 
     _networkingService.run();
-    while (true) {
+    while (_isRunning) {
         update();
         sleep(1);
     }
+    std::cout << "Server stopped" << std::endl;
     _networkingService.stop();
 }

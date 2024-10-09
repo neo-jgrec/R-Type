@@ -9,7 +9,7 @@
 #include "../../../game/CollisionMask.hpp"
 #include "../../../core/ecs/GameEngine/GameEngineComponents.hpp"
 
-core::ecs::Entity EntityFactory::createConnectionHub(core::ecs::Registry &registry, const NetworkingService &networkingService, std::vector<core::ecs::Entity> &players)
+core::ecs::Entity EntityFactory::createConnectionHub(core::ecs::Registry &registry, NetworkingService &networkingService, std::array<std::optional<core::ecs::Entity>, 4> &players)
 {
     const core::ecs::Entity connectionHub = registry.spawn_entity();
 
@@ -19,7 +19,7 @@ core::ecs::Entity EntityFactory::createConnectionHub(core::ecs::Registry &regist
     return connectionHub;
 }
 
-core::ecs::Entity EntityFactory::createWorld(core::ecs::Registry& registry, const NetworkingService &networkingService, const std::string& filePath)
+core::ecs::Entity EntityFactory::createWorld(core::ecs::Registry& registry, NetworkingService &networkingService, const std::string& filePath)
 {
     const core::ecs::Entity world = registry.spawn_entity();
 
@@ -51,19 +51,9 @@ core::ecs::Entity EntityFactory::createWorld(core::ecs::Registry& registry, cons
     return world;
 }
 
-core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, const NetworkingService &networkingService)
+core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, NetworkingService &networkingService, const asio::ip::udp::endpoint &endpoint, const uint8_t id)
 {
     const core::ecs::Entity player = registry.spawn_entity();
-
-    uint8_t id = 0;
-    for (const auto otherPlayers = registry.get_entities<Player>();
-        const auto& otherPlayer : otherPlayers) {
-        if (const auto ptr = std::any_cast<std::shared_ptr<Player>>(otherPlayer);
-            ptr->id == id)
-            id++;
-    }
-    if (id == 4)
-        throw std::runtime_error("Maximum number of players reached");
 
     registry.add_component(player, Network{networkingService});
     registry.add_component(player, core::ge::TransformComponent{sf::Vector2f(0, 0), sf::Vector2f(32, 32), sf::Vector2f(1, 1), 0});
@@ -76,13 +66,13 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, con
                 registry.kill_entity(entity);
             registry.kill_entity(otherEntity);
         }}}});
-    registry.add_component(player, Player{id, 3});
+    registry.add_component(player, Player{endpoint, id, 3});
 
     std::cout << "Player " << static_cast<int>(id) << " created" << std::endl;
     return player;
 }
 
-core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry& registry, const NetworkingService &networkingService)
+core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry& registry, NetworkingService &networkingService)
 {
     const core::ecs::Entity enemy = registry.spawn_entity();
 
