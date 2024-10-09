@@ -32,6 +32,10 @@ struct ShootCounterComponent {
     float shotCount;
 };
 
+struct PlayerColorComponent {
+    int color;
+};
+
 // Identifiers
 
 struct Player {};

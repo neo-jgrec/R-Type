@@ -13,6 +13,7 @@ public:
     ~Game() = default;
 
     void run();
+    void releaseColor(int color);
 private:
     void processEvents();
     void update();
@@ -20,7 +21,7 @@ private:
     void init();
     void setMusicVolume(float volume);
     int assignColor();
-    void releaseColor(int color);
+    // void releaseColor(int color);
 
     core::ecs::Entity _playerEntity = core::ecs::Entity();
     core::ecs::Entity _enemyEntity = core::ecs::Entity();

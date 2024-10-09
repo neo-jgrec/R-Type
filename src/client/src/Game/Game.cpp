@@ -22,14 +22,15 @@ void Game::init() {
     _gameEngine.registry.register_component<Missile>();
     _gameEngine.registry.register_component<ShootCounterComponent>();
     _gameEngine.registry.register_component<DamageComponent>();
+    _gameEngine.registry.register_component<PlayerColorComponent>();
 
     int player1Color = assignColor();
     if (player1Color >= 0) {
-        _playerEntity = EntityFactory::createPlayer(_gameEngine.registry, sf::Vector2f(100.0f, 400.0f), player1Color);
+        _playerEntity = EntityFactory::createPlayer(_gameEngine.registry, sf::Vector2f(100.0f, 400.0f), player1Color, *this);
     }
     int player2Color = assignColor();
     if (player2Color >= 0) {
-        _playerEntity = EntityFactory::createPlayer(_gameEngine.registry, sf::Vector2f(100.0f, 100.0f), player2Color);
+        _playerEntity = EntityFactory::createPlayer(_gameEngine.registry, sf::Vector2f(100.0f, 100.0f), player2Color, *this);
     }
     _enemyEntity = EntityFactory::createEnemy(_gameEngine.registry, sf::Vector2f(700.0f, 100.0f));
 
