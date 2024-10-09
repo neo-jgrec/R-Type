@@ -4,7 +4,7 @@
 #include "../../../core/network/NetworkService.hpp"
 
 struct Network {
-    NetworkingService &service = NetworkingService::getInstance();
+    const NetworkingService &service;
 };
 
 struct World {

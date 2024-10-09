@@ -1,5 +1,5 @@
 #ifndef NETWORKSERVICE_HPP
-    #define NETWORKSERVICE_HPP32
+    #define NETWORKSERVICE_HPP
 
 /**
  * @file NetworkingService.hpp
