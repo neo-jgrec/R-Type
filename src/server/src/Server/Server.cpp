@@ -2,8 +2,7 @@
 #include "Components.hpp"
 #include "Systems.hpp"
 #include "EntityFactory.hpp"
-
-#include "../../../game/MessageType.hpp"
+#include "../../../game/RequestType.hpp"
 
 Server::Server()
 {
@@ -19,7 +18,7 @@ Server::Server()
 
     Systems::worldSystem(_gameEngine.registry);
 
-    _networkingService.addEvent(ConnectionAccept, [&](const GDTPHeader &, const std::vector<uint8_t> &, const asio::ip::udp::endpoint &endpoint) {
+    _networkingService.addEvent(PlayerConnect, [&](const GDTPHeader &, const std::vector<uint8_t> &, const asio::ip::udp::endpoint &endpoint) {
         std::cout << "New connection from " << endpoint << std::endl;
         for (uint8_t i = 0; i < 4; i++) {
             if (_players[i].has_value())

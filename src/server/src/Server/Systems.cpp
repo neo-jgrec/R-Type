@@ -1,6 +1,6 @@
 #include "Systems.hpp"
 #include "Components.hpp"
-#include "../../../game/MessageType.hpp"
+#include "../../../game/RequestType.hpp"
 
 void Systems::worldSystem(core::ecs::Registry &registry)
 {
@@ -41,7 +41,7 @@ void Systems::playerSystem(core::ecs::Registry &registry, std::array<std::option
                 const auto &playerComponent = registry.get_component<Player>(playerEntity.value());
                 network.service.sendRequest(
                     playerComponent->endpoint,
-                    PlayerDisconnect,
+                    PlayerDie,
                     {player.id});
             }
         });
