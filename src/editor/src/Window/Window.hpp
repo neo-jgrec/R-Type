@@ -19,10 +19,44 @@
 #include "src/Gui/MapPropertiesPanel/MapPropertiesPanel.hpp"
 #include "src/Gui/TileInfo/TileInfoPanel.hpp"
 #include "src/Gui/ToolPanel/ToolPanel.hpp"
+#include <stack>
+#include <memory>
+#include "../Map/Map.hpp"
 
 using json = nlohmann::json;
 
 namespace Editor {
+    class Action {
+    public:
+        virtual void execute(Map& map) = 0;
+        virtual void undo(Map& map) = 0;
+        virtual ~Action() = default;
+    };
+
+    class AddTileAction : public Action {
+        int x, y, tileIndex;
+    public:
+        AddTileAction(int x, int y, int tileIndex) : x(x), y(y), tileIndex(tileIndex) {}
+        void execute(Map& map) override {
+            map.placeTile(x, y, tileIndex);
+        }
+        void undo(Map& map) override {
+            map.removeTile(x, y);
+        }
+    };
+
+    class RemoveTileAction : public Action {
+        int x, y, tileIndex;
+    public:
+        RemoveTileAction(int x, int y, int tileIndex) : x(x), y(y), tileIndex(tileIndex) {}
+        void execute(Map& map) override {
+            map.removeTile(x, y);
+        }
+        void undo(Map& map) override {
+            map.placeTile(x, y, tileIndex);
+        }
+    };
+
     class Window {
     public:
         Window(const std::string &title, const std::string &mapPath = "");
@@ -64,8 +98,8 @@ namespace Editor {
 
         void setupMainMenuBar();
         void saveMap();
-        static void undo();
-        static void redo();
+        void undo();
+        void redo();
         void resetView();
         void openMapDialog();
         bool _openMapDialogIsOpen = false;
@@ -86,6 +120,9 @@ namespace Editor {
 
         static constexpr float MIN_ZOOM = 0.1f;
         static constexpr float MAX_ZOOM = 5.0f;
+
+        std::stack<std::unique_ptr<Action>> _undoStack;
+        std::stack<std::unique_ptr<Action>> _redoStack;
     };
 }
 

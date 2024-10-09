@@ -13,6 +13,7 @@ The map file is a JSON object with the following main sections:
 - Map properties
 - Tileset information
 - Tile placements
+- Background
 
 ## Example
 
@@ -20,28 +21,45 @@ Here's an example of a minimal map file:
 
 ```json
 {
+    "background": {
+        "height": 20,
+        "path": "assets/Background/image.png"
+    },
+    "editorVersion": "2.0",
+    "name": "Example Map",
     "cellSize": 24,
-    "editorVersion": "0.1",
     "height": 20,
-    "name": "Default map",
+    "width": 200,
     "tileSets": [
         {
-            "filePath": "oak_woods_tileset.png",
-            "tileCount": 315,
+            "filePath": "assets/Obstacles/Ripped/Obstacle Bottom Claw.png",
+            "tileCount": 96,
             "tileHeight": 24,
             "tileWidth": 24
         }
     ],
     "tiles": [
         {
-            "tileIndex": 1,
+            "isDestructible": false,
+            "tileIndex": 107,
             "x": 0,
+            "y": 0
+        },
+        {
+            "isDestructible": true,
+            "tileIndex": 107,
+            "x": 1,
             "y": 0
         }
     ],
-    "width": 100
 }
 ```
+
+:::info
+
+Most of the time, the unit of measure is the cell. Except for tileset, which use pixels.
+
+:::
 
 ## Field Descriptions
 
@@ -70,11 +88,14 @@ The `tiles` field is an array of objects, each representing a tile placed on the
 - `x`: The x-coordinate of the tile placement (integer)
 - `y`: The y-coordinate of the tile placement (integer)
 
+### Background
+
+- `height`: The height of the background image in pixels (integer)
+- `path`: The file path to the background image (string)
+
 ## Notes
 
 - Coordinates (x, y) are in cell units, not pixels.
 - The `tileIndex` refers to the index of the tile within its tileset, starting from 0.
 - Multiple tilesets can be used in a single map.
 - The `editorVersion` field can be used to handle backwards compatibility if the file format changes in future versions.
-
-For more information on how to use this file format with the R-Type Map Editor, please refer to the [Map Editor documentation](map-editor.md).

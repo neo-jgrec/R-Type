@@ -29,8 +29,12 @@ Window::Window(
     registerEvents();
 
     if (!mapPath.empty()) {
-        _map.clearMap();
-        _map.loadMapConfig(mapPath);
+        try {
+            _map.clearMap();
+            _map.loadMapConfig(mapPath);
+        } catch (const std::exception& e) {
+            std::cerr << "Failed to load map config: " << e.what() << std::endl;
+        }
     } else
         _newMapDialogIsOpen = true;
     updateObjectSelector();
@@ -119,6 +123,12 @@ void Window::registerEvents() {
         // Check for Alt+F4 (Exit)
         if (event.key.alt && event.key.code == sf::Keyboard::F4)
             _window.close();
+        // Check for Ctrl+Z (Undo)
+        if (event.key.control && event.key.code == sf::Keyboard::Z)
+            undo();
+        // Check for Ctrl+Y (Redo)
+        if (event.key.control && event.key.code == sf::Keyboard::Y)
+            redo();
 
         if (event.key.control)
             return;
@@ -184,7 +194,10 @@ void Window::run() {
         updateViewOffset();
 
         ImGuiIO& io = ImGui::GetIO();
-        io.FontGlobalScale = 2.0f;
+        float screenWidth = static_cast<float>(sf::VideoMode::getDesktopMode().width);
+        float screenHeight = static_cast<float>(sf::VideoMode::getDesktopMode().height);
+        float scaleFactor = std::min(screenWidth / 1920.0f, screenHeight / 1080.0f);
+        io.FontGlobalScale = scaleFactor;
 
         ImGui::SFML::Update(_window, deltaClock.restart());
 
@@ -202,11 +215,26 @@ void Window::run() {
 }
 
 void Window::renderUI() {
+    if (_map.getEditorVersion() != _map.getMapEditorVersion()) {
+        ImGui::OpenPopup("Map Editor Version Error");
+        if (ImGui::BeginPopupModal("Map Editor Version Error", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::Text("The map was created with a different version of the editor.");
+            ImGui::Text("Do you want to continue ?");
+            if (ImGui::Button("Yes")) {
+                _map.setMapEditorVersion(_map.getEditorVersion());
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Exit"))
+                _window.close();
+            ImGui::EndPopup();
+        }
+    }
     _mapPropertiesPanel.render(_map);
     _mainMenuBar.render();
     _objectSelector.render(_map.getTileSets());
     _toolPanel.render();
-    _tileInfoPanel.render(_map, _selectedTiles);
+    Editor::TileInfoPanel::render(_map, _selectedTiles);
     loadTileSetDialog();
     openMapDialog();
     newMapDialog();
@@ -247,8 +275,8 @@ void Window::setupMainMenuBar() {
     };
     _mainMenuBar.onSaveMap = [this]() { saveMap(); };
     _mainMenuBar.onExit = [this]() { _window.close(); };
-    _mainMenuBar.onUndo = []() { undo(); };
-    _mainMenuBar.onRedo = []() { redo(); };
+    _mainMenuBar.onUndo = [this]() { undo(); };
+    _mainMenuBar.onRedo = [this]() { redo(); };
     _mainMenuBar.onResetView = [this]() { resetView(); };
     _mainMenuBar.onLoadTileSet = [this]() {
         _popupLoaderIsOpen = true;
@@ -283,6 +311,9 @@ void Window::loadTileSetDialog() {
         ImGui::InputInt("Tile Width", &tileWidth);
         ImGui::InputInt("Tile Height", &tileHeight);
 
+        tileWidth = std::clamp(tileWidth, 1, 1000);
+        tileHeight = std::clamp(tileHeight, 1, 1000);
+
         if (ImGui::Button("Load")) {
             loadTileSet(path, tileWidth, tileHeight);
             _popupLoaderIsOpen = false;
@@ -308,6 +339,10 @@ void Window::newMapDialog() {
         ImGui::InputInt("Map Height", &mapHeight);
         ImGui::InputInt("Cell Size", &cellSize);
         ImGui::InputText("File Path", path, IM_ARRAYSIZE(path));
+
+        mapWidth = std::clamp(mapWidth, 1, 1000);
+        mapHeight = std::clamp(mapHeight, 1, 1000);
+        cellSize = std::clamp(cellSize, 1, 100);
 
         if (ImGui::Button("Create")) {
             try {
@@ -374,17 +409,24 @@ std::string Window::openSaveFileDialog() {
 }
 
 void Window::undo() {
-    std::cout << "Undo" << std::endl;
-    // TODO: Implement undo functionality
+    if (!_undoStack.empty()) {
+        auto action = std::move(_undoStack.top());
+        action->undo(_map);
+        _redoStack.push(std::move(action));
+        _undoStack.pop();
+    }
 }
 
 void Window::redo() {
-    std::cout << "Redo" << std::endl;
-    // TODO: Implement redo functionality
+    if (!_redoStack.empty()) {
+        auto action = std::move(_redoStack.top());
+        action->execute(_map);
+        _undoStack.push(std::move(action));
+        _redoStack.pop();
+    }
 }
 
 void Window::resetView() {
-    std::cout << "Reset view" << std::endl;
     _zoomLevel = 1.0f;
     _viewOffset = sf::Vector2f(0.0f, 0.0f);
     _view = _window.getDefaultView();
@@ -403,9 +445,9 @@ void Window::handleMouseButtonPressed(const sf::Event& event) {
     if (!_map.isPositionValid(gridX, gridY))
         return;
 
-    int tileId = _map.getTile(gridX, gridY);
+    const Tile& tile = _map.getTileObject(gridX, gridY);
     if (_toolPanel.getSelectedTool() == Tool::SELECTOR) {
-        if (tileId == -1)
+        if (tile.getId() == -1)
             return;
         auto it = std::find(_selectedTiles.begin(), _selectedTiles.end(), sf::Vector2i(gridX, gridY));
         if (it == _selectedTiles.end())
@@ -418,12 +460,16 @@ void Window::handleMouseButtonPressed(const sf::Event& event) {
         for (int i = 0; i < static_cast<int>(_currentTiles.size()); ++i) {
             for (int j = 0; j < static_cast<int>(_currentTiles[i].size()); ++j) {
                 const auto& tile = _currentTiles[i][j];
-                _map.placeTile(gridX + j, gridY + i, tile->getId());
+                if (_map.placeTile(gridX + j, gridY + i, tile->getId()))
+                    _undoStack.push(std::make_unique<AddTileAction>(gridX + j, gridY + i, tile->getId()));
             }
         }
     } else {
-        if (_toolPanel.getSelectedTool() == Tool::ERASER)
+        if (_toolPanel.getSelectedTool() == Tool::ERASER) {
+            int tileIndex = _map.getTile(gridX, gridY);
             _map.removeTile(gridX, gridY);
+            _undoStack.push(std::make_unique<RemoveTileAction>(gridX, gridY, tileIndex));
+        }
     }
 }
 
@@ -437,11 +483,20 @@ void Window::handleMouseMoved(const sf::Event& event) {
         int gridX = static_cast<int>(worldPos.x / static_cast<float>(_map.getGrid().getCellSize()));
         int gridY = static_cast<int>(worldPos.y / static_cast<float>(_map.getGrid().getCellSize()));
 
+        if (_toolPanel.getSelectedTool() == Tool::SELECTOR) {
+            if (_map.isPositionValid(gridX, gridY)) {
+                auto it = std::find(_selectedTiles.begin(), _selectedTiles.end(), sf::Vector2i(gridX, gridY));
+                if (it == _selectedTiles.end())
+                    _selectedTiles.emplace_back(gridX, gridY);
+            }
+        }
+
         if (!_currentTiles.empty()) {
             for (int i = 0; i < static_cast<int>(_currentTiles.size()); ++i) {
                 for (int j = 0; j < static_cast<int>(_currentTiles[i].size()); ++j) {
                     const auto& tile = _currentTiles[i][j];
-                    _map.placeTile(gridX + j, gridY + i, tile->getId());
+                    if (_map.placeTile(gridX + j, gridY + i, tile->getId()))
+                        _undoStack.push(std::make_unique<AddTileAction>(gridX + j, gridY + i, tile->getId()));
                 }
             }
         } else {
@@ -455,9 +510,8 @@ const Tile& Window::getTile(int tileId) const {
     for (const auto& tileSet : _map.getTileSets()) {
         for (int i = 0; i < static_cast<int>(tileSet->getTileCount()); ++i) {
             const Tile& tile = tileSet->getTile(i);
-            if (tile.getId() == tileId) {
+            if (tile.getId() == tileId)
                 return tile;
-            }
         }
     }
     throw Editor::Exception("Tile not found: " + std::to_string(tileId));

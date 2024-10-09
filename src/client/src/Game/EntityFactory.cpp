@@ -3,21 +3,20 @@
 #include <SFML/System/Vector2.hpp>
 #include <filesystem>
 #include <iostream>
+
 #include "../../../game/Components.hpp"
+#include "../../../game/CollisionMask.hpp"
+#include "../../../core/ecs/GameEngine/GameEngineComponents.hpp"
 
 core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, const sf::Vector2f& position, int color)
 {
     core::ecs::Entity player = registry.spawn_entity();
 
     registry.add_component(player, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 17.0f), sf::Vector2f(4.0f, 4.0f), 0.0f});
-    registry.add_component(player, core::ge::CollisionComponent{
-        .collisionBoxes = {sf::FloatRect(0.0f, 0.0f, 33.0f, 17.0f)},
-        .onCollision = [&](core::ecs::Entity self, core::ecs::Entity other) {
-            if (registry.has_component<Enemy>(other)) {
+    registry.add_component(player, core::ge::CollisionComponent{PLAYER, {sf::FloatRect(0.0f, 0.0f, 33.0f, 17.0f)}, {
+        { ENEMY, [&](const core::ecs::Entity self, [[maybe_unused]] const core::ecs::Entity other) {
                 registry.kill_entity(self);
-            }
-        }
-    });
+        }}}});
     registry.add_component(player, VelocityComponent{10.0f, 10.0f});
     registry.add_component(player, InputStateComponent{});
     registry.add_component(player, core::ge::KeyBinding{});
@@ -41,11 +40,9 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, con
     int row = color * 17;
     playerShape.setTextureRect(sf::IntRect(0, row, 33, 17));
 
-    // playerShape.setTextureRect(sf::IntRect(0, 0, 33, 17));
     registry.add_component(player, core::ge::DrawableComponent{playerShape});
     registry.add_component(player, core::ge::TextureComponent{texture});
 
-    // Animation frames (first row)
     std::vector<sf::IntRect> moveFrames;
     moveFrames.reserve(5);
     for (int i = 0; i < 5; i++) {
@@ -77,10 +74,7 @@ core::ecs::Entity EntityFactory::createPlayerProjectile(core::ecs::Registry& reg
     startPosition.y += (playerHeight / 2.0f) - (projectileSize.y / 2.0f);
 
     registry.add_component(projectile, core::ge::TransformComponent{startPosition, projectileSize, scale, 0.0f});
-    registry.add_component(projectile, core::ge::CollisionComponent{
-        .collisionBoxes = {sf::FloatRect(0.0f, 0.0f, 18.0f, 5.0f)},
-        .onCollision = nullptr
-    });
+    registry.add_component(projectile, core::ge::CollisionComponent{PLAYER_PROJECTILE, {sf::FloatRect(0.0f, 0.0f, 18.0f, 5.0f)}});
     registry.add_component(projectile, VelocityComponent{10.0f, 10.0f});
     registry.add_component(projectile, DamageComponent{10});
     registry.add_component(projectile, Projectile{});
@@ -127,10 +121,7 @@ core::ecs::Entity EntityFactory::createPlayerMissile(core::ecs::Registry &regist
 
 
     registry.add_component(missile, core::ge::TransformComponent{startPosition, missileSize, scale, 0.0f});
-    registry.add_component(missile, core::ge::CollisionComponent{
-        .collisionBoxes = {sf::FloatRect(0.0f, 0.0f, 34.5f, 12.0f)},
-        .onCollision = nullptr
-    });
+    registry.add_component(missile, core::ge::CollisionComponent{PLAYER_PROJECTILE, {sf::FloatRect(0.0f, 0.0f, 34.5f, 12.0f)}});
     registry.add_component(missile, VelocityComponent{10.0f, 10.0f});
     registry.add_component(missile, DamageComponent{20});
     registry.add_component(missile, Projectile{});
@@ -183,20 +174,16 @@ core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry &registry, cons
     core::ecs::Entity enemy = registry.spawn_entity();
 
     registry.add_component(enemy, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 36.0f), sf::Vector2f(4.0f, 4.0f), 0.0f});
-    registry.add_component(enemy, core::ge::CollisionComponent{
-        .collisionBoxes = {sf::FloatRect(0.0f, 0.0f, 33.0f, 36.0f)},
-        .onCollision = [&](core::ecs::Entity self, core::ecs::Entity other) {
-            if (registry.has_component<Projectile>(other)) {
-                auto &damageDone = registry.get_components<DamageComponent>() [other];
-                auto &health = registry.get_components<HealthComponent>() [self];
-                health->get()->health -= damageDone->get()->damage;
-                if (health->get()->health <= 0) {
-                    registry.kill_entity(self);
-                }
-                registry.kill_entity(other);
+    registry.add_component(enemy, core::ge::CollisionComponent{ENEMY, {sf::FloatRect(0.0f, 0.0f, 33.0f, 36.0f)}, {
+        { PLAYER_PROJECTILE, [&](const core::ecs::Entity self, const core::ecs::Entity other) {
+            const auto &damageDone = registry.get_components<DamageComponent>() [other];
+            const auto &health = registry.get_components<HealthComponent>() [self];
+            health->get()->health -= damageDone->get()->damage;
+            if (health->get()->health <= 0) {
+                registry.kill_entity(self);
             }
-        }
-    });
+            registry.kill_entity(other);
+        }}}});
     registry.add_component(enemy, VelocityComponent{10.0f, 10.0f});
     registry.add_component(enemy, HealthComponent{10});
     registry.add_component(enemy, DamageComponent{10});

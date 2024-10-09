@@ -54,6 +54,26 @@ namespace core::ecs
             return static_cast<const ComponentArray<Component>&>(*_components_arrays.at(typeid(Component))).data;
         }
 
+        template <class Component>
+        std::shared_ptr<Component> get_component(Entity const &e)
+        {
+            auto &comp_array = get_components<Component>();
+            auto value = comp_array[static_cast<size_t>(e)];
+            if (!value.has_value())
+                throw std::runtime_error("Entity does not have component");
+            return value.value();
+        }
+
+        template <class Component>
+        std::shared_ptr<Component> get_component(Entity const &e) const
+        {
+            auto &comp_array = get_components<Component>();
+            auto value = comp_array[static_cast<size_t>(e)];
+            if (!value.has_value())
+                throw std::runtime_error("Entity does not have component");
+            return value.value();
+        }
+
         Entity spawn_entity()
         {
             size_t id = _next_entity_id++;

@@ -4,8 +4,6 @@
 #include "../../../core/ecs/GameEngine/GameEngine.hpp"
 #include "MusicManager.hpp"
 
-#include <SFML/Graphics.hpp>
-
 class Game {
 public:
     Game()
@@ -19,7 +17,6 @@ private:
     void processEvents();
     void update();
     void render();
-    void addSystems();
     void init();
     void setMusicVolume(float volume);
     int assignColor();

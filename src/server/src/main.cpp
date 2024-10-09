@@ -1,8 +1,9 @@
-#include "Server.hpp"
+#include "Server/Server.hpp"
 
 int main()
 {
-    Server server("0.0.0.0", 12345);
+    Server server{};
 
-    server.update();
+    server.run();
+    return 0;
 }

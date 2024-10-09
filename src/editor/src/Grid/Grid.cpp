@@ -14,40 +14,32 @@ Grid::Grid(int width, int height, int cellSize)
 }
 
 void Grid::draw(sf::RenderWindow &window, std::vector<sf::Vector2i>& selectedTiles) const {
-    sf::Color highlightColor(0, 255, 0, 255); // Green color with some transparency
+    sf::Color highlightColor(0, 255, 0, 255);
     std::vector<sf::Vertex> highlightVertices;
 
     for (const auto& tile : selectedTiles) {
-        float left = tile.x * _cellSize;
-        float top = tile.y * _cellSize;
-        float right = left + _cellSize;
-        float bottom = top + _cellSize;
+        auto left = static_cast<float>(tile.x * _cellSize);
+        auto top = static_cast<float>(tile.y * _cellSize);
+        float right = left + static_cast<float>(_cellSize);
+        float bottom = top + static_cast<float>(_cellSize);
 
-        highlightVertices.push_back(sf::Vertex(sf::Vector2f(left, top), highlightColor));
-        highlightVertices.push_back(sf::Vertex(sf::Vector2f(right, top), highlightColor));
+        highlightVertices.emplace_back(sf::Vector2f(left, top), highlightColor);
+        highlightVertices.emplace_back(sf::Vector2f(right, top), highlightColor);
 
-        highlightVertices.push_back(sf::Vertex(sf::Vector2f(right, top), highlightColor));
-        highlightVertices.push_back(sf::Vertex(sf::Vector2f(right, bottom), highlightColor));
+        highlightVertices.emplace_back(sf::Vector2f(right, top), highlightColor);
+        highlightVertices.emplace_back(sf::Vector2f(right, bottom), highlightColor);
 
-        highlightVertices.push_back(sf::Vertex(sf::Vector2f(right, bottom), highlightColor));
-        highlightVertices.push_back(sf::Vertex(sf::Vector2f(left, bottom), highlightColor));
+        highlightVertices.emplace_back(sf::Vector2f(right, bottom), highlightColor);
+        highlightVertices.emplace_back(sf::Vector2f(left, bottom), highlightColor);
 
-        highlightVertices.push_back(sf::Vertex(sf::Vector2f(left, bottom), highlightColor));
-        highlightVertices.push_back(sf::Vertex(sf::Vector2f(left, top), highlightColor));
+        highlightVertices.emplace_back(sf::Vector2f(left, bottom), highlightColor);
+        highlightVertices.emplace_back(sf::Vector2f(left, top), highlightColor);
     }
 
     window.draw(&_gridLines[0], _gridLines.size(), sf::Lines);
     window.draw(&_vertices[0], _vertices.size(), sf::Lines);
     if (!highlightVertices.empty())
         window.draw(&highlightVertices[0], highlightVertices.size(), sf::Lines);
-}
-
-void Grid::updateGrid(float zoomLevel) {
-    //_gridLines.clear();
-    //_cellSize = static_cast<int>(zoomLevel * 10);
-    //if (_cellSize < 5)
-    //    _cellSize = 5;
-    //defineGrid();
 }
 
 void Grid::setGridSize(int width, int height) {
@@ -61,27 +53,27 @@ void Grid::defineGrid() {
     sf::Color gridColor(255, 255, 255, 50);
 
     _gridLines.clear();
-    for (float x = 0; x <= _width; x += _cellSize) {
-        _gridLines.push_back(sf::Vertex(sf::Vector2f(x, 0), gridColor));
-        _gridLines.push_back(sf::Vertex(sf::Vector2f(x, _height), gridColor));
+    for (int x = 0; x <= _width; x += _cellSize) { // Changed float to int
+        _gridLines.emplace_back(sf::Vector2f(static_cast<float>(x), 0), gridColor);
+        _gridLines.emplace_back(sf::Vector2f(static_cast<float>(x), static_cast<float>(_height)), gridColor);
     }
-    for (float y = 0; y <= _height; y += _cellSize) {
-        _gridLines.push_back(sf::Vertex(sf::Vector2f(0, y), gridColor));
-        _gridLines.push_back(sf::Vertex(sf::Vector2f(_width, y), gridColor));
+    for (int y = 0; y <= static_cast<int>(_height); y += static_cast<int>(_cellSize)) {
+        _gridLines.emplace_back(sf::Vector2f(0, static_cast<float>(y)), gridColor);
+        _gridLines.emplace_back(sf::Vector2f(static_cast<float>(_width), static_cast<float>(y)), gridColor);
     }
     _vertices.clear();
 
-    _vertices.push_back(sf::Vertex(sf::Vector2f(0, 0), sf::Color::Red));
-    _vertices.push_back(sf::Vertex(sf::Vector2f(_width, 0), sf::Color::Red));
+    _vertices.emplace_back(sf::Vector2f(0, 0), sf::Color::Red);
+    _vertices.emplace_back(sf::Vector2f(static_cast<float>(_width), 0), sf::Color::Red);
 
-    _vertices.push_back(sf::Vertex(sf::Vector2f(_width, _height), sf::Color::Red));
-    _vertices.push_back(sf::Vertex(sf::Vector2f(0, _height), sf::Color::Red));
+    _vertices.emplace_back(sf::Vector2f(static_cast<float>(_width), static_cast<float>(_height)), sf::Color::Red);
+    _vertices.emplace_back(sf::Vector2f(0, static_cast<float>(_height)), sf::Color::Red);
 
-    _vertices.push_back(sf::Vertex(sf::Vector2f(0, _height), sf::Color::Red));
-    _vertices.push_back(sf::Vertex(sf::Vector2f(0, 0), sf::Color::Red));
+    _vertices.emplace_back(sf::Vector2f(0, static_cast<float>(_height)), sf::Color::Red);
+    _vertices.emplace_back(sf::Vector2f(0, 0), sf::Color::Red);
 
-    _vertices.push_back(sf::Vertex(sf::Vector2f(_width, 0), sf::Color::Red));
-    _vertices.push_back(sf::Vertex(sf::Vector2f(_width, _height), sf::Color::Red));
+    _vertices.emplace_back(sf::Vector2f(static_cast<float>(_width), 0), sf::Color::Red);
+    _vertices.emplace_back(sf::Vector2f(static_cast<float>(_width), static_cast<float>(_height)), sf::Color::Red);
 }
 
 int Grid::getGridWidth() const {
@@ -98,5 +90,4 @@ int Grid::getCellSize() const {
 
 void Grid::setCellSize(int cellSize) {
     _cellSize = cellSize;
-    defineGrid();
 }

@@ -7,19 +7,23 @@
 
 #include "TileInfoPanel.hpp"
 #include <imgui.h>
-#include <iostream>
 
 using namespace Editor;
 
-TileInfoPanel::TileInfoPanel() {}
+TileInfoPanel::TileInfoPanel() = default;
 
 void TileInfoPanel::render(Map& map, std::vector<sf::Vector2i>& selectedTiles) {
     ImGui::Begin("Tile Information");
 
-    std::cout << "Selected Tiles: " << selectedTiles.size() << std::endl;
-
     for (const auto& selectedTile : selectedTiles) {
-        ImGui::Text("Tile ID: %d", map.getTile(selectedTile.x, selectedTile.y));
+        Tile& tile = const_cast<Tile&>(map.getTileObject(selectedTile.x, selectedTile.y));
+        ImGui::Text("Tile ID: %d", tile.getId());
+        ImGui::Text("Position: %d, %d", selectedTile.x, selectedTile.y);
+        bool isDestructible = tile.isDestructible();
+        if (ImGui::Checkbox("Is Destructible", &isDestructible)) {
+            tile.setDestructible(isDestructible);
+        }
+        ImGui::Separator();
     }
 
     ImGui::End();
