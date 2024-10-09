@@ -10,8 +10,10 @@
 #ifndef EVENTFACTORY_HPP
 #define EVENTFACTORY_HPP
 
-    #include "EventPool.hpp"
-    #include "../core/network/includes/RequestHeader.hpp"
+#include "EventPool.hpp"
+#include "../core/network/includes/RequestHeader.hpp"
+#include <unordered_map>
+#include <functional>
 
 /**
  * @class EventFactory
@@ -37,6 +39,9 @@ public:
     static Event createEvent(const GDTPHeader& header, const std::vector<uint8_t>& payload);
 
 private:
+    using EventHandler = std::function<Event(const GDTPHeader&, const std::vector<uint8_t>&)>;
+    static const std::unordered_map<uint8_t, EventHandler> handlers;
+
     // Handlers for each specific event type
     static Event handlePlayerMovement(const GDTPHeader& header, const std::vector<uint8_t>& payload);
     static Event handlePlayerShoot(const GDTPHeader& header, const std::vector<uint8_t>& payload);

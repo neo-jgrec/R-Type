@@ -27,4 +27,5 @@ enum MessageType {
     ConnectionRequest = 0x10,     // Requête de connexion d'un client
     ConnectionAccept = 0x11,      // Acceptation de la connexion par le serveur
     ConnectionReject = 0x12,      // Rejet de la connexion
+    MapTileDestroy = 0x22,        // Destruction d'une tile de la map
 };
