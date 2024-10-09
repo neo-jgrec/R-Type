@@ -1,5 +1,6 @@
 #include "EntityFactory.hpp"
 #include <SFML/Graphics.hpp>
+
 #include <SFML/System/Vector2.hpp>
 #include <filesystem>
 #include <iostream>
@@ -8,11 +9,11 @@
 #include "../../../game/CollisionMask.hpp"
 #include "../../../core/ecs/GameEngine/GameEngineComponents.hpp"
 
-core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, const sf::Vector2f& position, int color)
+core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, const sf::Vector2f& position, int color, sf::Vector2f gameScale)
 {
     core::ecs::Entity player = registry.spawn_entity();
 
-    registry.add_component(player, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 17.0f), sf::Vector2f(4.0f, 4.0f), 0.0f});
+    registry.add_component(player, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 17.0f), gameScale, 0.0f});
     registry.add_component(player, core::ge::CollisionComponent{PLAYER, {sf::FloatRect(0.0f, 0.0f, 33.0f, 17.0f)}, {
         { ENEMY, [&](const core::ecs::Entity self, [[maybe_unused]] const core::ecs::Entity other) {
                 registry.kill_entity(self);
@@ -61,19 +62,19 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, con
     return player;
 }
 
-core::ecs::Entity EntityFactory::createPlayerProjectile(core::ecs::Registry& registry, core::ge::TransformComponent& playerTransform)
+core::ecs::Entity EntityFactory::createPlayerProjectile(core::ecs::Registry& registry, core::ge::TransformComponent& playerTransform, sf::Vector2f gameScale)
 {
     core::ecs::Entity projectile = registry.spawn_entity();
 
     sf::Vector2f projectileSize(18.0f, 5.0f);
     sf::Vector2f startPosition = playerTransform.position;
-    sf::Vector2f scale(4.0f, 4.0f);
+
     float playerWidth = playerTransform.size.x * playerTransform.scale.x;
     float playerHeight = playerTransform.size.y * playerTransform.scale.y;
     startPosition.x += playerWidth;
     startPosition.y += (playerHeight / 2.0f) - (projectileSize.y / 2.0f);
 
-    registry.add_component(projectile, core::ge::TransformComponent{startPosition, projectileSize, scale, 0.0f});
+    registry.add_component(projectile, core::ge::TransformComponent{startPosition, projectileSize, gameScale, 0.0f});
     registry.add_component(projectile, core::ge::CollisionComponent{PLAYER_PROJECTILE, {sf::FloatRect(0.0f, 0.0f, 18.0f, 5.0f)}});
     registry.add_component(projectile, VelocityComponent{10.0f, 10.0f});
     registry.add_component(projectile, DamageComponent{10});
@@ -107,12 +108,12 @@ core::ecs::Entity EntityFactory::createPlayerProjectile(core::ecs::Registry& reg
     return projectile;
 }
 
-core::ecs::Entity EntityFactory::createPlayerMissile(core::ecs::Registry &registry, core::ge::TransformComponent &playerTransform)
+core::ecs::Entity EntityFactory::createPlayerMissile(core::ecs::Registry &registry, core::ge::TransformComponent &playerTransform, sf::Vector2f gameScale)
 {
     core::ecs::Entity missile = registry.spawn_entity();
 
     sf::Vector2f missileSize(34.5f, 12.0f);
-    sf::Vector2f scale(4.0f, 4.0f);
+    sf::Vector2f scale = gameScale;
     sf::Vector2f startPosition = playerTransform.position;
     float playerWidth = playerTransform.size.x * playerTransform.scale.x;
     float playerHeight = playerTransform.size.y * playerTransform.scale.y;
@@ -169,11 +170,11 @@ core::ecs::Entity EntityFactory::createPlayerMissile(core::ecs::Registry &regist
     return missile;
 }
 
-core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry &registry, const sf::Vector2f &position)
+core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry& registry, const sf::Vector2f& position, sf::Vector2f gameScale)
 {
     core::ecs::Entity enemy = registry.spawn_entity();
 
-    registry.add_component(enemy, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 36.0f), sf::Vector2f(4.0f, 4.0f), 0.0f});
+    registry.add_component(enemy, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 36.0f), gameScale, 0.0f});
     registry.add_component(enemy, core::ge::CollisionComponent{ENEMY, {sf::FloatRect(0.0f, 0.0f, 33.0f, 36.0f)}, {
         { PLAYER_PROJECTILE, [&](const core::ecs::Entity self, const core::ecs::Entity other) {
             const auto &damageDone = registry.get_components<DamageComponent>() [other];
@@ -221,4 +222,3 @@ core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry &registry, cons
 
     return enemy;
 }
-

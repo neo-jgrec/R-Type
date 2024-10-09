@@ -4,7 +4,6 @@
 #include "../Registry/Registry.hpp"
 #include "./GameEngineComponents.hpp"
 
-#include <iostream>
 #include <SFML/Graphics.hpp>
 #include <SFML/System/Clock.hpp>
 
