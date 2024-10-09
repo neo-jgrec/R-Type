@@ -3,6 +3,7 @@
 #include <iostream>
 #include "EntityFactory.hpp"
 #include "../../../game/Components.hpp"
+#include <iostream>
 
 void Game::init() {
     _gameEngine.window.setFramerateLimit(60);
@@ -33,6 +34,30 @@ void Game::init() {
     }
     _enemyEntity = EntityFactory::createEnemy(_gameEngine.registry, sf::Vector2f(700.0f, 100.0f));
 
+    EntityFactory::createButton(_gameEngine.registry,
+        sf::Vector2f(300.0f, 200.0f),
+        sf::Vector2f(200.0f, 50.0f),
+        "Start Game",
+        [this]() { _gameEngine.currentScene = static_cast<int>(GameState::Playing); },
+        static_cast<int>(GameState::MainMenu)
+    );
+
+    EntityFactory::createButton(_gameEngine.registry,
+        sf::Vector2f(300.0f, 275.0f),
+        sf::Vector2f(200.0f, 50.0f),
+        "Options",
+        [this]() { },
+        static_cast<int>(GameState::MainMenu)
+    );
+
+    EntityFactory::createButton(_gameEngine.registry,
+        sf::Vector2f(300.0f, 350.0f),
+        sf::Vector2f(200.0f, 50.0f),
+        "Quit",
+        [this]() { _windowOpen = false; },
+        static_cast<int>(GameState::MainMenu)
+    );
+
     inputSystem(_gameEngine.registry);
     projectileMovementSystem(_gameEngine.registry);
     enemyMovementSystem(_gameEngine.registry);
@@ -50,15 +75,21 @@ void Game::update() {
     _gameEngine.registry.run_system<core::ge::TransformComponent, VelocityComponent, Projectile>();
 
     // Enemy movement
-    _gameEngine.registry.run_system<core::ge::TransformComponent, VelocityComponent, Enemy>();
+    if (_gameEngine.currentScene == static_cast<int>(GameState::Playing))
+        _gameEngine.registry.run_system<core::ge::TransformComponent, VelocityComponent, Enemy>();
 
     // Collision detection
-    _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent>();
+    _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent, core::ge::SceneComponent>();
+
+    // Button
+    _gameEngine.registry.run_system<core::ge::ButtonComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent>();
+
 }
 
 void Game::render() {
     _gameEngine.window.clear();
-    _gameEngine.registry.run_system<core::ge::DrawableComponent>();
+    _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::SceneComponent>();
+    _gameEngine.registry.run_system<core::ge::TextComponent, core::ge::SceneComponent>();
     _gameEngine.window.display();
 }
 
