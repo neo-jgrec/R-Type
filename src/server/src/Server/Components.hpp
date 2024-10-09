@@ -21,9 +21,9 @@ struct ConnectionHub {
 
 struct Player {
     const asio::ip::udp::endpoint &endpoint;
-    uint8_t id = 0;
-    uint8_t health = 0;
-    uint64_t lastTimePacketReceived = 0;
+    uint8_t id;
+    uint8_t health;
+    time_t lastTimePacketReceived;
 };
 
 struct Enemy {

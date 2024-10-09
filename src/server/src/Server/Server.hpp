@@ -18,6 +18,8 @@ private:
 
     bool _isRunning = true;
 
+    bool asPlayerConnected();
+
     void update();
 public:
     Server();

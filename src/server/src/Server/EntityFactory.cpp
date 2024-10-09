@@ -66,7 +66,7 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, Net
                 registry.kill_entity(entity);
             registry.kill_entity(otherEntity);
         }}}});
-    registry.add_component(player, Player{endpoint, id, 3});
+    registry.add_component(player, Player{endpoint, id, 3, std::time(nullptr)});
 
     std::cout << "Player " << static_cast<int>(id) << " created" << std::endl;
     return player;
