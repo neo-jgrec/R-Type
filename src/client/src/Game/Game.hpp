@@ -2,7 +2,6 @@
 
 #include "../../../core/ecs/Entity/Entity.hpp"
 #include "../../../core/ecs/GameEngine/GameEngine.hpp"
-#include "MusicManager.hpp"
 
 class Game {
 public:
@@ -19,7 +18,6 @@ private:
     void update();
     void render();
     void init();
-    void setMusicVolume(float volume);
     int assignColor();
     // void releaseColor(int color);
 
@@ -34,6 +32,5 @@ private:
     static void projectileMovementSystem(core::ecs::Registry& registry);
     static void enemyMovementSystem(core::ecs::Registry& registry);
 
-    MusicManager _musicManager;
     std::vector<int> availableColors = {0, 1, 2, 3, 4};
 };

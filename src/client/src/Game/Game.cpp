@@ -8,9 +8,9 @@ void Game::init() {
     _gameEngine.window.setFramerateLimit(60);
     _gameEngine.window.setKeyRepeatEnabled(true);
 
-    _musicManager.loadMusic("level1", "assets/music/level1.ogg");
+    _gameEngine.musicManager.loadMusic("level1", "assets/music/level1.ogg");
     // TODO: load every level music
-    _musicManager.playMusic("level1");
+    _gameEngine.musicManager.playMusic("level1");
 
     _gameEngine.registry.register_component<VelocityComponent>();
     _gameEngine.registry.register_component<InputStateComponent>();
@@ -98,10 +98,6 @@ void Game::processEvents() {
             }
         }
     }
-}
-
-void Game::setMusicVolume(float volume) {
-    _musicManager.setVolume(volume);
 }
 
 int Game::assignColor() {

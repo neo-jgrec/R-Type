@@ -3,6 +3,7 @@
 
 #include "../Registry/Registry.hpp"
 #include "./GameEngineComponents.hpp"
+#include "MusicManager.hpp"
 
 #include <iostream>
 #include <SFML/Graphics.hpp>
@@ -39,6 +40,7 @@ namespace core {
 
             float delta_t = 0.0f;
             core::ecs::Registry registry;
+            MusicManager musicManager;
             sf::RenderWindow window;
             sf::Clock clock;
 
