@@ -87,6 +87,11 @@ void Game::parseMap(core::ecs::Registry& registry, const std::string& mapFilePat
         return;
     }
 
+    float mapHeight = mapData["height"].get<float>() * mapData["cellSize"].get<float>();
+    float scale = static_cast<float>(window.getSize().y) / mapHeight;
+
+    gameScale = sf::Vector2f(scale, scale);
+
     for (const auto& tile : mapData["tiles"]) {
         if (!tile.contains("tileIndex") || !tile.contains("x") || !tile.contains("y") || !tile.contains("isDestructible")) {
             std::cerr << "Warning: Tile data missing essential fields. Skipping tile." << std::endl;
@@ -97,19 +102,19 @@ void Game::parseMap(core::ecs::Registry& registry, const std::string& mapFilePat
             core::ecs::Entity tileEntity = registry.spawn_entity();
             int tileIdx = tile["tileIndex"].get<int>() - 1;
             bool isDestructible = tile["isDestructible"];
-            sf::Vector2f tilePos(tile["x"].get<float>() * mapData["cellSize"].get<float>(),
-                                 tile["y"].get<float>() * mapData["cellSize"].get<float>());
+            sf::Vector2f tilePos(tile["x"].get<float>() * mapData["cellSize"].get<float>() * gameScale.x,
+                                 tile["y"].get<float>() * mapData["cellSize"].get<float>() * gameScale.y);
 
-            sf::RectangleShape tileShape(sf::Vector2f(mapData["cellSize"], mapData["cellSize"]));
+            sf::RectangleShape tileShape(sf::Vector2f(mapData["cellSize"].get<float>() * gameScale.x, mapData["cellSize"].get<float>() * gameScale.y));
             tileShape.setTexture(tileTextures[tileIdx].get());
             tileShape.setTextureRect(tileRects[tileIdx]);
 
-            registry.add_component(tileEntity, core::ge::TransformComponent{tilePos, {mapData["cellSize"], mapData["cellSize"]}, {1.0f, 1.0f}, 0.0f});
+            registry.add_component(tileEntity, core::ge::TransformComponent{tilePos, {mapData["cellSize"].get<float>() * gameScale.x, mapData["cellSize"].get<float>() * gameScale.y}, {1.0f, 1.0f}, 0.0f});
             registry.add_component(tileEntity, core::ge::DrawableComponent{tileShape});
             registry.add_component(tileEntity, core::ge::TextureComponent{tileTextures[tileIdx]});
 
             registry.add_component(tileEntity, core::ge::CollisionComponent{
-                WORLD, {sf::FloatRect(0.0f, 0.0f, mapData["cellSize"], mapData["cellSize"])},
+                WORLD, {sf::FloatRect(0.0f, 0.0f, mapData["cellSize"].get<float>() * gameScale.x, mapData["cellSize"].get<float>() * gameScale.y)},
                 {
                     {PLAYER_PROJECTILE, [&](const core::ecs::Entity self, const core::ecs::Entity other) {
                         if (isDestructible) {
@@ -127,11 +132,10 @@ void Game::parseMap(core::ecs::Registry& registry, const std::string& mapFilePat
 
             _tileMap[tile["y"]][tile["x"]] = Tile{tileEntity, tilePos, isDestructible};
         } catch (const std::exception& e) {
-            std::cerr << "ERROR at "<< __PRETTY_FUNCTION__ << ": " << e.what() << std::endl;
+            std::cerr << "Error: Exception while parsing tile data: " << e.what() << std::endl;
             continue;
         }
     }
-
 
     std::cout << "Map parsed successfully." << std::endl;
 }

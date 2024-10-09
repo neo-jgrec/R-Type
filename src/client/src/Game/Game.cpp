@@ -4,13 +4,16 @@
 #include "EntityFactory.hpp"
 #include "../../../game/Components.hpp"
 
-void Game::init() {
+void Game::init()
+{
     _gameEngine.window.setFramerateLimit(60);
     _gameEngine.window.setKeyRepeatEnabled(true);
 
     _musicManager.loadMusic("level1", "assets/music/level1.ogg");
     // TODO: load every level music
     _musicManager.playMusic("level1");
+
+    // TODO: implement a way to load maps at runtimes dynamically
     parseMap(_gameEngine.registry, "./JY_map.json", _gameEngine.window);
 
     _gameEngine.registry.register_component<VelocityComponent>();
