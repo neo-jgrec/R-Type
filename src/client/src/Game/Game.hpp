@@ -37,6 +37,7 @@ private:
 
     core::ecs::Entity _playerEntity = core::ecs::Entity();
     core::ecs::Entity _enemyEntity = core::ecs::Entity();
+    core::ecs::Entity _viewEntity = core::ecs::Entity();
 
     core::GameEngine _gameEngine;
 
@@ -48,6 +49,7 @@ private:
     void inputSystem(core::ecs::Registry& registry);
     void projectileMovementSystem(core::ecs::Registry& registry) const;
     void enemyMovementSystem(core::ecs::Registry& registry) const;
+    void moveWindowViewSystem(core::ecs::Registry& registry);
 
     MusicManager _musicManager;
     std::vector<int> availableColors = {0, 1, 2, 3, 4};

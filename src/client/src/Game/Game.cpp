@@ -3,10 +3,13 @@
 #include <iostream>
 #include "EntityFactory.hpp"
 #include "../../../game/Components.hpp"
+#include "src/Game/Utils/ClientComponents.hpp"
 #include <iostream>
 
 void Game::init()
 {
+    _gameEngine.currentScene = static_cast<int>(GameState::MainMenu);
+
     _gameEngine.window.setFramerateLimit(60);
     _gameEngine.window.setKeyRepeatEnabled(true);
 
@@ -27,6 +30,7 @@ void Game::init()
     _gameEngine.registry.register_component<Missile>();
     _gameEngine.registry.register_component<ShootCounterComponent>();
     _gameEngine.registry.register_component<DamageComponent>();
+    _gameEngine.registry.register_component<ViewComponent>();
 
     int player1Color = assignColor();
     if (player1Color >= 0) {
@@ -50,7 +54,7 @@ void Game::init()
         sf::Vector2f(300.0f, 275.0f),
         sf::Vector2f(200.0f, 50.0f),
         "Options",
-        [this]() { },
+        []() { },
         static_cast<int>(GameState::MainMenu)
     );
 
@@ -65,9 +69,15 @@ void Game::init()
     inputSystem(_gameEngine.registry);
     projectileMovementSystem(_gameEngine.registry);
     enemyMovementSystem(_gameEngine.registry);
+
+    _viewEntity = _gameEngine.registry.spawn_entity();
+    _gameEngine.registry.add_component(_viewEntity, ViewComponent{});
+    _gameEngine.registry.add_component(_viewEntity, core::ge::SceneComponent{static_cast<int>(GameState::Playing)});
+    moveWindowViewSystem(_gameEngine.registry);
 }
 
-void Game::update() {
+void Game::update()
+{
     _gameEngine.registry.run_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, ShootCounterComponent>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::TransformComponent>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::AnimationComponent>();
@@ -87,14 +97,12 @@ void Game::update() {
 
     // Button
     _gameEngine.registry.run_system<core::ge::ButtonComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent>();
-
 }
 
-void Game::render() {
+void Game::render()
+{
     _gameEngine.window.clear();
-    // sf::View view = _gameEngine.window.getView();
-    // view.move(1.0f, 0.0f);
-    // _gameEngine.window.setView(view);
+    _gameEngine.registry.run_system<ViewComponent, core::ge::SceneComponent>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::SceneComponent>();
     _gameEngine.registry.run_system<core::ge::TextComponent, core::ge::SceneComponent>();
     _gameEngine.window.display();

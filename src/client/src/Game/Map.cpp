@@ -112,6 +112,7 @@ void Game::parseMap(core::ecs::Registry& registry, const std::string& mapFilePat
             registry.add_component(tileEntity, core::ge::TransformComponent{tilePos, {mapData["cellSize"].get<float>() * gameScale.x, mapData["cellSize"].get<float>() * gameScale.y}, {1.0f, 1.0f}, 0.0f});
             registry.add_component(tileEntity, core::ge::DrawableComponent{tileShape});
             registry.add_component(tileEntity, core::ge::TextureComponent{tileTextures[tileIdx]});
+            registry.add_component(tileEntity, core::ge::SceneComponent{static_cast<int>(GameState::Playing)});
 
             registry.add_component(tileEntity, core::ge::CollisionComponent{
                 WORLD, {sf::FloatRect(0.0f, 0.0f, mapData["cellSize"].get<float>() * gameScale.x, mapData["cellSize"].get<float>() * gameScale.y)},

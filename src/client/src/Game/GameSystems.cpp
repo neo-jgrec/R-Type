@@ -1,6 +1,7 @@
 #include "Game.hpp"
 #include "../../../game/Components.hpp"
 #include "EntityFactory.hpp"
+#include "Utils/ClientComponents.hpp"
 
 sf::Vector2f getViewBounds(const sf::RenderWindow& window);
 
@@ -60,5 +61,16 @@ void Game::enemyMovementSystem(core::ecs::Registry& registry) const
             if (transform.position.x < getViewBounds(_gameEngine.window).x || transform.position.y < getViewBounds(_gameEngine.window).y) {
                 registry.kill_entity(enemy);
             }
+        });
+}
+
+void Game::moveWindowViewSystem(core::ecs::Registry& registry)
+{
+    registry.add_system<ViewComponent, core::ge::SceneComponent>(
+        [&](core::ecs::Entity, ViewComponent &viewComponent, const core::ge::SceneComponent& scene) {
+            if (scene.sceneName != static_cast<int>(_gameEngine.currentScene))
+                return;
+            viewComponent.view.move(1.0f, 0.0f);
+            _gameEngine.window.setView(viewComponent.view);
         });
 }
