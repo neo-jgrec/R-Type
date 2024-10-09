@@ -37,7 +37,11 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, con
 
     sf::RectangleShape playerShape(sf::Vector2f(33.0f, 17.0f));
     playerShape.setTexture(texture.get());
-    playerShape.setTextureRect(sf::IntRect(0, 0, 33, 17));
+
+    int row = color * 17;
+    playerShape.setTextureRect(sf::IntRect(0, row, 33, 17));
+
+    // playerShape.setTextureRect(sf::IntRect(0, 0, 33, 17));
     registry.add_component(player, core::ge::DrawableComponent{playerShape});
     registry.add_component(player, core::ge::TextureComponent{texture});
 
@@ -45,7 +49,7 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, con
     std::vector<sf::IntRect> moveFrames;
     moveFrames.reserve(5);
     for (int i = 0; i < 5; i++) {
-        moveFrames.emplace_back(i * 33, 0, 33, 17);
+        moveFrames.emplace_back(i * 33, row, 33, 17);
     }
     registry.add_component(player, core::ge::AnimationComponent{
         .animations = {

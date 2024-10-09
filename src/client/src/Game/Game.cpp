@@ -23,11 +23,14 @@ void Game::init() {
     _gameEngine.registry.register_component<ShootCounterComponent>();
     _gameEngine.registry.register_component<DamageComponent>();
 
-    int playerColor = assignColor();
-    if (playerColor >= 0) {
-        _playerEntity = EntityFactory::createPlayer(_gameEngine.registry, sf::Vector2f(100.0f, 100.0f), playerColor);
+    int player1Color = assignColor();
+    if (player1Color >= 0) {
+        _playerEntity = EntityFactory::createPlayer(_gameEngine.registry, sf::Vector2f(100.0f, 400.0f), player1Color);
     }
-    // _playerEntity = EntityFactory::createPlayer(_gameEngine.registry, sf::Vector2f(100.0f, 100.0f));
+    int player2Color = assignColor();
+    if (player2Color >= 0) {
+        _playerEntity = EntityFactory::createPlayer(_gameEngine.registry, sf::Vector2f(100.0f, 100.0f), player2Color);
+    }
     _enemyEntity = EntityFactory::createEnemy(_gameEngine.registry, sf::Vector2f(700.0f, 100.0f));
 
     inputSystem(_gameEngine.registry);
