@@ -18,20 +18,20 @@
  * @throws UnknownEvent if the event type is unsupported.
  */
 Event EventFactory::createEvent(const GDTPHeader& header, const std::vector<uint8_t>& payload) {
-    Event::EventType type = uint8ToEventType(header.messageType);
+    uint8_t type = header.messageType;
 
     switch (type) {
-        case Event::EventType::PlayerMovement:
+        case 0x01:
             return handlePlayerMovement(header, payload);
-        case Event::EventType::PlayerShoot:
+    case 0x05:
             return handlePlayerShoot(header, payload);
-        case Event::EventType::ChatMessage:
+        case 0x15:
             return handleChatMessage(header, payload);
-        case Event::EventType::PlayerHealthUpdate:
+        case 0x06:
             return handlePlayerHealthUpdate(header, payload);
-        case Event::EventType::EntitySpawn:
+        case 0x09:
             return handleEntitySpawn(header, payload);
-        case Event::EventType::EntityDestroy:
+        case 0x0A:
             return handleEntityDestroy(header, payload);
         default:
             throw EventPool::UnknownEvent(header.messageType);
@@ -49,7 +49,7 @@ Event EventFactory::handlePlayerMovement( [[maybe_unused]]const GDTPHeader& head
     std::memcpy(&movement.y, &payload[8], 4);
     std::memcpy(&movement.z, &payload[12], 4);
 
-    return Event(Event::EventType::PlayerMovement, movement);
+    return Event(0x01, movement);
 }
 
 Event EventFactory::handlePlayerShoot([[maybe_unused]]const GDTPHeader& header, const std::vector<uint8_t>& payload) {
@@ -62,7 +62,7 @@ Event EventFactory::handlePlayerShoot([[maybe_unused]]const GDTPHeader& header, 
     shoot.direction = payload[4];
     shoot.weaponType = payload[5];
 
-    return Event(Event::EventType::PlayerShoot, shoot);
+    return Event(0x055, shoot);
 }
 
 Event EventFactory::handleChatMessage([[maybe_unused]]const GDTPHeader& header, const std::vector<uint8_t>& payload) {
@@ -79,7 +79,7 @@ Event EventFactory::handleChatMessage([[maybe_unused]]const GDTPHeader& header, 
 
     ChatMessage chatMessage{playerId, message};
 
-    return Event(Event::EventType::ChatMessage, chatMessage);
+    return Event(0x15, chatMessage);
 }
 
 Event EventFactory::handlePlayerHealthUpdate([[maybe_unused]]const GDTPHeader& header, const std::vector<uint8_t>& payload) {
@@ -91,7 +91,7 @@ Event EventFactory::handlePlayerHealthUpdate([[maybe_unused]]const GDTPHeader& h
     std::memcpy(&healthUpdate.playerId, &payload[0], 4);
     std::memcpy(&healthUpdate.health, &payload[4], 4);
 
-    return Event(Event::EventType::PlayerHealthUpdate, healthUpdate);
+    return Event(0x06, healthUpdate);
 }
 
 Event EventFactory::handleEntitySpawn([[maybe_unused]]const GDTPHeader& header, const std::vector<uint8_t>& payload) {
@@ -104,7 +104,7 @@ Event EventFactory::handleEntitySpawn([[maybe_unused]]const GDTPHeader& header, 
     std::memcpy(&entitySpawn.x, &payload[4], 4);
     std::memcpy(&entitySpawn.y, &payload[8], 4);
 
-    return Event(Event::EventType::EntitySpawn, entitySpawn);
+    return Event(0x09, entitySpawn);
 }
 
 Event EventFactory::handleEntityDestroy([[maybe_unused]]const GDTPHeader& header, const std::vector<uint8_t>& payload) {
@@ -115,5 +115,5 @@ Event EventFactory::handleEntityDestroy([[maybe_unused]]const GDTPHeader& header
     EntityDestroy entityDestroy;
     std::memcpy(&entityDestroy.entityId, &payload[0], 4);
 
-    return Event(Event::EventType::EntityDestroy, entityDestroy);
+    return Event(0x0A, entityDestroy);
 }

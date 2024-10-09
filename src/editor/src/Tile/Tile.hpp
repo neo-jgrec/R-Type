@@ -22,10 +22,16 @@ namespace Editor {
 
             [[nodiscard]] const sf::Sprite& getSprite() const;
 
+            void setId(int id);
             [[nodiscard]] int getId() const;
             [[nodiscard]] ImTextureID getTextureId() const;
             [[nodiscard]] bool isDestructible() const;
             void setDestructible(bool isDestructible);
+            void update(
+                const sf::Texture& texture,
+                const sf::IntRect& textureRect,
+                int id
+            );
         private:
             sf::Sprite _sprite;
             int _id;

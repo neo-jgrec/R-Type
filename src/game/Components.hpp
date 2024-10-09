@@ -29,8 +29,13 @@ struct ScoreComponent {
     int score;
 };
 
+struct ShootCounterComponent {
+    float shotCount;
+};
+
 // Identifiers
 
 struct Player {};
 struct Enemy {};
 struct Projectile {};
+struct Missile {};

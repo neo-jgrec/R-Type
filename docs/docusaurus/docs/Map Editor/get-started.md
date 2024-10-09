@@ -74,6 +74,12 @@ The map editor interface consists of several panels:
 1. Select the Eraser tool from the Tools Panel.
 2. Click and drag over tiles you wish to remove.
 
+### Selecting Tiles
+
+1. Select the Select tool from the Tools Panel.
+2. Click on a tile to select it.
+3. Show tiles informations to the "Tile Properties" panel.
+
 ### Adjusting Map Properties
 
 Use the Map Properties Panel to change the map's name, dimensions, or cell size. Note that changing dimensions may affect existing tile placements.

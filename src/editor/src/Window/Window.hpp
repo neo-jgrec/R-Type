@@ -46,14 +46,14 @@ namespace Editor {
     };
 
     class RemoveTileAction : public Action {
-        int x, y;
+        int x, y, tileIndex;
     public:
-        RemoveTileAction(int x, int y) : x(x), y(y) {}
+        RemoveTileAction(int x, int y, int tileIndex) : x(x), y(y), tileIndex(tileIndex) {}
         void execute(Map& map) override {
             map.removeTile(x, y);
         }
         void undo(Map& map) override {
-            map.placeTile(x, y, 0);
+            map.placeTile(x, y, tileIndex);
         }
     };
 

@@ -10,43 +10,43 @@
 /**
  * @brief Constructor for an event with a PlayerMovement payload.
  */
-Event::Event(EventType type, const PlayerMovement& movement)
+Event::Event(uint8_t type, const PlayerMovement& movement)
     : type(type), payload(movement) {}
 
 /**
  * @brief Constructor for an event with a ChatMessage payload.
  */
-Event::Event(EventType type, const ChatMessage& message)
+Event::Event(uint8_t type, const ChatMessage& message)
     : type(type), payload(message) {}
 
 /**
  * @brief Constructor for an event with a PlayerShoot payload.
  */
-Event::Event(EventType type, const PlayerShoot& shoot)
+Event::Event(uint8_t type, const PlayerShoot& shoot)
     : type(type), payload(shoot) {}
 
 /**
  * @brief Constructor for an event with a PowerUpCollected payload.
  */
-Event::Event(EventType type, const PowerUpCollected& powerUp)
+Event::Event(uint8_t type, const PowerUpCollected& powerUp)
     : type(type), payload(powerUp) {}
 
 /**
  * @brief Constructor for an event with an EntityUpdate payload.
  */
-Event::Event(EventType type, const EntityUpdate& update)
+Event::Event(uint8_t type, const EntityUpdate& update)
     : type(type), payload(update) {}
 
 /**
  * @brief Constructor for an event without a payload.
  */
-Event::Event(EventType type)
+Event::Event(uint8_t type)
     : type(type), payload(NoData{}) {}
 
 /**
  * @brief Returns the type of the event.
  */
-Event::EventType Event::getType() const {
+uint8_t Event::getType() const {
     return type;
 }
 
@@ -61,17 +61,17 @@ const std::variant<std::monostate, PlayerMovement, ChatMessage, PlayerShoot, Pow
 /**
  * @brief Constructor for an event with a PlayerHealthUpdate payload.
  */
-Event::Event(EventType type, const PlayerHealthUpdate& healthUpdate)
+Event::Event(uint8_t type, const PlayerHealthUpdate& healthUpdate)
     : type(type), payload(healthUpdate) {}
 
 /**
  * @brief Constructor for an event with an EntitySpawn payload.
  */
-Event::Event(EventType type, const EntitySpawn& spawn)
+Event::Event(uint8_t type, const EntitySpawn& spawn)
     : type(type), payload(spawn) {}
 
 /**
  * @brief Constructor for an event with an EntityDestroy payload.
  */
-Event::Event(EventType type, const EntityDestroy& destroy)
+Event::Event(uint8_t type, const EntityDestroy& destroy)
     : type(type), payload(destroy) {}
