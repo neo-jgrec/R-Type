@@ -97,8 +97,10 @@ namespace core {
 
             void collisionSystem()
             {
-                registry.add_system<ge::TransformComponent, ge::CollisionComponent>(
-                    [&](const ecs::Entity entity, const ge::TransformComponent &transform, ge::CollisionComponent &collision) {
+                registry.add_system<ge::TransformComponent, ge::CollisionComponent, ge::SceneComponent>(
+                    [&](const ecs::Entity entity, const ge::TransformComponent &transform, ge::CollisionComponent &collision, ge::SceneComponent &scene) {
+                        if (scene.sceneName != currentScene)
+                            return;
                         auto &collisionComponents = registry.get_components<ge::CollisionComponent>();
                         auto &transformComponents = registry.get_components<ge::TransformComponent>();
 

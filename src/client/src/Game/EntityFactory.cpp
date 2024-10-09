@@ -207,7 +207,7 @@ core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry &registry, cons
     enemyShape.setTextureRect(sf::IntRect(0, 0, 33, 36));
     registry.add_component(enemy, core::ge::DrawableComponent{enemyShape});
     registry.add_component(enemy, core::ge::TextureComponent{texture});
-
+    registry.add_component(enemy, core::ge::SceneComponent{static_cast<int>(Game::GameState::Playing)});
     std::vector<sf::IntRect> moveFrames;
     moveFrames.reserve(8);
     for (int i = 0; i < 5; i++) {

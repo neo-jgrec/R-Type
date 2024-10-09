@@ -75,10 +75,11 @@ void Game::update() {
     _gameEngine.registry.run_system<core::ge::TransformComponent, VelocityComponent, Projectile>();
 
     // Enemy movement
-    _gameEngine.registry.run_system<core::ge::TransformComponent, VelocityComponent, Enemy>();
+    if (_gameEngine.currentScene == static_cast<int>(GameState::Playing))
+        _gameEngine.registry.run_system<core::ge::TransformComponent, VelocityComponent, Enemy>();
 
     // Collision detection
-    _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent>();
+    _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent, core::ge::SceneComponent>();
 
     // Button
     _gameEngine.registry.run_system<core::ge::ButtonComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent>();
