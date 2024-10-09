@@ -1,185 +1,169 @@
----
-title: NetworkingService Class Documentation
-sidebar_position: 1
----
-1. **Overview of GDTP** and how **UDP-based communication** is integrated.
-2. **Explanation of key components**: message handling, payload preparation, and error management.
-3. **Details of each public method** with code examples where necessary.
+# NetworkingService Developer Documentation
 
-### NetworkingService Class Documentation
+## Overview
+The `NetworkingService` class manages real-time communication between clients and servers using the Game Datagram Transfer Protocol (GDTP) over UDP. It supports sending and receiving game-related data such as player movements, entity updates, and events. This class is designed to ensure low-latency communication, making it suitable for real-time multiplayer game environments.
 
----
+## Class: `NetworkingService`
 
-## **NetworkingService Class**
-This class provides UDP-based networking services, enabling communication between a client and server using the **Game Datagram Transfer Protocol (GDTP)**. It handles message sending, reception, and processing, using ASIO for asynchronous network operations. The class also employs the **Singleton Design Pattern** to ensure only one instance of the networking service exists throughout the application.
+### Key Characteristics:
+- **Transport Layer**: Uses UDP for low-latency, high-speed communications.
+- **Asynchronous I/O**: Leverages ASIO for non-blocking network operations.
+- **Event-Driven Architecture**: Uses handlers for processing specific message types.
+- **Singleton Pattern**: Ensures a single instance of the service for consistent network behavior across the application.
 
----
+### Protocol Overview:
+The GDTP protocol uses a fixed header structure:
+- **Version (1 byte)**: Protocol version (currently `0x01`).
+- **Message Type (1 byte)**: Identifies the type of message.
+- **Packet ID (8 bytes)**: Unique identifier for the packet.
+- **Payload Size (2 bytes)**: The size of the message payload.
+- **Sequence Number (2 bytes)**: Order of the packet in a sequence.
+- **Total Packets (2 bytes)**: Indicates how many packets make up the full message.
 
-### **1. Class Overview**
+### Public Methods
 
-**NetworkingService** allows the exchange of real-time game data such as player movements, entity updates, and in-game events between the client and server using **GDTP over UDP**. The class includes mechanisms to handle packet loss, reordering, and message validation, which are critical for reliable and low-latency game communication.
+#### `static NetworkingService& getInstance(const std::string& server_ip = "127.0.0.1", int port = 12345)`
+- **Description**: Retrieves the singleton instance of `NetworkingService`, creating it if it doesn't exist.
+- **Parameters**:
+    - `server_ip` (const std::string&): IP address of the server.
+    - `port` (int): The port number for communication.
+- **Example**:
+  ```cpp
+  NetworkingService& networkService = NetworkingService::getInstance("192.168.1.10", 8080);
+  networkService.run();  // Start the service.
+  ```
 
-#### **Key Features:**
-- **UDP Protocol**: Used for fast, connectionless communication with low overhead.
-- **Singleton Design Pattern**: Ensures a single instance of the class is shared across the application.
-- **Message Handlers**: Processes messages based on their type.
-- **Payload Preparation Handlers**: Converts input arguments into a binary payload before sending.
+#### `void addEvent(const uint8_t messageType, const std::function<void(const GDTPHeader&, const std::vector<uint8_t>&, const asio::ip::udp::endpoint&)>& handler)`
+- **Description**: Registers a handler function for a specific GDTP message type. When a message of this type is received, the registered function is called.
+- **Parameters**:
+    - `messageType` (uint8_t): The type of message for which the handler is being registered.
+    - `handler`: A function that processes the message's header, payload, and client endpoint.
+- **Example**:
+  ```cpp
+  networkService.addEvent(0x01, [](const GDTPHeader& header, const std::vector<uint8_t>& payload, const asio::ip::udp::endpoint& client) {
+      std::cout << "Player movement received from " << client.address() << std::endl;
+  });
+  ```
 
----
+#### `std::string getLocalEndpoint() const`
+- **Description**: Retrieves the local endpoint (IP:Port) where the service is listening.
+- **Returns**: A string representation of the local endpoint.
+- **Example**:
+  ```cpp
+  std::string endpoint = networkService.getLocalEndpoint();
+  std::cout << "Listening on: " << endpoint << std::endl;
+  ```
 
-### **2. GDTP Protocol Integration**
+#### `std::string getIp() const`
+- **Description**: Retrieves the local IP address where the service is listening.
+- **Returns**: The IP address as a string.
+- **Example**:
+  ```cpp
+  std::string ip = networkService.getIp();
+  std::cout << "Local IP: " << ip << std::endl;
+  ```
 
-The **Game Datagram Transfer Protocol (GDTP)** is designed for lightweight, low-latency communication in real-time games. This protocol leverages **UDP** to send discrete datagrams between a client and server.
+#### `uint32_t getPort() const`
+- **Description**: Retrieves the local port number where the service is listening.
+- **Returns**: The port number.
+- **Example**:
+  ```cpp
+  uint32_t port = networkService.getPort();
+  std::cout << "Listening on port: " << port << std::endl;
+  ```
 
-Each datagram consists of:
-- **Header (16 bytes)**: Contains version, message type, packet ID, sequence number, total packets, and payload size.
-- **Payload (variable size)**: Carries data specific to the message type.
+### Sending and Receiving Messages
 
-#### **UDP-Specific Concerns:**
-- **Packet Loss**: Handled by the game logic, which allows updates from subsequent packets.
-- **Out-of-Order Packets**: Sequence numbers help reorder packets upon receipt.
-- **Fixed-Size Buffers**: Protect against buffer overflow attacks by discarding oversized packets.
+#### `void sendRequest(const std::string& recipient, int port, uint8_t messageType, const std::vector<uint8_t>& payload = {})`
+- **Description**: Sends a message with a specified type and payload to a recipient.
+- **Parameters**:
+    - `recipient`: IP address of the recipient.
+    - `port`: Port number on which to send the message.
+    - `messageType`: Type of message (e.g., `0x01` for PlayerMovement).
+    - `payload`: Data to be included in the message.
+- **Example**:
+  ```cpp
+  std::vector<uint8_t> data = {0x01, 0x02, 0x03};
+  networkService.sendRequest("127.0.0.1", 12345, 0x01, data);
+  ```
 
----
+#### `void sendRequest(const asio::ip::udp::endpoint& client_endpoint, uint8_t messageType, const std::vector<uint8_t>& payload = {})`
+- **Description**: Sends a message directly to a specified client endpoint.
+- **Example**:
+  ```cpp
+  asio::ip::udp::endpoint client(asio::ip::make_address("127.0.0.1"), 12345);
+  networkService.sendRequest(client, 0x01, {0x10, 0x20});
+  ```
 
-### **3. Public Methods**
+#### `void sendRequestResponse(const std::string& recipient, int port, GDTPHeader headerOrigin, const std::vector<uint8_t>& payload = {})`
+- **Description**: Sends a response using a given header and payload.
+- **Parameters**:
+    - `headerOrigin`: Original header used as the basis for the response.
+- **Example**:
+  ```cpp
+  GDTPHeader header = ...; // Received from another message
+  networkService.sendRequestResponse("127.0.0.1", 12345, header, {0xAA, 0xBB});
+  ```
 
-#### **`getInstance`**
-This static method returns the singleton instance of **NetworkingService**. It ensures only one instance exists across the application, which is initialized with the provided IP address and port on the first call.
+### Internal Methods
 
-```cpp
-NetworkingService& networkService = NetworkingService::getInstance("192.168.1.1", 8080);
-```
+#### `void startReceive()`
+- **Description**: Starts listening for incoming packets asynchronously.
+- **Example**:
+  ```cpp
+  networkService.startReceive(); // Begin listening for messages.
+  ```
 
-**Parameters:**
-- `server_ip` (optional): IP address of the server (default: `"127.0.0.1"`).
-- `port` (optional): Port number for the server (default: `12345`).
+#### `void handleReceivedPacket(const std::array<uint8_t, 1400>& packet, std::size_t length, const asio::ip::udp::endpoint& client_endpoint) const`
+- **Description**: Validates and processes an incoming packet.
+- **Example**:
+  ```cpp
+  handleReceivedPacket(buffer, length, client_endpoint);
+  ```
 
-**Returns:**
-- A reference to the singleton **NetworkingService** instance.
-
----
-
-#### **`setMessageHandler`**
-This method assigns a handler function to a specific **GDTP message type**. When a message of this type is received, the handler processes the message's header, payload, and client endpoint.
-
-```cpp
-networkService.setMessageHandler(uint8_t::PlayerMovement, 
-    [](const GDTPHeader& header, const std::vector<uint8_t>& payload, const asio::ip::udp::endpoint& client_endpoint) {
-        std::cout << "Player moved!" << std::endl;
-});
-```
-
-**Parameters:**
-- `messageType`: The GDTP message type (e.g., **PlayerMovement**).
-- `handler`: A function that processes the message (header, payload, client endpoint).
-
----
-
-#### **`setPayloadHandler`**
-This method assigns a function to prepare the payload for a specific **GDTP message type**. The handler converts input arguments into a binary payload that can be sent.
-
-```cpp
-networkService.setPayloadHandler(uint8_t::PlayerMovement, 
-    [](std::vector<std::string> args) -> std::vector<uint8_t> {
-        // Prepare payload from arguments
-        return std::vector<uint8_t>();
-});
-```
-
-**Parameters:**
-- `messageType`: The GDTP message type (e.g., **PlayerMovement**).
-- `handler`: A function that prepares the payload.
-
----
-
-#### **`sendRequest`**
-This method sends a request to a specified recipient, composed of a GDTP message type, header, and payload. It supports both IP address and **ASIO endpoint** as recipients.
-
-```cpp
-networkService.sendRequest("127.0.0.1", 12345, uint8_t::PlayerMovement, {"1", "100.0", "200.0", "300.0"});
-```
-
-```cpp
-asio::ip::udp::endpoint clientEndpoint(asio::ip::address::from_string("127.0.0.1"), 8080);
-networkService.sendRequest(clientEndpoint, uint8_t::PlayerMovement, {"1", "100.0", "200.0", "300.0"});
-```
-
-**Parameters:**
-- `recipient`: The recipient's IP address or UDP endpoint.
-- `port`: Port number of the recipient.
-- `messageType`: The GDTP message type.
-- `args`: Arguments for the payload (optional).
-
----
-
-#### **`startReceive`**
-This method begins the asynchronous reception of UDP packets. It continuously listens for incoming packets using ASIO’s **`async_receive_from`** and processes them with the assigned handlers.
-
----
-
-#### **`run`**
-Starts the ASIO I/O context in a separate thread, enabling asynchronous I/O operations.
-
----
-
-#### **`stop`**
-Stops the ASIO I/O context and terminates the service thread.
-
----
-
-### **4. Error Handling**
-
-#### **UnknownPayloadMessage**
-This exception is thrown when a payload handler for a specific **GDTP message type** is missing.
-
-```cpp
-throw UnknownPayloadMessage(messageType);
-```
-
-**Example Usage:**
-```cpp
-if (!payload_handlers->contains(messageType)) {
-    throw UnknownPayloadMessage(messageType);
-}
-```
+#### `void processMessage(uint8_t messageType, const std::vector<uint8_t>& payload, const GDTPHeader& header, const asio::ip::udp::endpoint& client_endpoint) const`
+- **Description**: Processes a message by invoking the appropriate handler.
+- **Example**:
+  ```cpp
+  processMessage(0x01, payload, header, client_endpoint);
+  ```
 
 ---
 
-### **5. Message Handling**
+## Best Practices for Developers
 
-Message handling is a core aspect of the **NetworkingService** class. Each message type has its own handler, responsible for processing incoming data.
+1. **Starting the Service**:
+    - Call `getInstance()` to create or retrieve the singleton instance.
+    - Use `startReceive()` followed by `run()` to start receiving messages.
+    - Example:
+      ```cpp
+      auto& service = NetworkingService::getInstance();
+      service.startReceive();
+      service.run();
+      ```
 
-When a packet is received, the **header** and **payload** are extracted and passed to the appropriate handler function based on the **messageType**.
+2. **Adding Event Handlers**:
+    - Use `addEvent()` to register handlers for different message types.
+    - Ensure each handler processes the payload correctly according to its type.
+    - Example:
+      ```cpp
+      service.addEvent(0x05, [](const GDTPHeader& header, const std::vector<uint8_t>& payload, const asio::ip::udp::endpoint& client) {
+          std::cout << "Handling a Player Shoot event." << std::endl;
+      });
+      ```
+
+3. **Shutting Down the Service**:
+    - Call `stop()` before the application exits to gracefully close network operations.
+    - Use `attempt()` to wait until the network thread is fully stopped.
+    - Example:
+      ```cpp
+      service.stop();
+      service.attempt();
+      ```
+
+4. **Sending Requests and Responses**:
+    - Use `sendRequest()` to send messages to clients or servers.
+    - Use `sendRequestResponse()` to reply to received messages, preserving header metadata.
 
 ---
 
-### **6. GDTP Packet Structure**
-
-Each packet transmitted or received follows the GDTP format:
-
-| Field           | Size (bytes) |
-|-----------------|--------------|
-| Version         | 1            |
-| Message Type    | 1            |
-| Packet ID       | 8            |
-| Payload Size    | 2            |
-| Sequence Number | 2            |
-| Total Packets   | 2            |
-
-- **Payload (variable size)**: The content of the message depends on the **message type**.
-
-Example packet (Player Movement):
-```cpp
-| Version | MessageType | PacketID | PayloadSize | SeqNum | TotalPackets |
-|    1    |      1      |    1     |      8      |    1   |       1      |
-|  Player ID | X coordinate | Y coordinate | Z coordinate |
-```
-
----
-
-### **7. Conclusion**
-
-The **NetworkingService** class provides robust and flexible UDP-based communication for real-time games, integrating smoothly with the **GDTP protocol**. The class is designed to handle common networking concerns like packet loss, ordering, and payload preparation, making it a foundational component for client-server communication in your project.
-
----
