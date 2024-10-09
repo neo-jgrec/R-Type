@@ -3,15 +3,22 @@
 #include <iostream>
 #include "EntityFactory.hpp"
 #include "../../../game/Components.hpp"
+#include "src/Game/Utils/ClientComponents.hpp"
 #include <iostream>
 
-void Game::init() {
+void Game::init()
+{
+    _gameEngine.currentScene = static_cast<int>(GameState::MainMenu);
+
     _gameEngine.window.setFramerateLimit(60);
     _gameEngine.window.setKeyRepeatEnabled(true);
 
     _musicManager.loadMusic("level1", "assets/music/level1.ogg");
     // TODO: load every level music
     _musicManager.playMusic("level1");
+
+    // TODO: implement a way to load maps at runtimes dynamically
+    parseMap(_gameEngine.registry, "./JY_map.json", _gameEngine.window);
 
     _gameEngine.registry.register_component<VelocityComponent>();
     _gameEngine.registry.register_component<InputStateComponent>();
@@ -23,16 +30,17 @@ void Game::init() {
     _gameEngine.registry.register_component<Missile>();
     _gameEngine.registry.register_component<ShootCounterComponent>();
     _gameEngine.registry.register_component<DamageComponent>();
+    _gameEngine.registry.register_component<ViewComponent>();
 
     int player1Color = assignColor();
     if (player1Color >= 0) {
-        _playerEntity = EntityFactory::createPlayer(_gameEngine.registry, sf::Vector2f(100.0f, 400.0f), player1Color);
+        _playerEntity = EntityFactory::createPlayer(_gameEngine.registry, sf::Vector2f(100.0f, 400.0f), player1Color, gameScale);
     }
     int player2Color = assignColor();
     if (player2Color >= 0) {
-        _playerEntity = EntityFactory::createPlayer(_gameEngine.registry, sf::Vector2f(100.0f, 100.0f), player2Color);
+        _playerEntity = EntityFactory::createPlayer(_gameEngine.registry, sf::Vector2f(100.0f, 100.0f), player2Color, gameScale);
     }
-    _enemyEntity = EntityFactory::createEnemy(_gameEngine.registry, sf::Vector2f(700.0f, 100.0f));
+    _enemyEntity = EntityFactory::createEnemy(_gameEngine.registry, sf::Vector2f(700.0f, 100.0f), gameScale);
 
     EntityFactory::createButton(_gameEngine.registry,
         sf::Vector2f(300.0f, 200.0f),
@@ -46,7 +54,7 @@ void Game::init() {
         sf::Vector2f(300.0f, 275.0f),
         sf::Vector2f(200.0f, 50.0f),
         "Options",
-        [this]() { },
+        []() { },
         static_cast<int>(GameState::MainMenu)
     );
 
@@ -61,9 +69,15 @@ void Game::init() {
     inputSystem(_gameEngine.registry);
     projectileMovementSystem(_gameEngine.registry);
     enemyMovementSystem(_gameEngine.registry);
+
+    _viewEntity = _gameEngine.registry.spawn_entity();
+    _gameEngine.registry.add_component(_viewEntity, ViewComponent{});
+    _gameEngine.registry.add_component(_viewEntity, core::ge::SceneComponent{static_cast<int>(GameState::Playing)});
+    moveWindowViewSystem(_gameEngine.registry);
 }
 
-void Game::update() {
+void Game::update()
+{
     _gameEngine.registry.run_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, ShootCounterComponent>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::TransformComponent>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::AnimationComponent>();
@@ -83,11 +97,12 @@ void Game::update() {
 
     // Button
     _gameEngine.registry.run_system<core::ge::ButtonComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent>();
-
 }
 
-void Game::render() {
+void Game::render()
+{
     _gameEngine.window.clear();
+    _gameEngine.registry.run_system<ViewComponent, core::ge::SceneComponent>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::SceneComponent>();
     _gameEngine.registry.run_system<core::ge::TextComponent, core::ge::SceneComponent>();
     _gameEngine.window.display();
@@ -101,8 +116,10 @@ void Game::processEvents() {
             _gameEngine.window.close();
         }
 
-        if (event.type == sf::Event::KeyPressed) {
-            if (event.key.code == sf::Keyboard::Escape) {
+        if (event.type == sf::Event::KeyPressed || event.type == sf::Event::KeyReleased) {
+            bool isPressed = (event.type == sf::Event::KeyPressed);
+
+            if (event.key.code == sf::Keyboard::Escape && isPressed) {
                 _windowOpen = false;
                 _gameEngine.window.close();
             }
@@ -114,9 +131,9 @@ void Game::processEvents() {
                 auto &keyBinding = *keyBindingOpt.value();
                 auto &inputState = *inputStateOpt.value();
 
-                auto set_input_state = [&event](auto key, bool &state) {
+                auto set_input_state = [&event, isPressed](auto key, bool &state) {
                     if (event.key.code == key) {
-                        state = true;
+                        state = isPressed;
                     }
                 };
 
@@ -125,6 +142,18 @@ void Game::processEvents() {
                 set_input_state(keyBinding.moveLeftKey, inputState.left);
                 set_input_state(keyBinding.moveRightKey, inputState.right);
                 set_input_state(keyBinding.fireKey, inputState.fire);
+            }
+        }
+
+        if (event.type == sf::Event::Resized) {
+            gameScale.x = static_cast<float>(_gameEngine.window.getSize().x) / 800.0f;
+            gameScale.y = static_cast<float>(_gameEngine.window.getSize().y) / 600.0f;
+            auto entities = _gameEngine.registry.get_entities<core::ge::TransformComponent>();
+            for (auto entity : entities) {
+                auto &transform = _gameEngine.registry.get_components<core::ge::DrawableComponent>()[entity];
+                if (transform.has_value()) {
+                    transform->get()->shape.setScale(gameScale);
+                }
             }
         }
     }
