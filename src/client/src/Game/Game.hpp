@@ -22,6 +22,8 @@ private:
     void addSystems();
     void init();
     void setMusicVolume(float volume);
+    int assignColor();
+    void releaseColor(int color);
 
     core::ecs::Entity _playerEntity = core::ecs::Entity();
     core::ecs::Entity _enemyEntity = core::ecs::Entity();
@@ -35,4 +37,5 @@ private:
     static void enemyMovementSystem(core::ecs::Registry& registry);
 
     MusicManager _musicManager;
+    std::vector<int> availableColors = {0, 1, 2, 3, 4};
 };

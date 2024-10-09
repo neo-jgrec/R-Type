@@ -8,7 +8,7 @@
 
 class EntityFactory {
 public:
-    static core::ecs::Entity createPlayer(core::ecs::Registry& registry, const sf::Vector2f& position);
+    static core::ecs::Entity createPlayer(core::ecs::Registry& registry, const sf::Vector2f& position, int color);
     static core::ecs::Entity createPlayerProjectile(core::ecs::Registry& registry, core::ge::TransformComponent& playerTransform);
     static core::ecs::Entity createPlayerMissile(core::ecs::Registry& registry, core::ge::TransformComponent& playerTransform);
     static core::ecs::Entity createEnemy(core::ecs::Registry& registry, const sf::Vector2f& position);

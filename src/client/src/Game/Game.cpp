@@ -1,5 +1,6 @@
 #include "Game.hpp"
 #include <SFML/System/Time.hpp>
+#include <iostream>
 #include "EntityFactory.hpp"
 #include "../../../game/Components.hpp"
 
@@ -22,7 +23,11 @@ void Game::init() {
     _gameEngine.registry.register_component<ShootCounterComponent>();
     _gameEngine.registry.register_component<DamageComponent>();
 
-    _playerEntity = EntityFactory::createPlayer(_gameEngine.registry, sf::Vector2f(100.0f, 100.0f));
+    int playerColor = assignColor();
+    if (playerColor >= 0) {
+        _playerEntity = EntityFactory::createPlayer(_gameEngine.registry, sf::Vector2f(100.0f, 100.0f), playerColor);
+    }
+    // _playerEntity = EntityFactory::createPlayer(_gameEngine.registry, sf::Vector2f(100.0f, 100.0f));
     _enemyEntity = EntityFactory::createEnemy(_gameEngine.registry, sf::Vector2f(700.0f, 100.0f));
 
     inputSystem(_gameEngine.registry);
@@ -93,6 +98,21 @@ void Game::processEvents() {
 
 void Game::setMusicVolume(float volume) {
     _musicManager.setVolume(volume);
+}
+
+int Game::assignColor() {
+    if (!availableColors.empty()) {
+        int color = availableColors.back();
+        availableColors.pop_back();
+        return color;
+    } else {
+        std::cerr << "No available colors left!" << std::endl;
+        return -1;
+    }
+}
+
+void Game::releaseColor(int color) {
+    availableColors.push_back(color);
 }
 
 void Game::run() {

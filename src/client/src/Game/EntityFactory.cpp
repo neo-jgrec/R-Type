@@ -5,7 +5,7 @@
 #include <iostream>
 #include "../../../game/Components.hpp"
 
-core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, const sf::Vector2f& position)
+core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, const sf::Vector2f& position, int color)
 {
     core::ecs::Entity player = registry.spawn_entity();
 
