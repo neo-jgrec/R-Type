@@ -41,7 +41,11 @@ void Server::run()
     _networkingService.run();
     while (true) {
         update();
-        sleep(1);
+        #ifdef _WIN32
+            _sleep(1000);
+        #else
+            sleep(1);
+        #endif
     }
     _networkingService.stop();
 }

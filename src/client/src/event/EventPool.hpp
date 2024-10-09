@@ -30,7 +30,7 @@
  */
 class EventPool {
     public:
-        EventPool();
+        EventPool() = default;
         static EventPool& getInstance();
 
         /**
