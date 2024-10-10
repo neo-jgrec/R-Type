@@ -18,6 +18,7 @@
     #include <map>
     #include <vector>
 
+    #include "../../../core/network/NetworkService.hpp"
     #include "../core/network/includes/RequestHeader.hpp"
     #include "Event.hpp"
 
@@ -116,6 +117,36 @@ class EventPool {
         std::condition_variable condition; ///< Condition variable to notify when events are added.
         std::optional<std::function<void(Event)>> _handler; ///< Optional handler function for processing events.
 };
+/**
+ * @brief Configures the handlers for all possible event types (0 to 255).
+ *
+ * This function retrieves the singleton instance of the `NetworkingService`
+ * and registers a default handler for each possible event type, ranging from 0 to 255.
+ * The default handler is set to `EventPool::handler`, which will process
+ * the incoming events.
+ *
+ * @details
+ * The `setHandlers` function iterates over the range of possible event types (0 to 255)
+ * and uses the `addEvent` method of the `NetworkingService` to associate each event type
+ * with a generic handler. This allows the `NetworkingService` to automatically
+ * handle different types of events as they are received.
+ *
+ * @note
+ * - This function is typically called during the initialization phase to ensure
+ *   that all event types are properly handled.
+ * - The `EventPool::handler` function is used as a generic handler for all event types.
+ *   This can be customized later if specific handling is needed for certain event types.
+ * - It assumes that `NetworkingService::getInstance()` is already properly initialized.
+ *
+ * @code
+ * // Example usage:
+ * setHandlers();
+ * // This sets up handlers for all message types (0-255) using `EventPool::handler`.
+ * @endcode
+ *
+ * @see NetworkingService::addEvent() for adding individual event handlers.
+ * @see EventPool::handler for the default event handling logic.
+ */
 void setHandlers();
 
 
