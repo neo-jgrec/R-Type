@@ -70,13 +70,50 @@ core::ecs::Entity EntityFactory::createPlayer(
     registry.add_component(player, Network{networkingService});
     registry.add_component(player, core::ge::TransformComponent{sf::Vector2f(0, 0), sf::Vector2f(32, 32), sf::Vector2f(1, 1), 0});
     registry.add_component(player, core::ge::CollisionComponent{PLAYER, std::vector{sf::FloatRect(0, 0, 32, 32)},{
-        { ENEMY, [&]([[maybe_unused]] const core::ecs::Entity& entity, [[maybe_unused]] const core::ecs::Entity& otherEntity) {
-            std::cout << "Player " << static_cast<int>(id) << " collided with enemy" << std::endl;
-            const auto &playerComponent = registry.get_component<Player>(entity);
-            playerComponent->health -= 1;
-            if (playerComponent->health <= 0)
-                registry.kill_entity(entity);
-            registry.kill_entity(otherEntity);
+        { ENEMY, [&](const core::ecs::Entity& entity, const core::ecs::Entity&) {
+            std::cout << "Player " << id << " collided with enemy" << std::endl;
+
+            {
+                const auto &playerComponent = registry.get_component<Player>(entity);
+                playerComponent->health -= 1;
+                if (playerComponent->health > 0)
+                    return;
+            }
+
+            for (auto &playerEntity : players) {
+                if (!playerEntity.has_value())
+                    continue;
+                const auto &playerComponent = registry.get_component<Player>(playerEntity.value());
+                networkingService.sendRequest(
+                    playerComponent->endpoint,
+                    PlayerDie,
+                    {playerComponent->id});
+            }
+
+            registry.kill_entity(entity);
+        }}}});
+    registry.add_component(player, core::ge::CollisionComponent{PLAYER, std::vector{sf::FloatRect(0, 0, 32, 32)},{
+        { TILE, [&](const core::ecs::Entity& entity, const core::ecs::Entity&) {
+            std::cout << "Player " << id << " collided with enemy" << std::endl;
+
+            {
+                const auto &playerComponent = registry.get_component<Player>(entity);
+                playerComponent->health -= 1;
+                if (playerComponent->health > 0)
+                    return;
+            }
+
+            for (auto &playerEntity : players) {
+                if (!playerEntity.has_value())
+                    continue;
+                const auto &playerComponent = registry.get_component<Player>(playerEntity.value());
+                networkingService.sendRequest(
+                    playerComponent->endpoint,
+                    PlayerDie,
+                    {playerComponent->id});
+            }
+
+            registry.kill_entity(entity);
         }}}});
     registry.add_component(player, Player{endpoint, id, 3, std::time(nullptr)});
 
@@ -96,7 +133,8 @@ core::ecs::Entity EntityFactory::createPlayer(
             PlayerConnect,
             {playerComponent->id});
     }
-    std::cout << "Player " << static_cast<int>(id) << " created" << std::endl;
+
+    std::cout << "Player " << id << " created" << std::endl;
     return player;
 }
 
@@ -112,8 +150,21 @@ core::ecs::Entity EntityFactory::createEnemy(
     registry.add_component(enemy, Network{networkingService});
     registry.add_component(enemy, core::ge::TransformComponent{sf::Vector2f(position), sf::Vector2f(32, 32), sf::Vector2f(1, 1), 0});
     registry.add_component(enemy, core::ge::CollisionComponent{ENEMY, std::vector{sf::FloatRect(0, 0, 32, 32)},{
-        { PLAYER, []([[maybe_unused]] const core::ecs::Entity& entity, [[maybe_unused]] const core::ecs::Entity& otherEntity) {
-            std::cout << "Enemy collided with player" << std::endl;
+        { PLAYER, [&](const core::ecs::Entity& entity, const core::ecs::Entity&) {
+            std::cout << "Enemy " << id << " collided with player" << std::endl;
+
+            const auto &enemyComponent = registry.get_component<Enemy>(entity);
+            for (auto &playerEntity : players) {
+                if (!playerEntity.has_value())
+                    continue;
+                const auto &playerComponent = registry.get_component<Player>(playerEntity.value());
+                networkingService.sendRequest(
+                    playerComponent->endpoint,
+                    EnemyDie,
+                    {enemyComponent->id});
+            }
+
+            registry.kill_entity(entity);
         }}}});
     registry.add_component(enemy, Enemy{id});
 
