@@ -43,6 +43,7 @@ core::ecs::Entity EntityFactory::createWorld(
         file >> json;
     }
 
+    float cellSize = json["cellSize"].get<float>();
     World worldComponent = {1, 0,
         { json["width"], json["height"] },
         std::vector(json["width"], std::vector<uint8_t>(json["height"], 0)) };
@@ -52,6 +53,28 @@ core::ecs::Entity EntityFactory::createWorld(
             throw std::out_of_range("Tile coordinates out of bounds");
         }
         worldComponent.tiles[tile["x"]][tile["y"]] = static_cast<uint8_t>(tile["tileIndex"]);
+                    core::ecs::Entity tileEntity = registry.spawn_entity();
+            bool isDestructible = tile["isDestructible"];
+            sf::Vector2f tilePos(tile["x"].get<float>() * cellSize,
+                                 tile["y"].get<float>() * cellSize);
+        registry.add_component(tileEntity, core::ge::TransformComponent{tilePos, {cellSize, cellSize }, {1.0f, 1.0f}, 0.0f});
+
+            registry.add_component(tileEntity, core::ge::CollisionComponent{
+                WORLD, {sf::FloatRect(0.0f, 0.0f, cellSize, cellSize)},
+                {
+                    {PLAYER_PROJECTILE, [&](const core::ecs::Entity self, const core::ecs::Entity other) {
+                        if (isDestructible) {
+                            registry.kill_entity(self);
+                        }
+                        registry.kill_entity(other);
+                    }},
+                    {PLAYER, [&](const core::ecs::Entity, const core::ecs::Entity other) {
+                        if (isDestructible) {
+                            registry.kill_entity(other);
+                        }
+                    }},
+                }
+            });
     }
     registry.add_component(world, std::move(worldComponent));
 
