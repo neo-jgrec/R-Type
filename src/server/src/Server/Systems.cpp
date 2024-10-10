@@ -32,17 +32,6 @@ void Systems::playerSystem(core::ecs::Registry &registry, std::array<std::option
     registry.add_system<Network, Player>(
         [&](const core::ecs::Entity &entity, const Network &network, Player &player) {
             if (player.lastTimePacketReceived + 5 < std::time(nullptr)) {
-                {
-                    const auto &playerComponent = registry.get_component<Player>(entity);
-                    network.service.sendRequest(
-                        playerComponent->endpoint,
-                        PlayerDisconnect,
-                        {playerComponent->id});
-                }
-
-                registry.kill_entity(entity);
-                players[player.id].reset();
-
                 for (auto &playerEntity : players) {
                     if (!playerEntity.has_value())
                         continue;
@@ -50,10 +39,12 @@ void Systems::playerSystem(core::ecs::Registry &registry, std::array<std::option
                     const auto &playerComponent = registry.get_component<Player>(playerEntity.value());
                     network.service.sendRequest(
                         playerComponent->endpoint,
-                        OtherPlayerDisconnect,
+                        PlayerDisconnect,
                         {player.id});
                 }
-            }
 
+                registry.kill_entity(entity);
+                players[player.id].reset();
+            }
         });
 }
