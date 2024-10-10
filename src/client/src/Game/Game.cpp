@@ -42,29 +42,7 @@ void Game::init()
     }
     _enemyEntity = EntityFactory::createEnemy(_gameEngine.registry, sf::Vector2f(700.0f, 100.0f), gameScale);
 
-    EntityFactory::createButton(_gameEngine.registry,
-        sf::Vector2f(300.0f, 200.0f),
-        sf::Vector2f(200.0f, 50.0f),
-        "Start Game",
-        [this]() { _gameEngine.currentScene = static_cast<int>(GameState::Playing); },
-        static_cast<int>(GameState::MainMenu)
-    );
-
-    EntityFactory::createButton(_gameEngine.registry,
-        sf::Vector2f(300.0f, 275.0f),
-        sf::Vector2f(200.0f, 50.0f),
-        "Options",
-        []() { },
-        static_cast<int>(GameState::MainMenu)
-    );
-
-    EntityFactory::createButton(_gameEngine.registry,
-        sf::Vector2f(300.0f, 350.0f),
-        sf::Vector2f(200.0f, 50.0f),
-        "Quit",
-        [this]() { _windowOpen = false; },
-        static_cast<int>(GameState::MainMenu)
-    );
+    initMainMenu();
 
     inputSystem(_gameEngine.registry);
     projectileMovementSystem(_gameEngine.registry);
@@ -74,6 +52,57 @@ void Game::init()
     _gameEngine.registry.add_component(_viewEntity, ViewComponent{});
     _gameEngine.registry.add_component(_viewEntity, core::ge::SceneComponent{static_cast<int>(GameState::Playing)});
     moveWindowViewSystem(_gameEngine.registry);
+}
+
+void Game::initMainMenu()
+{
+    sf::Vector2u windowSize = _gameEngine.window.getSize();
+    float centerX = static_cast<float>(windowSize.x) / 2.0f;
+    float centerY = static_cast<float>(windowSize.y) / 4.0f;
+
+    sf::Vector2f buttonSize(200.0f, 50.0f);
+    float buttonSpacing = 20.0f;
+
+    EntityFactory::createButton(_gameEngine.registry,
+        sf::Vector2f(centerX - buttonSize.x / 2, centerY - buttonSize.y - buttonSpacing),
+        buttonSize,
+        "Start Game",
+        [this]() { _gameEngine.currentScene = static_cast<int>(GameState::Playing); },
+        static_cast<int>(GameState::MainMenu)
+    );
+
+    EntityFactory::createButton(_gameEngine.registry,
+        sf::Vector2f(centerX - buttonSize.x / 2, centerY),
+        buttonSize,
+        "Options",
+        []() { },
+        static_cast<int>(GameState::MainMenu)
+    );
+
+    EntityFactory::createButton(_gameEngine.registry,
+        sf::Vector2f(centerX - buttonSize.x / 2, centerY + buttonSize.y + buttonSpacing),
+        buttonSize,
+        "Quit",
+        [this]() { _windowOpen = false; },
+        static_cast<int>(GameState::MainMenu)
+    );
+
+    EntityFactory::createTextInput(_gameEngine.registry,
+        sf::Vector2f(centerX - buttonSize.x / 2, centerY + 2 * (buttonSize.y + (buttonSpacing += 10.0f))),
+        buttonSize,
+        "Enter your name",
+        []() { },
+        static_cast<int>(GameState::MainMenu)
+    );
+
+    EntityFactory::createSlider(_gameEngine.registry,
+        sf::Vector2f(centerX - buttonSize.x / 2, centerY + 3 * (buttonSize.y + (buttonSpacing += 10.0f))),
+        sf::Vector2f(200.0f, 10.0f),
+        "Volume",
+        [this](float value) { setMusicVolume(value); },
+        static_cast<int>(GameState::MainMenu),
+        _musicManager.getVolume()
+    );
 }
 
 void Game::update()
@@ -97,6 +126,9 @@ void Game::update()
 
     // Button
     _gameEngine.registry.run_system<core::ge::ButtonComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent>();
+
+    // TextInput
+    _gameEngine.registry.run_system<core::ge::TextInputComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent>();
 }
 
 void Game::render()
@@ -105,6 +137,7 @@ void Game::render()
     _gameEngine.registry.run_system<ViewComponent, core::ge::SceneComponent>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::SceneComponent>();
     _gameEngine.registry.run_system<core::ge::TextComponent, core::ge::SceneComponent>();
+    _gameEngine.registry.run_system<core::ge::SliderComponent, core::ge::SceneComponent>();
     _gameEngine.window.display();
 }
 

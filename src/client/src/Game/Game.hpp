@@ -34,6 +34,7 @@ private:
     void setMusicVolume(float volume);
     int assignColor();
     void releaseColor(int color);
+    void initMainMenu();
 
     core::ecs::Entity _playerEntity = core::ecs::Entity();
     core::ecs::Entity _enemyEntity = core::ecs::Entity();
