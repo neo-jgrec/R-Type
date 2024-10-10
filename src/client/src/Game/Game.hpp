@@ -4,6 +4,7 @@
 #include "../../../core/ecs/Entity/Entity.hpp"
 #include "../../../core/ecs/GameEngine/GameEngine.hpp"
 #include "MusicManager.hpp"
+#include "../../../core/network/NetworkService.hpp"
 
 struct Tile {
     core::ecs::Entity entity;
@@ -56,4 +57,6 @@ private:
 
     std::vector<std::vector<Tile>> _tileMap;
     void parseMap(core::ecs::Registry& registry, const std::string& mapFilePath, sf::RenderWindow& window);
+
+    NetworkingService &networkingService = NetworkingService::getInstance();
 };

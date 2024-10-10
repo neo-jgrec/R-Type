@@ -8,7 +8,7 @@
 class Server {
 private:
     core::GameEngine _gameEngine{false};
-    NetworkingService _networkingService{12345};
+    NetworkingService _networkingService{1111};
 
     core::ecs::Entity _connectionHub;
     core::ecs::Entity _world;
