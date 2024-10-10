@@ -44,6 +44,10 @@ public:
         }
     }
 
+    float getVolume() {
+        return _musicMap[_currentState]->getVolume();
+    }
+
 private:
     // Use unique_ptr to manage the lifetime of sf::Music objects
     std::unordered_map<std::string, std::unique_ptr<sf::Music>> _musicMap;
