@@ -325,6 +325,7 @@ void sendRequest(
             asio::buffer(recv_buffer_), remote_endpoint_,
             [this](const std::error_code ec, const std::size_t bytes_recvd) {
                 if (!ec && bytes_recvd > 0) {
+                    std::cout << "Received " << bytes_recvd << " bytes from " << remote_endpoint_ << std::endl;
                     handleReceivedPacket(recv_buffer_, bytes_recvd, remote_endpoint_);
                 }
                 startReceive(); // Continue listening for more packets.
@@ -370,7 +371,8 @@ void sendRequest(
             try {
                 socket_ = asio::ip::udp::socket(io_context_, asio::ip::udp::endpoint(asio::ip::udp::v4(), _port));
                 isInit = true;
-                std::cout << "Network service initialized" << std::endl;
+                startReceive();
+                std::cout << "Network service initialized on port : " << _port << std::endl;
             } catch (std::exception &e) {
                 std::cerr << "Error in Network service: " << e.what() << std::endl;
                 throw std::runtime_error("Failed to initialize network service");
@@ -413,7 +415,9 @@ void sendRequest(
         init();
         thread = std::jthread([this] {
             io_context_.run();
+            std::cout << "Networking service thread started" << std::endl;
         });
+
     }
 
 
