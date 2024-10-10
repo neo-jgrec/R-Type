@@ -24,7 +24,7 @@ Server::Server()
         for (uint8_t i = 0; i < 4; i++) {
             if (_players[i].has_value())
                 continue;
-            _players[i].emplace(EntityFactory::createPlayer(_gameEngine.registry, _networkingService, endpoint, i));
+            _players[i].emplace(EntityFactory::createPlayer(_gameEngine.registry, _networkingService, _players, endpoint, i));
             return;
         }
     });
@@ -43,10 +43,9 @@ bool Server::asPlayerConnected()
     return std::ranges::any_of(_players, [](const auto &playerEntity) { return playerEntity.has_value(); });
 }
 
-
 void Server::run()
 {
-    _enemies.push_back(EntityFactory::createEnemy(_gameEngine.registry, _networkingService));
+    _enemies.push_back(EntityFactory::createEnemy(_gameEngine.registry, _networkingService, _players));
     _networkingService.run();
 
     std::cout << "Server started" << std::endl;

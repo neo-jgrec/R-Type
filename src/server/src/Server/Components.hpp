@@ -27,7 +27,7 @@ struct Player {
 };
 
 struct Enemy {
-    uint8_t id = 0;
+    uint8_t id;
 };
 
 struct Projectile {};
