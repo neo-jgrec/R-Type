@@ -12,11 +12,8 @@
 namespace core {
     class GameEngine {
         public:
-            GameEngine() : window(sf::VideoMode(800, 600), "R-Type")
+            GameEngine(bool initWindow = true)
             {
-                window.setFramerateLimit(60);
-                window.setKeyRepeatEnabled(true);
-
                 registry.register_component<core::ge::TransformComponent>();
                 registry.register_component<core::ge::DrawableComponent>();
                 registry.register_component<core::ge::KeyBinding>();
@@ -39,6 +36,12 @@ namespace core {
                 collisionSystem();
                 buttonSystem();
                 textSystem();
+
+                if (!initWindow)
+                    return;
+                window.create(sf::VideoMode(800, 600), "Game", sf::Style::Default);
+                window.setFramerateLimit(60);
+                window.setKeyRepeatEnabled(true);
             }
 
             ~GameEngine() = default;

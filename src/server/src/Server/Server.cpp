@@ -51,7 +51,11 @@ void Server::run()
 
     std::cout << "Server started" << std::endl;
     while (!asPlayerConnected()) {
-        sleep(1);
+        #ifdef _WIN32
+            _sleep(1000);
+        #else
+            sleep(1);
+        #endif
     }
     while (asPlayerConnected()) {
         update();
