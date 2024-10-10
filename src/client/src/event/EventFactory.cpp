@@ -30,7 +30,7 @@ Event EventFactory::createEvent(const GDTPHeader& header, const std::vector<uint
     }
 }
 
-Event EventFactory::handlePlayerMovement(const GDTPHeader& header, const std::vector<uint8_t>& payload) {
+Event EventFactory::handlePlayerMovement([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload) {
     if (payload.size() < sizeof(PlayerMovement)) {
         throw std::runtime_error("Invalid payload size for PlayerMovement");
     }
@@ -44,7 +44,7 @@ Event EventFactory::handlePlayerMovement(const GDTPHeader& header, const std::ve
     return Event(0x01, movement);
 }
 
-Event EventFactory::handlePlayerShoot(const GDTPHeader& header, const std::vector<uint8_t>& payload) {
+Event EventFactory::handlePlayerShoot([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload) {
     if (payload.size() < sizeof(PlayerShoot)) {
         throw std::runtime_error("Invalid payload size for PlayerShoot");
     }
@@ -57,7 +57,7 @@ Event EventFactory::handlePlayerShoot(const GDTPHeader& header, const std::vecto
     return Event(0x05, shoot);
 }
 
-Event EventFactory::handleChatMessage(const GDTPHeader& header, const std::vector<uint8_t>& payload) {
+Event EventFactory::handleChatMessage([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload) {
     if (payload.size() < 6) {
         throw std::runtime_error("Invalid payload size for ChatMessage");
     }
@@ -73,7 +73,7 @@ Event EventFactory::handleChatMessage(const GDTPHeader& header, const std::vecto
     return Event(0x15, chatMessage);
 }
 
-Event EventFactory::handlePlayerHealthUpdate(const GDTPHeader& header, const std::vector<uint8_t>& payload) {
+Event EventFactory::handlePlayerHealthUpdate([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload) {
     if (payload.size() < sizeof(PlayerHealthUpdate)) {
         throw std::runtime_error("Invalid payload size for PlayerHealthUpdate");
     }
@@ -85,7 +85,7 @@ Event EventFactory::handlePlayerHealthUpdate(const GDTPHeader& header, const std
     return Event(0x06, healthUpdate);
 }
 
-Event EventFactory::handleEntitySpawn(const GDTPHeader& header, const std::vector<uint8_t>& payload) {
+Event EventFactory::handleEntitySpawn([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload) {
     if (payload.size() < sizeof(EntitySpawn)) {
         throw std::runtime_error("Invalid payload size for EntitySpawn");
     }
@@ -98,7 +98,7 @@ Event EventFactory::handleEntitySpawn(const GDTPHeader& header, const std::vecto
     return Event(0x09, entitySpawn);
 }
 
-Event EventFactory::handleEntityDestroy(const GDTPHeader& header, const std::vector<uint8_t>& payload) {
+Event EventFactory::handleEntityDestroy([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload) {
     if (payload.size() < sizeof(EntityDestroy)) {
         throw std::runtime_error("Invalid payload size for EntityDestroy");
     }

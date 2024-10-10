@@ -33,11 +33,10 @@ public:
      * If the instance is not yet created, it initializes it with the provided IP address and port.
      * If it has already been created, it returns the same instance.
      *
-     * @param server_ip The IP address for the server (default is "127.0.0.1").
      * @param port The port number for the server (default is 12345).
      * @return A reference to the singleton instance of NetworkingService.
      *
-     * @note The IP address and port are used only during the first call to this method. Subsequent calls
+     * @note The  port are used only during the first call to this method. Subsequent calls
      * will return the existing instance without reinitializing the networking parameters.
      *
      * @warning This method ensures that only one instance of NetworkingService exists. Do not attempt to
@@ -50,10 +49,9 @@ public:
      * @endcode
      */
     static NetworkingService& getInstance(
-        const std::string& server_ip = "127.0.0.1",
         const int port = 12345
     ) {
-        static NetworkingService instance(server_ip, port);
+        static NetworkingService instance(port);
         return instance;
     }
 
@@ -62,17 +60,12 @@ public:
 
     /**
     * @brief Constructs a NetworkingService object and starts receiving packets on the specified IP and port.
-    * @param server_ip The IP address of the server.
     * @param port The port number to listen on.
     */
     NetworkingService(
-        const std::string& server_ip,
         const int port
-    )
-        : socket_(io_context_, asio::ip::udp::endpoint(asio::ip::udp::v4(), port)) {
-        std::cout << "Server listening on " << server_ip << ":" << port << std::endl;
+    ) : _port(port){
         message_handlers = std::make_shared<std::map<uint8_t, std::function<void(const GDTPHeader&, const std::vector<uint8_t>&, const asio::ip::udp::endpoint&)>>>();
-        startReceive(); // Commence l'écoute des paquets dès l'initialisation
     }
 
     /**
@@ -107,7 +100,7 @@ public:
      * @return A string representing the IP address and port in the format "IP:Port".
      */
     [[nodiscard]] std::string getLocalEndpoint() const {
-        asio::ip::udp::endpoint local_endpoint = socket_.local_endpoint();
+        asio::ip::udp::endpoint local_endpoint = socket_->local_endpoint();
         return local_endpoint.address().to_string() + ":" + std::to_string(local_endpoint.port());
     }
 
@@ -116,7 +109,7 @@ public:
      * @return A string representing the IP address.
      */
     [[nodiscard]] std::string getIp() const {
-        const asio::ip::udp::endpoint local_endpoint = socket_.local_endpoint();
+        const asio::ip::udp::endpoint local_endpoint = socket_->local_endpoint();
         return local_endpoint.address().to_string();
     }
 
@@ -126,7 +119,7 @@ public:
      */
     [[nodiscard]] uint32_t getPort() const
     {
-        return socket_.local_endpoint().port();
+        return socket_->local_endpoint().port();
     }
 
     /**
@@ -134,7 +127,7 @@ public:
     */
     ~NetworkingService()
     {
-        socket_.close();
+        socket_->close();
         stop();
     }
 
@@ -328,7 +321,7 @@ void sendRequest(
      * @see `run()` for starting the I/O context in a separate thread.
      */
     void startReceive() {
-        socket_.async_receive_from(
+        socket_->async_receive_from(
             asio::buffer(recv_buffer_), remote_endpoint_,
             [this](const std::error_code ec, const std::size_t bytes_recvd) {
                 if (!ec && bytes_recvd > 0) {
@@ -339,6 +332,51 @@ void sendRequest(
         );
     }
 
+    /**
+     * @brief Initializes the networking service by setting up the UDP socket.
+     *
+     * This function sets up the UDP socket for the networking service. It ensures that the
+     * socket is only initialized once by using a static `isInit` flag. If the socket has already
+     * been initialized, subsequent calls to this function will have no effect.
+     *
+     * @details
+     * - The function checks if the `isInit` flag is `false`, indicating that the socket has not been initialized.
+     * - It then attempts to create a new `asio::ip::udp::socket` using the provided I/O context and binds it
+     *   to a UDP endpoint with the specified port.
+     * - If the initialization is successful, `isInit` is set to `true` to prevent future reinitializations.
+     * - If an exception occurs during socket creation, it is caught and the error message is printed to `std::cerr`.
+     *
+     * @note This function is automatically called inside the `run()` method if it has not been called before.
+     *       Therefore, it is not strictly necessary to call `init()` manually unless you want to initialize
+     *       the socket explicitly before starting the service.
+     *
+     * @code
+     * // Example usage:
+     * NetworkingService& networkService = NetworkingService::getInstance();
+     * networkService.init(); // Explicitly initialize the network service.
+     * networkService.run();  // Will not attempt to reinitialize if already initialized.
+     * @endcode
+     *
+     * @throws std::runtime_error If an error occurs during the creation of the socket, the exception is caught
+     *         and logged, but the function does not rethrow the exception. This allows the caller to handle
+     *         the error gracefully.
+     */
+    void init()
+    {
+        static bool isInit = false;
+
+        if (!isInit)
+        {
+            try {
+                socket_ = asio::ip::udp::socket(io_context_, asio::ip::udp::endpoint(asio::ip::udp::v4(), _port));
+                isInit = true;
+                std::cout << "Network service initialized" << std::endl;
+            } catch (std::exception &e) {
+                std::cerr << "Error in Network service: " << e.what() << std::endl;
+                throw std::runtime_error("Failed to initialize network service");
+            }
+        }
+    }
 
     /**
      * @brief Runs the NetworkingService in a separate thread.
@@ -372,6 +410,7 @@ void sendRequest(
      * @see `stop()` for stopping the I/O context and thread safely.
      */
     void run() {
+        init();
         thread = std::jthread([this] {
             io_context_.run();
         });
@@ -466,7 +505,8 @@ void sendRequest(
 
 private:
     asio::io_context io_context_;                   ///< ASIO I/O context for handling asynchronous network operations.
-    asio::ip::udp::socket socket_;                  ///< ASIO UDP socket for sending and receiving packets.
+    std::optional<asio::ip::udp::socket> socket_;                  ///< ASIO UDP socket for sending and receiving packets.
+    int _port;                                      ///< Port number for the server to listen on.
     asio::ip::udp::endpoint remote_endpoint_;       ///< Endpoint of the remote client sending the packet.
     std::array<uint8_t, 1400> recv_buffer_{};         ///< Buffer for receiving incoming packets.
     std::jthread thread;                            ///< Thread for running the ASIO I/O context.
@@ -526,10 +566,10 @@ private:
     ) {
         const asio::ip::udp::endpoint recipient_endpoint(asio::ip::address::from_string(recipient), port);
         std::error_code ec;
-        const size_t bytesSent = socket_.send_to(asio::buffer(packet), recipient_endpoint, 0, ec);
+        socket_->send_to(asio::buffer(packet), recipient_endpoint, 0, ec);
 
         if (ec) {
-            throw std::runtime_error("Failed to send packet: " + ec.message());
+            std::cout << "Failed to send packet: " << ec.message() << std::endl;
         }
     }
 
