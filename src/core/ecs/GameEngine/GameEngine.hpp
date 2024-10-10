@@ -31,6 +31,8 @@ namespace core {
                 registry.register_component<core::ge::ButtonComponent>();
                 registry.register_component<core::ge::TextComponent>();
                 registry.register_component<core::ge::SceneComponent>();
+                registry.register_component<core::ge::TextInputComponent>();
+                registry.register_component<core::ge::SliderComponent>();
 
                 positionSystem();
                 renderSystems();
@@ -39,6 +41,8 @@ namespace core {
                 collisionSystem();
                 buttonSystem();
                 textSystem();
+                textInputSystem();
+                sliderSystem();
             }
 
             ~GameEngine() = default;
@@ -183,6 +187,65 @@ namespace core {
                     text.text.setFont(text.font);
                     window.draw(text.text);
                 });
+            }
+
+            void textInputSystem()
+            {
+                registry.add_system<core::ge::TextInputComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent>(
+                    [&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::TextInputComponent &textInput, core::ge::SceneComponent &scene, core::ge::DrawableComponent &drawable, core::ge::TextComponent &text) {
+                        if (scene.sceneName != currentScene)
+                            return;
+
+                        sf::Vector2i mousePosition = sf::Mouse::getPosition(window);
+                        sf::Vector2f worldPos = window.mapPixelToCoords(mousePosition);
+
+                        if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+                            if (drawable.shape.getGlobalBounds().contains(worldPos)) {
+                                textInput.isActive = true;
+                            } else {
+                                textInput.isActive = false;
+                            }
+                        }
+                    });
+            }
+
+            void sliderSystem()
+            {
+                registry.add_system<core::ge::SliderComponent, core::ge::SceneComponent>(
+                    [&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::SliderComponent &slider, core::ge::SceneComponent &scene) {
+                        if (scene.sceneName != currentScene)
+                            return;
+
+                        sf::Vector2i mousePosition = sf::Mouse::getPosition(window);
+                        sf::Vector2f worldPos = window.mapPixelToCoords(mousePosition);
+
+                        slider.handle.setPosition(
+                            slider.handle.getPosition().x,
+                            slider.bar.getPosition().y + (slider.bar.getSize().y / 2) - (slider.handle.getRadius())
+                        );
+                        window.draw(slider.bar);
+                        window.draw(slider.handle);
+
+                        if (!sf::Mouse::isButtonPressed(sf::Mouse::Left))
+                            return;
+                        sf::FloatRect hitbox = slider.bar.getGlobalBounds();
+                        hitbox.height += 40;
+                        hitbox.width += 20;
+                        hitbox.left -= 15;
+                        hitbox.top -= 20;
+                        if (!hitbox.contains(worldPos))
+                            return;
+
+                        float percentage = (worldPos.x - slider.bar.getPosition().x) / slider.bar.getSize().x;
+                        percentage = std::clamp(percentage, 0.0f, 1.0f);
+                        slider.currentValue = slider.minValue + (slider.maxValue - slider.minValue) * percentage;
+                        slider.handle.setPosition(
+                            slider.bar.getPosition().x + percentage * slider.bar.getSize().x - slider.handle.getRadius(),
+                            slider.bar.getPosition().y + slider.bar.getSize().y / 2
+                        );
+                        if (slider.onChange)
+                            slider.onChange(slider.currentValue);
+                    });
             }
     };
 }
