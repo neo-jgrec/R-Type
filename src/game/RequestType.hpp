@@ -13,12 +13,5 @@ enum RequestType {
     PlayerHit = 9,
     PlayerDie = 10,
     EnemySpawn = 11,
-    EnemyShoot = 12,
     EnemyDie = 13,
-    OtherPlayerConnect = 14,
-    OtherPlayerDisconnect = 15,
-    OtherPlayerMove = 16,
-    OtherPlayerShoot = 17,
-    OtherPlayerHit = 18,
-    OtherPlayerDie = 19,
 };
