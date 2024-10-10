@@ -61,7 +61,7 @@ class EventPool {
          * @param payload The payload of the message.
          * @param client_endpoint The client endpoint from which the message was received.
          */
-        void handler(const GDTPHeader& header, const std::vector<uint8_t>& payload, const asio::ip::udp::endpoint& client_endpoint);
+        static void handler(const GDTPHeader& header, const std::vector<uint8_t>& payload, const asio::ip::udp::endpoint& client_endpoint);
 
         /**
          * @brief Sets a new handler to be called when an event is pushed.
@@ -116,12 +116,7 @@ class EventPool {
         std::condition_variable condition; ///< Condition variable to notify when events are added.
         std::optional<std::function<void(Event)>> _handler; ///< Optional handler function for processing events.
 };
-/**
- * @brief use this function for set handlig map for use pool event
- * @return map of event handlers (the handlers is the same for all requests)
- */
-std::shared_ptr<std::map<uint8_t, std::function<void(
-    const GDTPHeader &header, const std::vector<uint8_t> &payload,
-    const asio::ip::udp::endpoint &client_endpoint)>>> handlersMapEventPool();
+void setHandlers();
+
 
 #endif // EVENTPOOL_HPP
