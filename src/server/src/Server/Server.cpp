@@ -2,8 +2,7 @@
 #include "Components.hpp"
 #include "Systems.hpp"
 #include "EntityFactory.hpp"
-
-#include "../../../game/MessageType.hpp"
+#include "../../../game/RequestType.hpp"
 
 Server::Server()
 {
@@ -18,9 +17,16 @@ Server::Server()
     _world = EntityFactory::createWorld(_gameEngine.registry, _networkingService, "JY_map.json");
 
     Systems::worldSystem(_gameEngine.registry);
+    Systems::playerSystem(_gameEngine.registry, _players);
 
-    _networkingService.addEvent(EntitySpawn, [&](const GDTPHeader &, const std::vector<uint8_t> &, const asio::ip::udp::endpoint &) {
-        std::cout << "EntitySpawn" << std::endl;
+    _networkingService.addEvent(PlayerConnect, [&](const GDTPHeader &, const std::vector<uint8_t> &, const asio::ip::udp::endpoint &endpoint) {
+        std::cout << "New connection from " << endpoint << std::endl;
+        for (uint8_t i = 0; i < 4; i++) {
+            if (_players[i].has_value())
+                continue;
+            _players[i].emplace(EntityFactory::createPlayer(_gameEngine.registry, _networkingService, endpoint, i));
+            return;
+        }
     });
 }
 
@@ -29,17 +35,25 @@ void Server::update()
     std::cout << "↻ Updating server" << std::endl;
     _gameEngine.registry.run_system<Network, World>();
     _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent>();
+    _gameEngine.registry.run_system<Network, Player>();
 }
+
+bool Server::asPlayerConnected()
+{
+    return std::ranges::any_of(_players, [](const auto &playerEntity) { return playerEntity.has_value(); });
+}
+
 
 void Server::run()
 {
-    std::cout << "Hello, World!" << std::endl;
-
-    // _players.push_back(EntityFactory::createPlayer(_gameEngine.registry));
     _enemies.push_back(EntityFactory::createEnemy(_gameEngine.registry, _networkingService));
-
     _networkingService.run();
-    while (true) {
+
+    std::cout << "Server started" << std::endl;
+    while (!asPlayerConnected()) {
+        sleep(1);
+    }
+    while (asPlayerConnected()) {
         update();
         #ifdef _WIN32
             _sleep(1000);
@@ -47,5 +61,7 @@ void Server::run()
             sleep(1);
         #endif
     }
+
+    std::cout << "Server stopped" << std::endl;
     _networkingService.stop();
 }

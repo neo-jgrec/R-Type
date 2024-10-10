@@ -1,6 +1,7 @@
 #include "Systems.hpp"
+
 #include "Components.hpp"
-// #include "../../game/PacketType.hpp"
+#include "../../../game/RequestType.hpp"
 
 void Systems::worldSystem(core::ecs::Registry &registry)
 {
@@ -15,13 +16,44 @@ void Systems::worldSystem(core::ecs::Registry &registry)
                 static_cast<uint8_t>(world.scroll)
             };
 
-            // for (const auto &playerEntity : registry.get_entities<Player>()) {
-            //     const auto &player =
-            //
-            //     network.service.sendRequest(
-            //         player->endpoint,
-            //         MapScrolling,
-            //         payload);
-            // }
+            for (const auto &playerEntity : registry.get_entities<Player>()) {
+                const auto &playerComponent = registry.get_component<Player>(playerEntity);
+
+                network.service.sendRequest(
+                    playerComponent->endpoint,
+                    MapScroll,
+                    payload);
+            }
+        });
+}
+
+void Systems::playerSystem(core::ecs::Registry &registry, std::array<std::optional<core::ecs::Entity>, 4> &players)
+{
+    registry.add_system<Network, Player>(
+        [&](const core::ecs::Entity &entity, const Network &network, Player &player) {
+            if (player.lastTimePacketReceived + 5 < std::time(nullptr)) {
+                {
+                    const auto &playerComponent = registry.get_component<Player>(entity);
+                    network.service.sendRequest(
+                        playerComponent->endpoint,
+                        PlayerDisconnect,
+                        {playerComponent->id});
+                }
+
+                registry.kill_entity(entity);
+                players[player.id].reset();
+
+                for (auto &playerEntity : players) {
+                    if (!playerEntity.has_value())
+                        continue;
+
+                    const auto &playerComponent = registry.get_component<Player>(playerEntity.value());
+                    network.service.sendRequest(
+                        playerComponent->endpoint,
+                        OtherPlayerDisconnect,
+                        {player.id});
+                }
+            }
+
         });
 }
