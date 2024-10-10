@@ -259,3 +259,71 @@ core::ecs::Entity EntityFactory::createButton(core::ecs::Registry& registry, con
     registry.add_component(button, core::ge::SceneComponent{scene});
     return button;
 }
+
+core::ecs::Entity EntityFactory::createTextInput(core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& placeholder, const std::function<void()>& onClick, int scene)
+{
+    core::ecs::Entity textInput = registry.spawn_entity();
+
+    sf::RectangleShape shape(size);
+    shape.setPosition(position);
+    shape.setFillColor(sf::Color::White);
+    shape.setOutlineThickness(2);
+    shape.setOutlineColor(sf::Color::Black);
+
+    sf::Font font;
+    if (!font.loadFromFile("assets/Fonts/Arial.ttf")) {
+        std::cerr << "Failed to load font: " << "assets/Fonts/Arial.ttf" << std::endl;
+        return textInput;
+    }
+
+    sf::Text text;
+    text.setFont(font);
+    text.setString(placeholder);
+    text.setCharacterSize(24);
+    text.setFillColor(sf::Color::Black);
+
+    sf::FloatRect textBounds = text.getLocalBounds();
+    text.setOrigin(textBounds.left + textBounds.width / 2.0f, textBounds.top + textBounds.height / 2.0f);
+    text.setPosition(position.x + size.x / 2.0f, position.y + size.y / 2.0f);
+
+    registry.add_component(textInput, core::ge::DrawableComponent{shape});
+    registry.add_component(textInput, core::ge::TextComponent{text, font});
+    registry.add_component(textInput, core::ge::TextInputComponent{placeholder, placeholder, false, 0, 100});
+    registry.add_component(textInput, core::ge::SceneComponent{scene});
+
+    return textInput;
+}
+
+core::ecs::Entity EntityFactory::createSlider(core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void(float)>& onChange, int scene, float currentValue)
+{
+    core::ecs::Entity slider = registry.spawn_entity();
+
+    sf::RectangleShape bar(size);
+    bar.setPosition(position);
+    bar.setFillColor(sf::Color::White);
+    bar.setOutlineThickness(2);
+    bar.setOutlineColor(sf::Color::Black);
+
+    sf::CircleShape handle(15);
+    handle.setPosition(position.x + size.x, position.y + size.y / 2);
+    handle.setFillColor(sf::Color::Red);
+
+    sf::Font font;
+    if (!font.loadFromFile("assets/Fonts/Arial.ttf")) {
+        std::cerr << "Failed to load font: " << "assets/Fonts/Arial.ttf" << std::endl;
+        return slider;
+    }
+
+    sf::Text text;
+    text.setFont(font);
+    text.setString(label);
+    text.setCharacterSize(24);
+    text.setFillColor(sf::Color::White);
+    text.setPosition(position.x, position.y - 40.0f);
+
+    registry.add_component(slider, core::ge::SliderComponent{0, 100, currentValue, bar, handle, onChange});
+    registry.add_component(slider, core::ge::SceneComponent{scene});
+    registry.add_component(slider, core::ge::TextComponent{text, font});
+
+    return slider;
+}
