@@ -13,8 +13,12 @@ private:
     core::ecs::Entity _connectionHub;
     core::ecs::Entity _world;
 
-    std::vector<core::ecs::Entity> _players;
+    std::array<std::optional<core::ecs::Entity>, 4> _players;
     std::vector<core::ecs::Entity> _enemies;
+
+    bool _isRunning = true;
+
+    bool asPlayerConnected();
 
     void update();
 public:
