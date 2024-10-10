@@ -3,6 +3,8 @@
 #include <SFML/System/Vector2.hpp>
 #include "../../../core/ecs/Entity/Entity.hpp"
 #include "../../../core/ecs/GameEngine/GameEngine.hpp"
+#include "MusicManager.hpp"
+#include "../../../core/network/NetworkService.hpp"
 
 /**
  * @struct Tile
@@ -146,4 +148,6 @@ private:
      * @param window The SFML render window for the game.
      */
     void parseMap(core::ecs::Registry& registry, const std::string& mapFilePath, sf::RenderWindow& window);
+
+    NetworkingService &networkingService = NetworkingService::getInstance();
 };

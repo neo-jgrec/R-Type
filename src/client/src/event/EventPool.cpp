@@ -48,7 +48,7 @@ void EventPool::handler(const GDTPHeader &header, const std::vector<uint8_t> &pa
     try {
         EventPool::getInstance().pushEvent(EventFactory::createEvent(header, payload));
     } catch (const std::exception &e) {
-        std::cerr << "Error in EventPool::Handler: " << e.what() << std::endl;
+        std::cerr << "Error: Failed to create event from payload: " << e.what() << std::endl;
     }
 }
 

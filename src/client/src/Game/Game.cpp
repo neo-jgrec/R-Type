@@ -4,6 +4,11 @@
 #include "EntityFactory.hpp"
 #include "../../../game/Components.hpp"
 #include "src/Game/Utils/ClientComponents.hpp"
+#include "src/event/Event.hpp"
+#include "src/event/EventPool.hpp"
+#include <iostream>
+#include <vector>
+#include "../../../game/RequestType.hpp"
 
 void Game::init()
 {
@@ -52,6 +57,17 @@ void Game::init()
     _gameEngine.registry.add_component(_viewEntity, ViewComponent{_gameEngine.window.getDefaultView()});
     _gameEngine.registry.add_component(_viewEntity, core::ge::SceneComponent{static_cast<int>(GameState::Playing)});
     moveWindowViewSystem(_gameEngine.registry);
+
+    networkingService.init();
+    setHandlers();
+    networkingService.run();
+
+    networkingService.sendRequest("127.0.0.1", 1111, PlayerConnect, {});
+
+    std::vector<Event> oui = EventPool::getInstance().getAllEvents();
+    for (auto &event : oui) {
+        std::cout << "Event: " << event.getType() << std::endl;
+    }
 }
 
 void Game::initMainMenu()
@@ -160,6 +176,7 @@ void Game::processEvents() {
         if (event.type == sf::Event::Closed) {
             _windowOpen = false;
             _gameEngine.window.close();
+            networkingService.stop();
         }
 
         if (event.type == sf::Event::KeyPressed || event.type == sf::Event::KeyReleased) {

@@ -6,17 +6,19 @@
 */
 
 #include "EventFactory.hpp"
-#include <iostream>
 #include <cstring>
+#include "../../../game/RequestType.hpp"
+#include "src/event/Event.hpp"
 
 // Define the handlers map
 const std::unordered_map<uint8_t, EventFactory::EventHandler> EventFactory::handlers = {
-    {0x01, &EventFactory::handlePlayerMovement},
-    {0x05, &EventFactory::handlePlayerShoot},
-    {0x15, &EventFactory::handleChatMessage},
-    {0x06, &EventFactory::handlePlayerHealthUpdate},
-    {0x09, &EventFactory::handleEntitySpawn},
-    {0x0A, &EventFactory::handleEntityDestroy},
+    {RequestType::EnemySpawn, &EventFactory::handlePlayerMovement},
+    {RequestType::PlayerShoot, &EventFactory::handlePlayerShoot},
+    // {, &EventFactory::handleChatMessage},
+    {RequestType::PlayerHit, &EventFactory::handlePlayerHealthUpdate},
+    {RequestType::EnemySpawn, &EventFactory::handleEntitySpawn},
+    {RequestType::EnemyDie, &EventFactory::handleEntityDestroy},
+    {RequestType::MapScroll, &EventFactory::handleMapScroll},
 };
 
 Event EventFactory::createEvent(const GDTPHeader& header, const std::vector<uint8_t>& payload) {
@@ -30,18 +32,29 @@ Event EventFactory::createEvent(const GDTPHeader& header, const std::vector<uint
     }
 }
 
+Event EventFactory::handleMapScroll([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload) {
+    if (payload.size() < sizeof(MapScroll)) {
+        throw std::runtime_error("Invalid payload size for MapScroll");
+    }
+
+    int mapScroll;
+    mapScroll = (payload[0] << 24) | (payload[1] << 16) | (payload[2] << 8) | payload[3];
+
+    return {0x0B, mapScroll};
+}
+
 Event EventFactory::handlePlayerMovement([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload) {
     if (payload.size() < sizeof(PlayerMovement)) {
         throw std::runtime_error("Invalid payload size for PlayerMovement");
     }
 
-    PlayerMovement movement;
-    std::memcpy(&movement.playerId, &payload[0], 4);
-    std::memcpy(&movement.x, &payload[4], 4);
-    std::memcpy(&movement.y, &payload[8], 4);
-    std::memcpy(&movement.z, &payload[12], 4);
+    PlayerMovement movement{};
+    movement.playerId = (payload[0] << 24) | (payload[1] << 16) | (payload[2] << 8) | payload[3];
+    movement.x = static_cast<float>((payload[4] << 24) | (payload[5] << 16) | (payload[6] << 8) | payload[7]);
+    movement.y = static_cast<float>((payload[8] << 24) | (payload[9] << 16) | (payload[10] << 8) | payload[11]);
+    movement.z = static_cast<float>((payload[12] << 24) | (payload[13] << 16) | (payload[14] << 8) | payload[15]);
 
-    return Event(0x01, movement);
+    return {0x01, movement};
 }
 
 Event EventFactory::handlePlayerShoot([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload) {
@@ -49,12 +62,12 @@ Event EventFactory::handlePlayerShoot([[maybe_unused]] const GDTPHeader& header,
         throw std::runtime_error("Invalid payload size for PlayerShoot");
     }
 
-    PlayerShoot shoot;
-    std::memcpy(&shoot.playerId, &payload[0], 4);
+    struct PlayerShoot shoot{};
+    shoot.playerId = (payload[0] << 24) | (payload[1] << 16) | (payload[2] << 8) | payload[3];
     shoot.direction = payload[4];
     shoot.weaponType = payload[5];
 
-    return Event(0x05, shoot);
+    return {0x05, shoot};
 }
 
 Event EventFactory::handleChatMessage([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload) {
@@ -64,13 +77,13 @@ Event EventFactory::handleChatMessage([[maybe_unused]] const GDTPHeader& header,
 
     uint32_t playerId;
     uint16_t messageLength;
-    std::memcpy(&playerId, &payload[0], 4);
-    std::memcpy(&messageLength, &payload[4], 2);
+    playerId = (payload[0] << 24) | (payload[1] << 16) | (payload[2] << 8) | payload[3];
+    messageLength = (payload[4] << 8) | payload[5];
 
     std::string message(payload.begin() + 6, payload.begin() + 6 + messageLength);
     ChatMessage chatMessage{playerId, message};
 
-    return Event(0x15, chatMessage);
+    return {0x15, chatMessage};
 }
 
 Event EventFactory::handlePlayerHealthUpdate([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload) {
@@ -78,11 +91,11 @@ Event EventFactory::handlePlayerHealthUpdate([[maybe_unused]] const GDTPHeader& 
         throw std::runtime_error("Invalid payload size for PlayerHealthUpdate");
     }
 
-    PlayerHealthUpdate healthUpdate;
-    std::memcpy(&healthUpdate.playerId, &payload[0], 4);
-    std::memcpy(&healthUpdate.health, &payload[4], 4);
+    PlayerHealthUpdate healthUpdate{};
+    healthUpdate.playerId = (payload[0] << 24) | (payload[1] << 16) | (payload[2] << 8) | payload[3];
+    healthUpdate.health = (payload[4] << 24) | (payload[5] << 16) | (payload[6] << 8) | payload[7];
 
-    return Event(0x06, healthUpdate);
+    return {0x06, healthUpdate};
 }
 
 Event EventFactory::handleEntitySpawn([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload) {
@@ -90,12 +103,12 @@ Event EventFactory::handleEntitySpawn([[maybe_unused]] const GDTPHeader& header,
         throw std::runtime_error("Invalid payload size for EntitySpawn");
     }
 
-    EntitySpawn entitySpawn;
-    std::memcpy(&entitySpawn.entityId, &payload[0], 4);
-    std::memcpy(&entitySpawn.x, &payload[4], 4);
-    std::memcpy(&entitySpawn.y, &payload[8], 4);
+    EntitySpawn entitySpawn{};
+    entitySpawn.entityId = (payload[0] << 24) | (payload[1] << 16) | (payload[2] << 8) | payload[3];
+    entitySpawn.x = static_cast<float>((payload[4] << 24) | (payload[5] << 16) | (payload[6] << 8) | payload[7]);
+    entitySpawn.y = static_cast<float>((payload[8] << 24) | (payload[9] << 16) | (payload[10] << 8) | payload[11]);
 
-    return Event(0x09, entitySpawn);
+    return {0x09, entitySpawn};
 }
 
 Event EventFactory::handleEntityDestroy([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload) {
@@ -103,8 +116,8 @@ Event EventFactory::handleEntityDestroy([[maybe_unused]] const GDTPHeader& heade
         throw std::runtime_error("Invalid payload size for EntityDestroy");
     }
 
-    EntityDestroy entityDestroy;
-    std::memcpy(&entityDestroy.entityId, &payload[0], 4);
+    EntityDestroy entityDestroy{};
+    entityDestroy.entityId = (payload[0] << 24) | (payload[1] << 16) | (payload[2] << 8) | payload[3];
 
-    return Event(0x0A, entityDestroy);
+    return {0x0A, entityDestroy};
 }

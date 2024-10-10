@@ -49,6 +49,7 @@ private:
     static Event handlePlayerHealthUpdate(const GDTPHeader& header, const std::vector<uint8_t>& payload);
     static Event handleEntitySpawn(const GDTPHeader& header, const std::vector<uint8_t>& payload);
     static Event handleEntityDestroy(const GDTPHeader& header, const std::vector<uint8_t>& payload);
+    static Event handleMapScroll(const GDTPHeader& header, const std::vector<uint8_t>& payload);
 };
 
 #endif // EVENTFACTORY_HPP
