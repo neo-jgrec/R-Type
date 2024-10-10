@@ -73,11 +73,12 @@ core::ecs::Entity EntityFactory::createPlayer(
         { ENEMY, [&](const core::ecs::Entity& entity, const core::ecs::Entity&) {
             std::cout << "Player " << id << " collided with enemy" << std::endl;
 
+            RequestType requestType = PlayerHit;
             {
                 const auto &playerComponent = registry.get_component<Player>(entity);
                 playerComponent->health -= 1;
                 if (playerComponent->health > 0)
-                    return;
+                    requestType = PlayerDie;
             }
 
             for (auto &playerEntity : players) {
@@ -86,21 +87,23 @@ core::ecs::Entity EntityFactory::createPlayer(
                 const auto &playerComponent = registry.get_component<Player>(playerEntity.value());
                 networkingService.sendRequest(
                     playerComponent->endpoint,
-                    PlayerDie,
+                    requestType,
                     {playerComponent->id});
             }
 
-            registry.kill_entity(entity);
+            if (requestType == PlayerDie)
+               registry.kill_entity(entity);
         }}}});
     registry.add_component(player, core::ge::CollisionComponent{PLAYER, std::vector{sf::FloatRect(0, 0, 32, 32)},{
         { TILE, [&](const core::ecs::Entity& entity, const core::ecs::Entity&) {
             std::cout << "Player " << id << " collided with enemy" << std::endl;
 
+            RequestType requestType = PlayerHit;
             {
                 const auto &playerComponent = registry.get_component<Player>(entity);
                 playerComponent->health -= 1;
                 if (playerComponent->health > 0)
-                    return;
+                    requestType = PlayerDie;
             }
 
             for (auto &playerEntity : players) {
@@ -109,11 +112,12 @@ core::ecs::Entity EntityFactory::createPlayer(
                 const auto &playerComponent = registry.get_component<Player>(playerEntity.value());
                 networkingService.sendRequest(
                     playerComponent->endpoint,
-                    PlayerDie,
+                    requestType,
                     {playerComponent->id});
             }
 
-            registry.kill_entity(entity);
+            if (requestType == PlayerDie)
+                registry.kill_entity(entity);
         }}}});
     registry.add_component(player, Player{endpoint, id, 3, std::time(nullptr)});
 
