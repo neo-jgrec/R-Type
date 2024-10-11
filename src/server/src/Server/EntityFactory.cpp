@@ -13,6 +13,7 @@
 core::ecs::Entity EntityFactory::createWorld(
     core::ecs::Registry& registry,
     NetworkingService &networkingService,
+    const std::array<std::optional<core::ecs::Entity>, 4> &players,
     const std::string& filePath)
 {
     const core::ecs::Entity world = registry.spawn_entity();
@@ -31,14 +32,13 @@ core::ecs::Entity EntityFactory::createWorld(
     }
 
     World worldComponent = {1, 0,
-        { json["width"], json["height"] },
-        std::vector(json["width"], std::vector<uint8_t>(json["height"], 0)) };
+        { json["width"], json["height"] }};
     for (const auto& tile : json["tiles"]) {
         if (tile["x"] < 0 || tile["x"] >= worldComponent.size.first
             || tile["y"] < 0 || tile["y"] >= worldComponent.size.second) {
             throw std::out_of_range("Tile coordinates out of bounds");
         }
-        worldComponent.tiles[tile["x"]][tile["y"]] = static_cast<uint8_t>(tile["tileIndex"]);
+        createTile(registry, networkingService, players, {32, 32}, tile["x"], tile["y"]);
     }
     registry.add_component(world, std::move(worldComponent));
 
@@ -249,4 +249,35 @@ core::ecs::Entity EntityFactory::createProjectile(
 
     std::cout << "Projectile created" << std::endl;
     return projectile;
+}
+
+core::ecs::Entity EntityFactory::createTile(
+    core::ecs::Registry& registry,
+    NetworkingService &networkingService,
+    const std::array<std::optional<core::ecs::Entity>, 4> &players,
+    const std::pair<uint32_t, uint32_t> &size,
+    const uint32_t x,
+    const uint32_t y)
+{
+    const core::ecs::Entity tile = registry.spawn_entity();
+
+    registry.add_component(tile, core::ge::TransformComponent{sf::Vector2f(static_cast<float>(x * size.first), static_cast<float>(y * size.second)), sf::Vector2f(static_cast<float>(size.first), static_cast<float>(size.second)), sf::Vector2f(1, 1), 0});
+    registry.add_component(tile, core::ge::CollisionComponent{TILE, std::vector{sf::FloatRect(0, 0, static_cast<float>(size.first), static_cast<float>(size.second))}, {
+        { PLAYER_PROJECTILE, [&](const core::ecs::Entity& entity, const core::ecs::Entity&) {
+            std::cout << "Tile collided with projectile" << std::endl;
+
+            for (auto &playerEntity : players) {
+                if (!playerEntity.has_value())
+                    continue;
+                const auto &playerComponent = registry.get_component<Player>(playerEntity.value());
+                networkingService.sendRequest(
+                    playerComponent->endpoint,
+                    TileDestroy,
+                    {playerComponent->id});
+            }
+
+            registry.kill_entity(entity);
+        }}}});
+
+    return tile;
 }

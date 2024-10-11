@@ -1,14 +1,15 @@
 #include "Systems.hpp"
 
 #include "Components.hpp"
+#include "EntityFactory.hpp"
 #include "../../../core/ecs/GameEngine/GameEngineComponents.hpp"
 #include "../../../game/RequestType.hpp"
 
 
-void Systems::worldSystem(core::ecs::Registry &registry)
+void Systems::worldSystem(core::ecs::Registry &registry, const std::array<std::optional<core::ecs::Entity>, 4> &players, std::vector<core::ecs::Entity> enemies)
 {
     registry.add_system<Network, World>(
-        [&]([[maybe_unused]] const core::ecs::Entity &entity, [[maybe_unused]] Network &network, World &world) {
+        [&](const core::ecs::Entity &, const Network &network, World &world) {
             world.scroll += world.speed;
 
             const std::vector payload = {
@@ -26,6 +27,9 @@ void Systems::worldSystem(core::ecs::Registry &registry)
                     MapScroll,
                     payload);
             }
+
+            if (rand() % 100 < 25)
+                enemies.push_back(EntityFactory::createEnemy(registry, network.service, players));
         });
 }
 

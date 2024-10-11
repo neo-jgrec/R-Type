@@ -12,7 +12,7 @@ Server::Server()
     _gameEngine.registry.register_component<Enemy>();
     _gameEngine.registry.register_component<Projectile>();
 
-    Systems::worldSystem(_gameEngine.registry);
+    Systems::worldSystem(_gameEngine.registry, _players, _enemies);
     Systems::playerSystem(_gameEngine.registry, _players);
     Systems::enemySystem(_gameEngine.registry, _players);
     Systems::projectileSystem(_gameEngine.registry);
@@ -30,7 +30,7 @@ Server::Server()
         if (!asPlayerConnected())
             return;
         std::cout << "Game started" << std::endl;
-        _world = EntityFactory::createWorld(_gameEngine.registry, _networkingService, "JY_map.json");
+        _world = EntityFactory::createWorld(_gameEngine.registry, _networkingService, _players, "JY_map.json");
         for (uint8_t i = 0; i < 4; i++) {
             if (!_players[i].has_value())
                 continue;
@@ -118,7 +118,6 @@ bool Server::asPlayerConnected()
 
 void Server::run()
 {
-    _enemies.push_back(EntityFactory::createEnemy(_gameEngine.registry, _networkingService, _players));
     _networkingService.run();
 
     std::cout << "Server started" << std::endl;

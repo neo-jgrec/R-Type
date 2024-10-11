@@ -12,7 +12,6 @@ struct World {
     uint32_t scroll = 0;
 
     std::pair<uint32_t, uint32_t> size;
-    std::vector<std::vector<uint8_t>> tiles;
 };
 
 struct Player {
@@ -29,5 +28,7 @@ struct Enemy {
 struct Projectile {
     uint8_t id;
 };
+
+struct Tile {};
 
 #endif //COMPONENTS_HPP
