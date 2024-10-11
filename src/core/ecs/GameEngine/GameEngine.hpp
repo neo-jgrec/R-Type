@@ -11,8 +11,16 @@
 #include <iostream>
 
 namespace core {
+    /**
+     * @class GameEngine
+     * @brief Main game engine class that manages components, systems, and game loop.
+     */
     class GameEngine {
         public:
+            /**
+             * @brief Constructor for GameEngine.
+             * @param initWindow If true, initializes the SFML window.
+             */
             GameEngine(bool initWindow = true)
             {
                 registry.register_component<core::ge::TransformComponent>();
@@ -51,14 +59,17 @@ namespace core {
 
             ~GameEngine() = default;
 
-            float delta_t = 0.0f;
-            core::ecs::Registry registry;
-            MusicManager musicManager;
-            sf::RenderWindow window;
-            int currentScene = 0;
-            sf::Clock clock;
+            float delta_t = 0.0f; ///< Time elapsed since last frame
+            core::ecs::Registry registry; ///< Entity-Component-System registry
+            MusicManager musicManager; ///< Manager for game music
+            sf::RenderWindow window; ///< SFML render window
+            int currentScene = 0; ///< Current active scene
+            sf::Clock clock; ///< SFML clock for timing
 
         protected:
+            /**
+             * @brief Initialize rendering systems.
+             */
             void renderSystems()
             {
                 registry.add_system<core::ge::DrawableComponent, core::ge::SceneComponent>([&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::DrawableComponent &drawable, core::ge::SceneComponent &scene) {
@@ -68,6 +79,9 @@ namespace core {
                 });
             }
 
+            /**
+             * @brief Initialize position system for entities.
+             */
             void positionSystem()
             {
                 registry.add_system<core::ge::DrawableComponent, core::ge::TransformComponent>(
@@ -79,6 +93,9 @@ namespace core {
                     });
             }
 
+            /**
+             * @brief Initialize animation system for entities.
+             */
             void animationSystem()
             {
                 registry.add_system<core::ge::DrawableComponent, core::ge::AnimationComponent>(
@@ -94,6 +111,9 @@ namespace core {
                     });
             }
 
+            /**
+             * @brief Initialize sound system for entities.
+             */
             void soundSystem()
             {
                 registry.add_system<core::ge::SoundComponent>([](core::ecs::Entity, core::ge::SoundComponent &sound) {
@@ -104,6 +124,9 @@ namespace core {
                 });
             }
 
+            /**
+             * @brief Initialize collision detection system.
+             */
             void collisionSystem()
             {
                 registry.add_system<ge::TransformComponent, ge::CollisionComponent, ge::SceneComponent>(
@@ -155,6 +178,9 @@ namespace core {
                     });
             }
 
+            /**
+             * @brief Initialize button interaction system.
+             */
             void buttonSystem()
             {
                 registry.add_system<core::ge::ButtonComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent>([&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::ButtonComponent &button, core::ge::SceneComponent &scene, core::ge::DrawableComponent &drawable, core::ge::TextComponent &text) {
@@ -180,6 +206,9 @@ namespace core {
                 });
             }
 
+            /**
+             * @brief Initialize text rendering system.
+             */
             void textSystem()
             {
                 registry.add_system<core::ge::TextComponent, core::ge::SceneComponent>([&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::TextComponent &text, core::ge::SceneComponent &scene) {
@@ -194,6 +223,9 @@ namespace core {
                 });
             }
 
+            /**
+             * @brief Initialize text input system.
+             */
             void textInputSystem()
             {
                 registry.add_system<core::ge::TextInputComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent>(
@@ -215,6 +247,9 @@ namespace core {
                     });
             }
 
+            /**
+             * @brief Initialize slider interaction system.
+             */
             void sliderSystem()
             {
                 registry.add_system<core::ge::SliderComponent, core::ge::SceneComponent>(
