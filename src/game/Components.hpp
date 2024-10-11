@@ -5,41 +5,113 @@
 #include <SFML/System/Vector2.hpp>
 #include <functional>
 
+/**
+ * @struct InputStateComponent
+ * @brief Represents the input state for controlling player movement and actions.
+ * 
+ * This component stores boolean flags indicating whether certain keys are pressed or not (e.g., up, down, left, right, fire).
+ * It is used to manage player input in the game.
+ */
 struct InputStateComponent {
-    bool up = false;
-    bool down = false;
-    bool left = false;
-    bool right = false;
-    bool fire = false;
+    bool up = false;   ///< Indicates if the 'up' key is pressed.
+    bool down = false; ///< Indicates if the 'down' key is pressed.
+    bool left = false; ///< Indicates if the 'left' key is pressed.
+    bool right = false; ///< Indicates if the 'right' key is pressed.
+    bool fire = false; ///< Indicates if the 'fire' key is pressed.
 };
 
+/**
+ * @struct VelocityComponent
+ * @brief Holds velocity data for an entity's movement.
+ * 
+ * The velocity component stores the change in position (dx, dy) for an entity per update cycle.
+ * This is typically used for movement systems to modify an entity's position.
+ */
 struct VelocityComponent {
-    float dx, dy;
+    float dx; ///< The change in the X-axis position.
+    float dy; ///< The change in the Y-axis position.
 };
 
+/**
+ * @struct HealthComponent
+ * @brief Stores the health of an entity.
+ * 
+ * The health component tracks the health of an entity, reducing when damage is taken. It is primarily used for player and enemy entities.
+ */
 struct HealthComponent {
-    int health;
+    int health; ///< The current health of the entity.
 };
 
+/**
+ * @struct DamageComponent
+ * @brief Defines the amount of damage an entity can inflict.
+ * 
+ * This component is typically used for projectiles or entities that can cause damage, specifying how much damage they deal.
+ */
 struct DamageComponent {
-    int damage;
+    int damage; ///< The amount of damage inflicted on collision or interaction.
 };
 
+/**
+ * @struct ScoreComponent
+ * @brief Tracks the score of a player.
+ * 
+ * This component holds the player's current score, which is updated based on game events such as defeating enemies.
+ */
 struct ScoreComponent {
-    int score;
+    int score; ///< The current score of the player.
 };
 
+/**
+ * @struct ShootCounterComponent
+ * @brief Manages the shooting cooldown or shot count for a player.
+ * 
+ * This component tracks how many shots have been fired or time between shots, allowing for control over shooting frequency.
+ */
 struct ShootCounterComponent {
-    float shotCount;
+    float shotCount; ///< The current shot count or cooldown timer for shooting.
 };
 
+/**
+ * @struct PlayerColorComponent
+ * @brief Stores the color identifier for a player.
+ * 
+ * This component is used to manage the color of a player's sprite, which can be customized or assigned dynamically.
+ */
 struct PlayerColorComponent {
-    int color;
+    int color; ///< The color identifier for the player's sprite.
 };
 
 // Identifiers
 
+/**
+ * @struct Player
+ * @brief Tag component used to identify an entity as a player.
+ * 
+ * This tag is applied to player entities to distinguish them in systems or logic that targets players.
+ */
 struct Player {};
+
+/**
+ * @struct Enemy
+ * @brief Tag component used to identify an entity as an enemy.
+ * 
+ * This tag is applied to enemy entities to distinguish them in systems or logic that targets enemies.
+ */
 struct Enemy {};
+
+/**
+ * @struct Projectile
+ * @brief Tag component used to identify an entity as a projectile.
+ * 
+ * This tag is applied to entities that represent projectiles, used to distinguish them from other entities.
+ */
 struct Projectile {};
+
+/**
+ * @struct Missile
+ * @brief Tag component used to identify an entity as a missile.
+ * 
+ * This tag is applied to missile entities, which may differ from regular projectiles in terms of behavior and damage.
+ */
 struct Missile {};
