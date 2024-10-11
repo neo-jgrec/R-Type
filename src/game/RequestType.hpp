@@ -13,5 +13,6 @@ enum RequestType {
     PlayerHit = 9,
     PlayerDie = 10,
     EnemySpawn = 11,
+    EnemyMove = 12,
     EnemyDie = 13,
 };

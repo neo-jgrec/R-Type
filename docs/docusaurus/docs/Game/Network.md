@@ -99,7 +99,7 @@ packet-beta
 10-11: "Payload size"
 12-13: "Seq number"
 14-15: "Total packet"
-16-16: "Player id"
+16-16: "Projectile id"
 ```
   - Request type = 6
     
@@ -183,6 +183,23 @@ packet-beta
 21-24: "Y"
 ```
   - Request type = 11
+    
+  - Payload size = 9
+
+- ### EnemyMove
+```mermaid
+packet-beta
+0-0: "Version"
+1-1: "Request Type"
+2-9: "Packet id"
+10-11: "Payload size"
+12-13: "Seq number"
+14-15: "Total packet"
+16-16: "Enemy id"
+17-20: "X"
+21-24: "Y"
+```
+  - Request type = 12
     
   - Payload size = 9
 
