@@ -98,9 +98,9 @@ void Game::initMainMenu()
         sf::Vector2f(centerX - buttonSize.x / 2, centerY + 3 * (buttonSize.y + (buttonSpacing += 10.0f))),
         sf::Vector2f(200.0f, 10.0f),
         "Volume",
-        [this](float value) { setMusicVolume(value); },
+        [this](float value) { _gameEngine.musicManager.setVolume(value); },
         static_cast<int>(GameState::MainMenu),
-        _musicManager.getVolume()
+        _gameEngine.musicManager.getVolume()
     );
 }
 
