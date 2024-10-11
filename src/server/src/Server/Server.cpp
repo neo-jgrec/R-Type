@@ -7,14 +7,10 @@
 Server::Server()
 {
     _gameEngine.registry.register_component<Network>();
-    _gameEngine.registry.register_component<ConnectionHub>();
     _gameEngine.registry.register_component<World>();
     _gameEngine.registry.register_component<Player>();
     _gameEngine.registry.register_component<Enemy>();
     _gameEngine.registry.register_component<Projectile>();
-
-    _connectionHub = EntityFactory::createConnectionHub(_gameEngine.registry, _networkingService, _players);
-
 
     Systems::worldSystem(_gameEngine.registry);
     Systems::playerSystem(_gameEngine.registry, _players);
