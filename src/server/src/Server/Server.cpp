@@ -14,7 +14,7 @@ Server::Server()
     _gameEngine.registry.register_component<Projectile>();
 
     _connectionHub = EntityFactory::createConnectionHub(_gameEngine.registry, _networkingService, _players);
-    _world = EntityFactory::createWorld(_gameEngine.registry, _networkingService, "JY_map.json");
+
 
     Systems::worldSystem(_gameEngine.registry);
     Systems::playerSystem(_gameEngine.registry, _players);
@@ -26,6 +26,64 @@ Server::Server()
                 continue;
             _players[i].emplace(EntityFactory::createPlayer(_gameEngine.registry, _networkingService, _players, endpoint, i));
             return;
+        }
+    });
+    _networkingService.addEvent(GameStart, [&](const GDTPHeader &, const std::vector<uint8_t> &, const asio::ip::udp::endpoint &) {
+        if (!asPlayerConnected())
+            return;
+        std::cout << "Game started" << std::endl;
+        _world = EntityFactory::createWorld(_gameEngine.registry, _networkingService, "JY_map.json");
+        for (uint8_t i = 0; i < 4; i++) {
+            if (!_players[i].has_value())
+                continue;
+            const auto &playerComponent = _gameEngine.registry.get_component<Player>(_players[i].value());
+            _networkingService.sendRequest(
+                playerComponent->endpoint,
+                GameStart,
+                {playerComponent->id});
+            _networkingService.sendRequest(
+                playerComponent->endpoint,
+                MapScroll,
+                {0, 0, 0, 0});
+            _networkingService.sendRequest(
+                playerComponent->endpoint,
+                PlayerMove,
+                {0, 0});
+            playerComponent->lastTimePacketReceived = std::time(nullptr);
+            playerComponent->health = 3;
+        }
+    });
+    _networkingService.addEvent(PlayerMove, [&](const GDTPHeader &, const std::vector<uint8_t> &payload, const asio::ip::udp::endpoint &) {
+        if (!asPlayerConnected())
+            return;
+        const uint8_t id = payload[0];
+        if (id >= 4 || !_players[id].has_value())
+            return;
+
+        {
+            const auto &playerComponent = _gameEngine.registry.get_component<Player>(_players[id].value());
+            _networkingService.sendRequest(
+                playerComponent->endpoint,
+                PlayerMove,
+                payload);
+            playerComponent->lastTimePacketReceived = std::time(nullptr);
+        }
+
+        const auto &transformComponent = _gameEngine.registry.get_component<core::ge::TransformComponent>(_players[id].value());
+        const uint32_t x = (payload[1] << 24) | (payload[2] << 16) | (payload[3] << 8) | payload[4];
+        const uint32_t y = (payload[5] << 24) | (payload[6] << 16) | (payload[7] << 8) | payload[8];
+        transformComponent->position = {static_cast<float>(x), static_cast<float>(y)};
+
+        for (const auto &playerEntity : _players) {
+            if (!playerEntity.has_value())
+                continue;
+            const auto &playerComponent = _gameEngine.registry.get_component<Player>(playerEntity.value());
+            if (playerComponent->id == id)
+                continue;
+            _networkingService.sendRequest(
+                playerComponent->endpoint,
+                PlayerMove,
+                payload);
         }
     });
 }
@@ -40,7 +98,7 @@ void Server::update()
 
 bool Server::asPlayerConnected()
 {
-    return std::ranges::any_of(_players, [](const auto &playerEntity) { return playerEntity.has_value(); });
+    return std::ranges::any_of(_players, [](const auto &entity) { return entity.has_value(); });
 }
 
 void Server::run()

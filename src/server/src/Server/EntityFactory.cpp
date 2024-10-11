@@ -10,19 +10,6 @@
 #include "../../../core/ecs/GameEngine/GameEngineComponents.hpp"
 #include "../../../game/RequestType.hpp"
 
-core::ecs::Entity EntityFactory::createConnectionHub(
-    core::ecs::Registry &registry,
-    NetworkingService &networkingService,
-    std::array<std::optional<core::ecs::Entity>, 4> &players)
-{
-    const core::ecs::Entity connectionHub = registry.spawn_entity();
-
-    registry.add_component(connectionHub, Network{networkingService});
-    registry.add_component(connectionHub, ConnectionHub{players});
-
-    return connectionHub;
-}
-
 core::ecs::Entity EntityFactory::createWorld(
     core::ecs::Registry& registry,
     NetworkingService &networkingService,
@@ -66,6 +53,48 @@ core::ecs::Entity EntityFactory::createPlayer(
     const uint8_t id)
 {
     const core::ecs::Entity player = registry.spawn_entity();
+
+    const std::function onCollision = [&](const core::ecs::Entity& entity, const core::ecs::Entity&) {
+        std::cout << "Player " << id << " collided with enemy" << std::endl;
+
+        RequestType requestType = PlayerHit;
+        {
+            const auto &playerComponent = registry.get_component<Player>(entity);
+            playerComponent->health -= 1;
+            if (playerComponent->health > 0)
+                requestType = PlayerDie;
+        }
+
+        for (auto &playerEntity : players) {
+            if (!playerEntity.has_value())
+                continue;
+            const auto &playerComponent = registry.get_component<Player>(playerEntity.value());
+            networkingService.sendRequest(
+                playerComponent->endpoint,
+                requestType,
+                {playerComponent->id});
+        }
+
+        if (requestType == PlayerDie)
+            registry.kill_entity(entity);
+
+        if (std::ranges::any_of(players, [&](const auto &playerEntity) {
+            if (!playerEntity.has_value())
+                return false;
+            if (const auto &playerComponent = registry.get_component<Player>(playerEntity.value()); playerComponent->health > 0)
+                return true;
+            return false;
+        }))
+            for (auto &playerEntity : players) {
+                if (!playerEntity.has_value())
+                    continue;
+                const auto &playerComponent = registry.get_component<Player>(playerEntity.value());
+                networkingService.sendRequest(
+                    playerComponent->endpoint,
+                    GameOver,
+                    {});
+            }
+    };
 
     registry.add_component(player, Network{networkingService});
     registry.add_component(player, core::ge::TransformComponent{sf::Vector2f(0, 0), sf::Vector2f(32, 32), sf::Vector2f(1, 1), 0});

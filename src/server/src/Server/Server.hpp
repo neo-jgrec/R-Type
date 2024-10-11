@@ -16,6 +16,7 @@ private:
     std::array<std::optional<core::ecs::Entity>, 4> _players;
     std::vector<core::ecs::Entity> _enemies;
 
+    bool _asGameStarted = false;
     bool _isRunning = true;
 
     bool asPlayerConnected();
