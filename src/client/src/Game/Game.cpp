@@ -91,7 +91,6 @@ void Game::initMainMenu()
         sf::Vector2f(centerX - buttonSize.x / 2, centerY + 2 * (buttonSize.y + (buttonSpacing += 10.0f))),
         buttonSize,
         "Enter your name",
-        []() { },
         static_cast<int>(GameState::MainMenu)
     );
 

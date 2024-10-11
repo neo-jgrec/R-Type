@@ -260,7 +260,7 @@ core::ecs::Entity EntityFactory::createButton(core::ecs::Registry& registry, con
     return button;
 }
 
-core::ecs::Entity EntityFactory::createTextInput(core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& placeholder, const std::function<void()>& onClick, int scene)
+core::ecs::Entity EntityFactory::createTextInput(core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& placeholder, int scene)
 {
     core::ecs::Entity textInput = registry.spawn_entity();
 

@@ -195,6 +195,7 @@ namespace core {
                     [&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::TextInputComponent &textInput, core::ge::SceneComponent &scene, core::ge::DrawableComponent &drawable, core::ge::TextComponent &text) {
                         if (scene.sceneName != currentScene)
                             return;
+                        (void)text;
 
                         sf::Vector2i mousePosition = sf::Mouse::getPosition(window);
                         sf::Vector2f worldPos = window.mapPixelToCoords(mousePosition);
