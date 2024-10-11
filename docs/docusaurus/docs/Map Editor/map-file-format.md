@@ -13,6 +13,7 @@ The map file is a JSON object with the following main sections:
 - Map properties
 - Tileset information
 - Tile placements
+- Background
 
 ## Example
 
@@ -20,32 +21,45 @@ Here's an example of a minimal map file:
 
 ```json
 {
+    "background": {
+        "height": 20,
+        "path": "assets/Background/image.png"
+    },
+    "editorVersion": "2.0",
+    "name": "Example Map",
     "cellSize": 24,
-    "editorVersion": "0.1",
     "height": 20,
-    "name": "Default map",
+    "width": 200,
     "tileSets": [
         {
-            "filePath": "oak_woods_tileset.png",
-            "tileCount": 315,
+            "filePath": "assets/Obstacles/Ripped/Obstacle Bottom Claw.png",
+            "tileCount": 96,
             "tileHeight": 24,
             "tileWidth": 24
         }
     ],
     "tiles": [
         {
-            "tileIndex": 1,
+            "isDestructible": false,
+            "tileIndex": 107,
             "x": 0,
+            "y": 0
+        },
+        {
+            "isDestructible": true,
+            "tileIndex": 107,
+            "x": 1,
             "y": 0
         }
     ],
-    "background": {
-        "height": 24,
-        "path": "assets/Background/image.png"
-    },
-    "width": 100
 }
 ```
+
+:::info
+
+Most of the time, the unit of measure is the cell. Except for tileset, which use pixels.
+
+:::
 
 ## Field Descriptions
 

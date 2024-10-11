@@ -9,36 +9,28 @@
 #include <iostream>
 #include <cstring>
 
-/**
- * @brief Creates an Event object from the provided GDTPHeader and payload.
- *
- * @param header The GDTPHeader containing event metadata.
- * @param payload The raw binary data of the event.
- * @return A fully constructed Event object.
- * @throws UnknownEvent if the event type is unsupported.
- */
-Event EventFactory::createEvent(const GDTPHeader& header, const std::vector<uint8_t>& payload) {
-    Event::EventType type = uint8ToEventType(header.messageType);
+// Define the handlers map
+const std::unordered_map<uint8_t, EventFactory::EventHandler> EventFactory::handlers = {
+    {0x01, &EventFactory::handlePlayerMovement},
+    {0x05, &EventFactory::handlePlayerShoot},
+    {0x15, &EventFactory::handleChatMessage},
+    {0x06, &EventFactory::handlePlayerHealthUpdate},
+    {0x09, &EventFactory::handleEntitySpawn},
+    {0x0A, &EventFactory::handleEntityDestroy},
+};
 
-    switch (type) {
-        case Event::EventType::PlayerMovement:
-            return handlePlayerMovement(header, payload);
-        case Event::EventType::PlayerShoot:
-            return handlePlayerShoot(header, payload);
-        case Event::EventType::ChatMessage:
-            return handleChatMessage(header, payload);
-        case Event::EventType::PlayerHealthUpdate:
-            return handlePlayerHealthUpdate(header, payload);
-        case Event::EventType::EntitySpawn:
-            return handleEntitySpawn(header, payload);
-        case Event::EventType::EntityDestroy:
-            return handleEntityDestroy(header, payload);
-        default:
-            throw EventPool::UnknownEvent(header.messageType);
+Event EventFactory::createEvent(const GDTPHeader& header, const std::vector<uint8_t>& payload) {
+    uint8_t type = header.messageType;
+
+    auto it = handlers.find(type);
+    if (it != handlers.end()) {
+        return it->second(header, payload);
+    } else {
+        throw EventPool::UnknownEvent(header.messageType);
     }
 }
 
-Event EventFactory::handlePlayerMovement( [[maybe_unused]]const GDTPHeader& header, const std::vector<uint8_t>& payload) {
+Event EventFactory::handlePlayerMovement([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload) {
     if (payload.size() < sizeof(PlayerMovement)) {
         throw std::runtime_error("Invalid payload size for PlayerMovement");
     }
@@ -49,10 +41,10 @@ Event EventFactory::handlePlayerMovement( [[maybe_unused]]const GDTPHeader& head
     std::memcpy(&movement.y, &payload[8], 4);
     std::memcpy(&movement.z, &payload[12], 4);
 
-    return Event(Event::EventType::PlayerMovement, movement);
+    return Event(0x01, movement);
 }
 
-Event EventFactory::handlePlayerShoot([[maybe_unused]]const GDTPHeader& header, const std::vector<uint8_t>& payload) {
+Event EventFactory::handlePlayerShoot([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload) {
     if (payload.size() < sizeof(PlayerShoot)) {
         throw std::runtime_error("Invalid payload size for PlayerShoot");
     }
@@ -62,10 +54,10 @@ Event EventFactory::handlePlayerShoot([[maybe_unused]]const GDTPHeader& header, 
     shoot.direction = payload[4];
     shoot.weaponType = payload[5];
 
-    return Event(Event::EventType::PlayerShoot, shoot);
+    return Event(0x05, shoot);
 }
 
-Event EventFactory::handleChatMessage([[maybe_unused]]const GDTPHeader& header, const std::vector<uint8_t>& payload) {
+Event EventFactory::handleChatMessage([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload) {
     if (payload.size() < 6) {
         throw std::runtime_error("Invalid payload size for ChatMessage");
     }
@@ -76,13 +68,12 @@ Event EventFactory::handleChatMessage([[maybe_unused]]const GDTPHeader& header, 
     std::memcpy(&messageLength, &payload[4], 2);
 
     std::string message(payload.begin() + 6, payload.begin() + 6 + messageLength);
-
     ChatMessage chatMessage{playerId, message};
 
-    return Event(Event::EventType::ChatMessage, chatMessage);
+    return Event(0x15, chatMessage);
 }
 
-Event EventFactory::handlePlayerHealthUpdate([[maybe_unused]]const GDTPHeader& header, const std::vector<uint8_t>& payload) {
+Event EventFactory::handlePlayerHealthUpdate([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload) {
     if (payload.size() < sizeof(PlayerHealthUpdate)) {
         throw std::runtime_error("Invalid payload size for PlayerHealthUpdate");
     }
@@ -91,10 +82,10 @@ Event EventFactory::handlePlayerHealthUpdate([[maybe_unused]]const GDTPHeader& h
     std::memcpy(&healthUpdate.playerId, &payload[0], 4);
     std::memcpy(&healthUpdate.health, &payload[4], 4);
 
-    return Event(Event::EventType::PlayerHealthUpdate, healthUpdate);
+    return Event(0x06, healthUpdate);
 }
 
-Event EventFactory::handleEntitySpawn([[maybe_unused]]const GDTPHeader& header, const std::vector<uint8_t>& payload) {
+Event EventFactory::handleEntitySpawn([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload) {
     if (payload.size() < sizeof(EntitySpawn)) {
         throw std::runtime_error("Invalid payload size for EntitySpawn");
     }
@@ -104,10 +95,10 @@ Event EventFactory::handleEntitySpawn([[maybe_unused]]const GDTPHeader& header, 
     std::memcpy(&entitySpawn.x, &payload[4], 4);
     std::memcpy(&entitySpawn.y, &payload[8], 4);
 
-    return Event(Event::EventType::EntitySpawn, entitySpawn);
+    return Event(0x09, entitySpawn);
 }
 
-Event EventFactory::handleEntityDestroy([[maybe_unused]]const GDTPHeader& header, const std::vector<uint8_t>& payload) {
+Event EventFactory::handleEntityDestroy([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload) {
     if (payload.size() < sizeof(EntityDestroy)) {
         throw std::runtime_error("Invalid payload size for EntityDestroy");
     }
@@ -115,5 +106,5 @@ Event EventFactory::handleEntityDestroy([[maybe_unused]]const GDTPHeader& header
     EntityDestroy entityDestroy;
     std::memcpy(&entityDestroy.entityId, &payload[0], 4);
 
-    return Event(Event::EventType::EntityDestroy, entityDestroy);
+    return Event(0x0A, entityDestroy);
 }

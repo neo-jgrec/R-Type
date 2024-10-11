@@ -1,73 +1,76 @@
 #include "Game.hpp"
 #include "../../../game/Components.hpp"
 #include "EntityFactory.hpp"
+#include "Utils/ClientComponents.hpp"
+
+sf::Vector2f getViewBounds(const sf::RenderWindow& window);
 
 void Game::inputSystem(core::ecs::Registry& registry)
 {
-    registry.add_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, Player>
-    ([&](core::ecs::Entity, core::ge::TransformComponent &transform, const VelocityComponent &vel, InputStateComponent &input, Player&) {
-            if (input.up) {
+    registry.add_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, ShootCounterComponent>
+    ([&](core::ecs::Entity, core::ge::TransformComponent &transform, const VelocityComponent &vel, InputStateComponent &input, ShootCounterComponent &shootCounter) {
+            if (input.up)
                 transform.position.y -= vel.dy;
-                input.up = false;
-            }
-            if (input.down) {
+            if (input.down)
                 transform.position.y += vel.dy;
-                input.down = false;
-            }
-            if (input.left) {
+            if (input.left)
                 transform.position.x -= vel.dx;
-                input.left = false;
-            }
-            if (input.right) {
+            if (input.right)
                 transform.position.x += vel.dx;
-                input.right = false;
-            }
             if (input.fire) {
-                sf::Vector2f projectilePosition = transform.position;
+                if (shootCounter.shotCount >= 6) {
+                    EntityFactory::createPlayerMissile(registry, transform, gameScale);
 
-                float playerWidth = transform.size.x * transform.scale.x;
-                float playerHeight = transform.size.y * transform.scale.y;
+                    shootCounter.shotCount = 0;
+                } else {
+                    EntityFactory::createPlayerProjectile(registry, transform, gameScale);
 
-                projectilePosition.x += playerWidth ;
-
-                float projectileHeight = 5.0f;
-                projectilePosition.y += (playerHeight / 2.0f) - (projectileHeight / 2.0f);
-                EntityFactory::createPlayerProjectile(registry, projectilePosition);
+                    shootCounter.shotCount++;
+                }
                 input.fire = false;
             }
+            if (transform.position.x < getViewBounds(_gameEngine.window).x) {
+                transform.position.x = getViewBounds(_gameEngine.window).x;
+            } else if (transform.position.x > getViewBounds(_gameEngine.window).x + _gameEngine.window.getView().getSize().x)
+                transform.position.x = getViewBounds(_gameEngine.window).x + _gameEngine.window.getView().getSize().x;
+            if (transform.position.y < getViewBounds(_gameEngine.window).y) {
+                transform.position.y = getViewBounds(_gameEngine.window).y;
+            } else if (transform.position.y > getViewBounds(_gameEngine.window).y + _gameEngine.window.getView().getSize().y)
+                transform.position.y = getViewBounds(_gameEngine.window).y + _gameEngine.window.getView().getSize().y;
     });
 }
 
-void Game::projectileMovementSystem(core::ecs::Registry& registry)
+void Game::projectileMovementSystem(core::ecs::Registry& registry) const
 {
     registry.add_system<core::ge::TransformComponent, VelocityComponent, Projectile>(
-        [&](core::ecs::Entity, core::ge::TransformComponent &transform, VelocityComponent &velocity, Projectile&) {
-
+        [&](core::ecs::Entity proj, core::ge::TransformComponent &transform, VelocityComponent &velocity, Projectile&) {
             transform.position.x += velocity.dx;
 
-            auto projectilesToCheck = registry.get_entities<Projectile>();
-
-            for (const auto &projectile : projectilesToCheck) {
-                if (transform.position.x > 800.0f || transform.position.x < 0.0f) {
-                    registry.kill_entity(projectile);
-                }
+            if (transform.position.x < getViewBounds(_gameEngine.window).x || transform.position.y < getViewBounds(_gameEngine.window).y) {
+                registry.kill_entity(proj);
             }
         });
 }
 
-void Game::enemyMovementSystem(core::ecs::Registry& registry)
+void Game::enemyMovementSystem(core::ecs::Registry& registry) const
 {
     registry.add_system<core::ge::TransformComponent, VelocityComponent, Enemy>(
-        [&](core::ecs::Entity, core::ge::TransformComponent &transform, VelocityComponent &velocity, Enemy&) {
-
+        [&](core::ecs::Entity enemy, core::ge::TransformComponent &transform, VelocityComponent &velocity, Enemy&) {
             transform.position.x -= velocity.dx;
 
-            auto enemiesToCheck = registry.get_entities<Enemy>();
-
-            for (const auto &enemy : enemiesToCheck) {
-                if (transform.position.x > 800.0f || transform.position.x < 0.0f) {
-                    registry.kill_entity(enemy);
-                }
+            if (transform.position.x < getViewBounds(_gameEngine.window).x || transform.position.y < getViewBounds(_gameEngine.window).y) {
+                registry.kill_entity(enemy);
             }
+        });
+}
+
+void Game::moveWindowViewSystem(core::ecs::Registry& registry)
+{
+    registry.add_system<ViewComponent, core::ge::SceneComponent>(
+        [&](core::ecs::Entity, ViewComponent &viewComponent, const core::ge::SceneComponent& scene) {
+            if (scene.sceneName != static_cast<int>(_gameEngine.currentScene))
+                return;
+            viewComponent.view.move(1.0f, 0.0f);
+            _gameEngine.window.setView(viewComponent.view);
         });
 }

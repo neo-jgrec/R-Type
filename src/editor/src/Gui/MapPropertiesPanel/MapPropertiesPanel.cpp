@@ -9,7 +9,7 @@
 
 using namespace Editor;
 
-MapPropertiesPanel::MapPropertiesPanel() {}
+MapPropertiesPanel::MapPropertiesPanel() = default;
 
 void MapPropertiesPanel::render(Map& map) {
     ImGui::Begin("Map Properties");
@@ -29,20 +29,17 @@ void MapPropertiesPanel::render(Map& map) {
     int backgroundHeight = map.getBackgroundHeight();
 
     if (ImGui::InputInt("Width", &width)) {
-        if (width < 1)
-            width = 1;
+        width = std::clamp(width, 1, 1000);
         map.setWidth(width);
         if (_onPropertyChanged) _onPropertyChanged();
     }
     if (ImGui::InputInt("Height", &height)) {
-        if (height < 1)
-            height = 1;
+        height = std::clamp(height, 1, 1000);
         map.setHeight(height);
         if (_onPropertyChanged) _onPropertyChanged();
     }
     if (ImGui::InputInt("Cell Size", &cellSize)) {
-        if (cellSize < 1)
-            cellSize = 1;
+        cellSize = std::clamp(cellSize, 1, 100);
         map.setCellSize(cellSize);
         if (_onPropertyChanged) _onPropertyChanged();
     }
@@ -56,8 +53,7 @@ void MapPropertiesPanel::render(Map& map) {
     }
 
     if (ImGui::InputInt("Background Height (in tiles)", &backgroundHeight)) {
-        if (backgroundHeight < 1)
-            backgroundHeight = 1;
+        backgroundHeight = std::clamp(backgroundHeight, 1, map.getHeight());
         map.setBackgroundHeight(backgroundHeight);
         if (_onPropertyChanged) _onPropertyChanged();
     }

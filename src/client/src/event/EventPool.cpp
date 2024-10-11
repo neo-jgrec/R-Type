@@ -8,10 +8,12 @@
 #include "EventPool.hpp"
 #include <iostream>
 
-#include "../core/network/includes/RequestType.hpp"
+#include "../../../core/network/NetworkService.hpp"
 #include "EventFactory.hpp"
 
-EventPool& EventPool::getInstance(){
+
+class NetworkingService;
+EventPool & EventPool::getInstance(){
     static EventPool instance;
     return instance;
 }
@@ -44,7 +46,7 @@ bool EventPool::isEmpty() const {
 void EventPool::handler(const GDTPHeader &header, const std::vector<uint8_t> &payload,
                        [[maybe_unused]] const asio::ip::udp::endpoint &client_endpoint) {
     try {
-        EventFactory::createEvent(header, payload);
+        EventPool::getInstance().pushEvent(EventFactory::createEvent(header, payload));
     } catch (const std::exception &e) {
         std::cerr << "Error in EventPool::Handler: " << e.what() << std::endl;
     }
@@ -79,23 +81,42 @@ std::vector<Event> EventPool::getAllEvents() {
 
     return allEvents;
 }
-
-std::shared_ptr<std::map<uint8_t, std::function<void(
-    const GDTPHeader &header, const std::vector<uint8_t> &payload,
-    const asio::ip::udp::endpoint &client_endpoint)>>> handlersMapEventPool()
+/**
+ * @brief Configures the handlers for all possible event types (0 to 255).
+ *
+ * This function retrieves the singleton instance of the `NetworkingService`
+ * and registers a default handler for each possible event type, ranging from 0 to 255.
+ * The default handler is set to `EventPool::handler`, which will process
+ * the incoming events.
+ *
+ * @details
+ * The `setHandlers` function iterates over the range of possible event types (0 to 255)
+ * and uses the `addEvent` method of the `NetworkingService` to associate each event type
+ * with a generic handler. This allows the `NetworkingService` to automatically
+ * handle different types of events as they are received.
+ *
+ * @note
+ * - This function is typically called during the initialization phase to ensure
+ *   that all event types are properly handled.
+ * - The `EventPool::handler` function is used as a generic handler for all event types.
+ *   This can be customized later if specific handling is needed for certain event types.
+ * - It assumes that `NetworkingService::getInstance()` is already properly initialized.
+ *
+ * @code
+ * // Example usage:
+ * setHandlers();
+ * // This sets up handlers for all message types (0-255) using `EventPool::handler`.
+ * @endcode
+ *
+ * @see NetworkingService::addEvent() for adding individual event handlers.
+ * @see EventPool::handler for the default event handling logic.
+ */
+void setHandlers()
 {
-    auto handlers = std::make_shared<std::map<uint8_t,
-    std::function<void(const GDTPHeader &header, const std::vector<uint8_t> &payload,
-    const asio::ip::udp::endpoint &client_endpoint)>>>();
+    NetworkingService &networkingService = NetworkingService::getInstance();
 
-    #define X(name, value) \
-    handlers->emplace(static_cast<uint8_t>(value), \
-    [](const GDTPHeader &header, const std::vector<uint8_t> &payload, const asio::ip::udp::endpoint &client_endpoint) { \
-    EventPool::getInstance().handler(header, payload, client_endpoint); \
-    });
-    EVENT_TYPE_LIST
-    #undef X
-
-    return handlers;
+    for (int i = 0; i < 256; i++) {
+        networkingService.addEvent(i, EventPool::handler);
+    }
 }
 
