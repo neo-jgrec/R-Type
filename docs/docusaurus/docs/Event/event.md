@@ -1,169 +1,199 @@
----
-
-# Event System Documentation
-
-The Event system manages the creation, storage, and processing of game and network events. It consists of several key components: the **Event** class, **EventPool** for managing events in a thread-safe manner, and **EventFactory** for dynamically creating events based on incoming data.
 
 ---
 
-## EventFactory Class
+# Event Class Documentation
 
-### Overview
+## Overview
 
-The **EventFactory** class is responsible for dynamically creating events based on the message type and payload received from the network. Instead of manually handling different event types in a switch statement, **EventFactory** abstracts the event creation logic into a single place, simplifying the code and making it more modular.
+The `Event` class represents a game event that can occur, such as player movements, chat messages, player actions, and more. Each event type is associated with a specific payload containing the relevant data for that event. This class uses `std::variant` to manage different payload types, ensuring type safety while handling events.
 
-### Key Methods
+## Data Structures
 
-#### `Event createEvent(const GDTPHeader& header, const std::vector<uint8_t>& payload)`
-
-This method accepts a **GDTPHeader** and a **payload** (a vector of bytes) and returns an **Event** object. Based on the `messageType` from the header, **EventFactory** determines which type of event to create and uses the payload to populate the event data.
-
-##### Example Usage
+### PlayerMovement
 
 ```cpp
-GDTPHeader header = receiveHeaderFromNetwork();
-std::vector<uint8_t> payload = receivePayloadFromNetwork();
-Event event = EventFactory::createEvent(header, payload);
+struct PlayerMovement {
+    uint32_t playerId; ///< The ID of the player.
+    float x; ///< The X-coordinate of the player's new position.
+    float y; ///< The Y-coordinate of the player's new position.
+    float z; ///< The Z-coordinate of the player's new position.
+    
+    bool operator==(const PlayerMovement& other) const;
+};
 ```
 
-This simplifies event creation, delegating it to the **EventFactory**.
-
-### How EventFactory Improves the Event System
-
-By centralizing event creation in **EventFactory**, the code becomes more modular and easier to maintain. When new event types are added, you only need to update the factory, avoiding scattered logic throughout the codebase.
+- **Description**: Represents the data for a player movement event.
+- **Fields**:
+   - `playerId`: The unique ID of the player.
+   - `x`, `y`, `z`: Coordinates of the player's new position.
+- **Equality Operator**: Compares two `PlayerMovement` objects. Returns `true` if the `playerId` and all coordinates match.
 
 ---
 
-## EventPool Class
-
-The **EventPool** class manages the queue of events in a thread-safe manner. It allows multiple threads to add events to the pool and provides mechanisms for retrieving and processing those events.
-
-### Interaction with EventFactory
-
-Instead of manually handling the creation of each event type within **EventPool**, it now delegates that responsibility to **EventFactory**. This decouples event creation logic from the pool, making it easier to extend and maintain.
-
-### Key Methods
-
-#### `void handler(const GDTPHeader& header, const std::vector<uint8_t>& payload, const asio::ip::udp::endpoint& client_endpoint)`
-
-This method processes an incoming network message by using **EventFactory** to generate an appropriate **Event**. The generated event is then added to the event queue for further processing.
-
-##### Example Usage
+### ChatMessage
 
 ```cpp
-GDTPHeader header = receiveHeaderFromNetwork();
-std::vector<uint8_t> payload = receivePayloadFromNetwork();
-EventPool::getInstance().handler(header, payload, clientEndpoint);
+struct ChatMessage {
+    uint32_t playerId; ///< The ID of the player sending the message.
+    std::string message; ///< The content of the chat message.
+    
+    bool operator==(const ChatMessage& other) const;
+};
 ```
 
-This demonstrates how **EventPool** processes incoming data and stores events using **EventFactory**.
+- **Description**: Represents the data for a chat message event.
+- **Fields**:
+   - `playerId`: The ID of the player who sent the message.
+   - `message`: The content of the message.
+- **Equality Operator**: Compares two `ChatMessage` objects. Returns `true` if both `playerId` and `message` are identical.
 
-#### `Event getNextEvent()`
+---
 
-This method retrieves and removes the next event from the queue. If the queue is empty, an exception is thrown.
+### Other Event Structures
 
-```cpp
-try {
-    Event nextEvent = EventPool::getInstance().getNextEvent();
-} catch (const std::runtime_error& e) {
-    std::cerr << e.what() << std::endl;
-}
-```
+Additional event types follow a similar pattern:
 
-#### `std::vector<Event> getAllEvents()`
+- `PlayerShoot`
+- `PowerUpCollected`
+- `EntityUpdate`
+- `EntitySpawn`
+- `EntityDestroy`
+- `PlayerHealthUpdate`
+- `NoData` (Represents events without a payload)
 
-Retrieves all events currently in the event queue.
-
-```cpp
-std::vector<Event> allEvents = EventPool::getInstance().getAllEvents();
-```
-
-#### `void deleteEvent(Event& event)`
-
-Removes a specific event from the queue.
-
-```cpp
-Event event = EventPool::getInstance().getNextEvent();
-EventPool::getInstance().deleteEvent(event);
-```
+Each structure has fields specific to its event type, and an equality operator for comparison.
 
 ---
 
 ## Event Class
 
-### Overview
-
-The **Event** class represents an event that can occur within the game or network. Each event has a type (represented by **GDTPMessageType**) and a payload that can vary based on the event type. For example, a `PlayerMovement` event contains player movement data, while a `ChatMessage` event holds a message string.
-
-### Constructors
-
-- **Event(EventType type, const PlayerMovement& movement)**: Creates an event with `PlayerMovement` payload.
-- **Event(EventType type, const ChatMessage& message)**: Creates an event with `ChatMessage` payload.
-- **Event(EventType type, const PlayerShoot& shoot)**: Creates an event with `PlayerShoot` payload.
-- **Event(EventType type)**: Creates an event without payload (`NoData`).
-
-#### Example Usage
-
 ```cpp
-PlayerMovement movement = {1, 10.0f, 20.0f, 30.0f};
-Event playerMoveEvent(EventType::PlayerMovement, movement);
+class Event {
+public:
+    template <typename T>
+    Event(uint8_t type, const T& payload);
 
-ChatMessage message = {1, "Hello!"};
-Event chatEvent(EventType::ChatMessage, message);
+    uint8_t getType() const;
+
+    const std::variant<std::monostate, PlayerMovement, ChatMessage, PlayerShoot, PowerUpCollected, EntityUpdate, PlayerHealthUpdate, EntitySpawn, EntityDestroy, NoData>& getPayload() const;
+
+    bool operator==(const Event& other) const;
+    
+private:
+    uint8_t type; ///< The type of the event.
+    std::variant<std::monostate, PlayerMovement, ChatMessage, PlayerShoot, PowerUpCollected, EntityUpdate, PlayerHealthUpdate, EntitySpawn, EntityDestroy, NoData> payload; ///< The payload of the event.
+};
 ```
 
-### Key Methods
+### Methods
 
-#### `EventType getType() const`
+#### Constructor
 
-Returns the type of the event.
+```cpp
+template <typename T>
+Event(uint8_t type, const T& payload);
+```
 
-#### `const std::variant<std::monostate, PlayerMovement, ChatMessage, PlayerShoot, NoData>& getPayload() const`
+- **Description**: Constructs an `Event` object with a specified payload.
+- **Parameters**:
+   - `type`: The type of the event (e.g., player movement, chat message).
+   - `payload`: The payload associated with the event, matching the type.
+- **Example**:
+  ```cpp
+  PlayerMovement movement{123, 10.0f, 20.0f, 5.0f};
+  Event playerMoveEvent(0x01, movement);
+  ```
 
-Returns the payload associated with the event. The payload can be one of the following types:
-- `PlayerMovement`
-- `ChatMessage`
-- `PlayerShoot`
-- `NoData`
+#### getType
 
-### Payload Types
+```cpp
+uint8_t getType() const;
+```
 
-Each event has an associated payload that stores data specific to the event type. These are the payload types currently implemented:
+- **Description**: Returns the type of the event.
+- **Returns**: The type as a `uint8_t`.
+- **Example**:
+  ```cpp
+  uint8_t eventType = playerMoveEvent.getType();
+  ```
 
-- **PlayerMovement**: Holds player position data.
-- **ChatMessage**: Stores a chat message.
-- **PlayerShoot**: Holds information about a player's shooting action.
-- **NoData**: Used for events that don't have a payload.
+#### getPayload
+
+```cpp
+const std::variant<std::monostate, PlayerMovement, ChatMessage, PlayerShoot, PowerUpCollected, EntityUpdate, PlayerHealthUpdate, EntitySpawn, EntityDestroy, NoData>& getPayload() const;
+```
+
+- **Description**: Retrieves the payload associated with the event.
+- **Returns**: A `std::variant` containing the payload.
+- **Example**:
+  ```cpp
+  auto payload = playerMoveEvent.getPayload();
+  if (std::holds_alternative<PlayerMovement>(payload)) {
+      PlayerMovement movement = std::get<PlayerMovement>(payload);
+      std::cout << "Player moved to (" << movement.x << ", " << movement.y << ", " << movement.z << ")" << std::endl;
+  }
+  ```
+
+#### Equality Operator
+
+```cpp
+bool operator==(const Event& other) const;
+```
+
+- **Description**: Compares two `Event` objects for equality.
+- **Parameters**:
+   - `other`: The other `Event` object to compare.
+- **Returns**: `true` if both events have the same type and payload, `false` otherwise.
+- **Example**:
+  ```cpp
+  Event event1(0x01, movement1);
+  Event event2(0x01, movement2);
+  if (event1 == event2) {
+      std::cout << "The events are identical." << std::endl;
+  }
+  ```
 
 ---
 
-## How to Use the Event System
+## Usage Example
 
-1. **Receiving and Handling Events**  
-   When a network message is received, **EventPool** uses **EventFactory** to create the corresponding event:
+```cpp
+#include "Event.hpp"
+#include <iostream>
 
-   ```cpp
-   GDTPHeader header = receiveHeaderFromNetwork();
-   std::vector<uint8_t> payload = receivePayloadFromNetwork();
-   EventPool::getInstance().handler(header, payload, clientEndpoint);
-   ```
+int main() {
+    // Create a PlayerMovement event
+    PlayerMovement movement{123, 100.0f, 200.0f, 300.0f};
+    Event moveEvent(0x01, movement);
 
-2. **Retrieving Events**  
-   You can retrieve the next event or all events from the **EventPool**:
+    // Access the event type
+    uint8_t type = moveEvent.getType();
+    std::cout << "Event type: " << static_cast<int>(type) << std::endl;
 
-   ```cpp
-   Event nextEvent = EventPool::getInstance().getNextEvent();
-   std::vector<Event> allEvents = EventPool::getInstance().getAllEvents();
-   ```
+    // Access the payload
+    auto payload = moveEvent.getPayload();
+    if (std::holds_alternative<PlayerMovement>(payload)) {
+        PlayerMovement movementData = std::get<PlayerMovement>(payload);
+        std::cout << "Player ID: " << movementData.playerId << ", Position: (" 
+                  << movementData.x << ", " << movementData.y << ", " << movementData.z << ")" << std::endl;
+    }
 
-3. **Processing Events**  
-   After retrieving events, you can process them according to their type:
-
-   ```cpp
-   if (nextEvent.getType() == EventType::PlayerMovement) {
-       auto movement = std::get<PlayerMovement>(nextEvent.getPayload());
-       // Process player movement
-   }
-   ```
+    // Compare events
+    PlayerMovement anotherMovement{123, 100.0f, 200.0f, 300.0f};
+    Event anotherMoveEvent(0x01, anotherMovement);
+    if (moveEvent == anotherMoveEvent) {
+        std::cout << "The events are identical." << std::endl;
+    }
+}
+```
 
 ---
+
+## Notes
+
+- The `Event` class and its associated structures ensure that game events are type-safe and easy to manipulate.
+- `std::variant` allows for safe storage of different types of event data in a single object.
+- The class design makes it easy to extend with new event types by adding new structs and updating the `Event` class accordingly.
+
+---
+

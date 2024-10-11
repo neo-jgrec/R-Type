@@ -9,11 +9,11 @@
 
 class EntityFactory {
 public:
-    static core::ecs::Entity createPlayer(core::ecs::Registry& registry, const sf::Vector2f& position, int color, Game &game);
-    static core::ecs::Entity createPlayerProjectile(core::ecs::Registry& registry, core::ge::TransformComponent& playerTransform);
-    static core::ecs::Entity createPlayerMissile(core::ecs::Registry& registry, core::ge::TransformComponent& playerTransform);
-    static core::ecs::Entity createEnemy(core::ecs::Registry& registry, const sf::Vector2f& position);
-
+    static core::ecs::Entity createPlayer(core::ecs::Registry& registry, const sf::Vector2f& position, int color, Game &game, sf::Vector2f gameScale);
+    static core::ecs::Entity createPlayerProjectile(core::ecs::Registry& registry, core::ge::TransformComponent& playerTransform, sf::Vector2f gameScale);
+    static core::ecs::Entity createPlayerMissile(core::ecs::Registry& registry, core::ge::TransformComponent& playerTransform, sf::Vector2f gameScale);
+    static core::ecs::Entity createEnemy(core::ecs::Registry& registry, const sf::Vector2f& position, sf::Vector2f gameScale);
+    static core::ecs::Entity createButton(core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void()>& onClick, int scene);
 };
 
 #endif // ENTITY_FACTORY_HPP

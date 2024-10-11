@@ -5,18 +5,16 @@
 #include "./GameEngineComponents.hpp"
 #include "MusicManager.hpp"
 
-#include <iostream>
 #include <SFML/Graphics.hpp>
 #include <SFML/System/Clock.hpp>
+
+#include <iostream>
 
 namespace core {
     class GameEngine {
         public:
-            GameEngine() : window(sf::VideoMode(800, 600), "R-Type")
+            GameEngine(bool initWindow = true)
             {
-                window.setFramerateLimit(60);
-                window.setKeyRepeatEnabled(true);
-
                 registry.register_component<core::ge::TransformComponent>();
                 registry.register_component<core::ge::DrawableComponent>();
                 registry.register_component<core::ge::KeyBinding>();
@@ -28,12 +26,23 @@ namespace core {
                 registry.register_component<core::ge::ClickableComponent>();
                 registry.register_component<core::ge::ColorComponent>();
                 registry.register_component<core::ge::CollisionComponent>();
+                registry.register_component<core::ge::ButtonComponent>();
+                registry.register_component<core::ge::TextComponent>();
+                registry.register_component<core::ge::SceneComponent>();
 
                 positionSystem();
                 renderSystems();
                 animationSystem();
                 soundSystem();
                 collisionSystem();
+                buttonSystem();
+                textSystem();
+
+                if (!initWindow)
+                    return;
+                window.create(sf::VideoMode(800, 600), "Game", sf::Style::Default);
+                window.setFramerateLimit(60);
+                window.setKeyRepeatEnabled(true);
             }
 
             ~GameEngine() = default;
@@ -42,12 +51,15 @@ namespace core {
             core::ecs::Registry registry;
             MusicManager musicManager;
             sf::RenderWindow window;
+            int currentScene = 0;
             sf::Clock clock;
 
         protected:
             void renderSystems()
             {
-                registry.add_system<core::ge::DrawableComponent>([&window = window](core::ecs::Entity, core::ge::DrawableComponent &drawable) {
+                registry.add_system<core::ge::DrawableComponent, core::ge::SceneComponent>([&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::DrawableComponent &drawable, core::ge::SceneComponent &scene) {
+                    if (scene.sceneName != currentScene)
+                        return;
                     window.draw(drawable.shape);
                 });
             }
@@ -90,8 +102,10 @@ namespace core {
 
             void collisionSystem()
             {
-                registry.add_system<ge::TransformComponent, ge::CollisionComponent>(
-                    [&](const ecs::Entity entity, const ge::TransformComponent &transform, ge::CollisionComponent &collision) {
+                registry.add_system<ge::TransformComponent, ge::CollisionComponent, ge::SceneComponent>(
+                    [&](const ecs::Entity entity, const ge::TransformComponent &transform, ge::CollisionComponent &collision, ge::SceneComponent &scene) {
+                        if (scene.sceneName != currentScene)
+                            return;
                         auto &collisionComponents = registry.get_components<ge::CollisionComponent>();
                         auto &transformComponents = registry.get_components<ge::TransformComponent>();
 
@@ -135,6 +149,45 @@ namespace core {
                             }
                         }
                     });
+            }
+
+            void buttonSystem()
+            {
+                registry.add_system<core::ge::ButtonComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent>([&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::ButtonComponent &button, core::ge::SceneComponent &scene, core::ge::DrawableComponent &drawable, core::ge::TextComponent &text) {
+                    if (scene.sceneName != currentScene)
+                        return;
+                    sf::Vector2i mousePosition = sf::Mouse::getPosition(window);
+                    sf::Vector2f worldPos = window.mapPixelToCoords(mousePosition);
+
+                    button.isHovered = button.shape.getGlobalBounds().contains(worldPos);
+                    button.isPressed = button.isHovered && sf::Mouse::isButtonPressed(sf::Mouse::Left);
+
+                    if (button.isPressed) {
+                        button.onClick();
+                        drawable.shape.setSize(button.shape.getSize() * 0.98f);
+                        text.text.setScale(sf::Vector2f(0.98f, 0.98f));
+                    } else if (button.isHovered) {
+                        drawable.shape.setSize(button.shape.getSize() * 1.02f);
+                        text.text.setScale(sf::Vector2f(1.02f, 1.02f));
+                    } else {
+                        drawable.shape.setSize(button.shape.getSize());
+                        text.text.setScale(sf::Vector2f(1.0f, 1.0f));
+                    }
+                });
+            }
+
+            void textSystem()
+            {
+                registry.add_system<core::ge::TextComponent, core::ge::SceneComponent>([&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::TextComponent &text, core::ge::SceneComponent &scene) {
+                    if (scene.sceneName != currentScene)
+                        return;
+                    if (text.text.getString().isEmpty()) {
+                        std::cerr << "Warning: Attempting to draw empty text" << std::endl;
+                        return;
+                    }
+                    text.text.setFont(text.font);
+                    window.draw(text.text);
+                });
             }
     };
 }

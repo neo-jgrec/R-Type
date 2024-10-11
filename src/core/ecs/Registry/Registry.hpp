@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <stdexcept>
 
 #include "../Entity/Entity.hpp"
 #include "../SparseArray/SparseArray.hpp"

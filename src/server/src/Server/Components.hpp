@@ -4,7 +4,7 @@
 #include "../../../core/network/NetworkService.hpp"
 
 struct Network {
-    NetworkingService &service = NetworkingService::getInstance();
+    NetworkingService &service;
 };
 
 struct World {
@@ -16,16 +16,18 @@ struct World {
 };
 
 struct ConnectionHub {
-    std::vector<core::ecs::Entity> &players;
+    std::array<std::optional<core::ecs::Entity>, 4> &players;
 };
 
 struct Player {
-    // asio::ip::udp::endpoint& endpoint;
-    uint8_t id = 0;
+    const asio::ip::udp::endpoint &endpoint;
+    uint8_t id;
+    uint8_t health;
+    time_t lastTimePacketReceived;
 };
 
 struct Enemy {
-    uint8_t id = 0;
+    uint8_t id;
 };
 
 struct Projectile {};

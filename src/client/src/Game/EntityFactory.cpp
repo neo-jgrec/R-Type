@@ -1,5 +1,8 @@
 #include "EntityFactory.hpp"
+#include "Game.hpp"
+
 #include <SFML/Graphics.hpp>
+
 #include <SFML/System/Vector2.hpp>
 #include <filesystem>
 #include <iostream>
@@ -9,11 +12,11 @@
 #include "../../../core/ecs/GameEngine/GameEngineComponents.hpp"
 #include "Game.hpp"
 
-core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, const sf::Vector2f& position, int color, Game &game)
+core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, const sf::Vector2f& position, int color, Game &game, sf::Vector2f gameScale)
 {
     core::ecs::Entity player = registry.spawn_entity();
 
-    registry.add_component(player, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 17.0f), sf::Vector2f(4.0f, 4.0f), 0.0f});
+    registry.add_component(player, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 17.0f), gameScale, 0.0f});
     registry.add_component(player, core::ge::CollisionComponent{PLAYER, {sf::FloatRect(0.0f, 0.0f, 33.0f, 17.0f)}, {
         { ENEMY, [&](const core::ecs::Entity self, [[maybe_unused]] const core::ecs::Entity other) {
                 registry.kill_entity(self);
@@ -44,6 +47,7 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, con
     playerShape.setTextureRect(sf::IntRect(0, row, 33, 17));
 
     registry.add_component(player, core::ge::DrawableComponent{playerShape});
+    registry.add_component(player, core::ge::SceneComponent{static_cast<int>(Game::GameState::Playing)});
     registry.add_component(player, core::ge::TextureComponent{texture});
 
     std::vector<sf::IntRect> moveFrames;
@@ -64,19 +68,19 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, con
     return player;
 }
 
-core::ecs::Entity EntityFactory::createPlayerProjectile(core::ecs::Registry& registry, core::ge::TransformComponent& playerTransform)
+core::ecs::Entity EntityFactory::createPlayerProjectile(core::ecs::Registry& registry, core::ge::TransformComponent& playerTransform, sf::Vector2f gameScale)
 {
     core::ecs::Entity projectile = registry.spawn_entity();
 
     sf::Vector2f projectileSize(18.0f, 5.0f);
     sf::Vector2f startPosition = playerTransform.position;
-    sf::Vector2f scale(4.0f, 4.0f);
+
     float playerWidth = playerTransform.size.x * playerTransform.scale.x;
     float playerHeight = playerTransform.size.y * playerTransform.scale.y;
     startPosition.x += playerWidth;
     startPosition.y += (playerHeight / 2.0f) - (projectileSize.y / 2.0f);
 
-    registry.add_component(projectile, core::ge::TransformComponent{startPosition, projectileSize, scale, 0.0f});
+    registry.add_component(projectile, core::ge::TransformComponent{startPosition, projectileSize, gameScale, 0.0f});
     registry.add_component(projectile, core::ge::CollisionComponent{PLAYER_PROJECTILE, {sf::FloatRect(0.0f, 0.0f, 18.0f, 5.0f)}});
     registry.add_component(projectile, VelocityComponent{10.0f, 10.0f});
     registry.add_component(projectile, DamageComponent{10});
@@ -105,17 +109,18 @@ core::ecs::Entity EntityFactory::createPlayerProjectile(core::ecs::Registry& reg
     projectileShape.setTexture(texture.get());
     projectileShape.setTextureRect(sf::IntRect(0, 0, 18, 5));
     registry.add_component(projectile, core::ge::DrawableComponent{projectileShape});
+    registry.add_component(projectile, core::ge::SceneComponent{static_cast<int>(Game::GameState::Playing)});
     registry.add_component(projectile, core::ge::TextureComponent{texture});
 
     return projectile;
 }
 
-core::ecs::Entity EntityFactory::createPlayerMissile(core::ecs::Registry &registry, core::ge::TransformComponent &playerTransform)
+core::ecs::Entity EntityFactory::createPlayerMissile(core::ecs::Registry &registry, core::ge::TransformComponent &playerTransform, sf::Vector2f gameScale)
 {
     core::ecs::Entity missile = registry.spawn_entity();
 
     sf::Vector2f missileSize(34.5f, 12.0f);
-    sf::Vector2f scale(4.0f, 4.0f);
+    sf::Vector2f scale = gameScale;
     sf::Vector2f startPosition = playerTransform.position;
     float playerWidth = playerTransform.size.x * playerTransform.scale.x;
     float playerHeight = playerTransform.size.y * playerTransform.scale.y;
@@ -153,6 +158,7 @@ core::ecs::Entity EntityFactory::createPlayerMissile(core::ecs::Registry &regist
     missileShape.setTextureRect(sf::IntRect(0, 0, 34, 12));
     registry.add_component(missile, core::ge::DrawableComponent{missileShape});
     registry.add_component(missile, core::ge::TextureComponent{texture});
+    registry.add_component(missile, core::ge::SceneComponent{static_cast<int>(Game::GameState::Playing)});
 
     std::vector<sf::IntRect> moveFrames;
     moveFrames.reserve(2);
@@ -172,11 +178,11 @@ core::ecs::Entity EntityFactory::createPlayerMissile(core::ecs::Registry &regist
     return missile;
 }
 
-core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry &registry, const sf::Vector2f &position)
+core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry& registry, const sf::Vector2f& position, sf::Vector2f gameScale)
 {
     core::ecs::Entity enemy = registry.spawn_entity();
 
-    registry.add_component(enemy, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 36.0f), sf::Vector2f(4.0f, 4.0f), 0.0f});
+    registry.add_component(enemy, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 36.0f), gameScale, 0.0f});
     registry.add_component(enemy, core::ge::CollisionComponent{ENEMY, {sf::FloatRect(0.0f, 0.0f, 33.0f, 36.0f)}, {
         { PLAYER_PROJECTILE, [&](const core::ecs::Entity self, const core::ecs::Entity other) {
             const auto &damageDone = registry.get_components<DamageComponent>() [other];
@@ -206,7 +212,7 @@ core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry &registry, cons
     enemyShape.setTextureRect(sf::IntRect(0, 0, 33, 36));
     registry.add_component(enemy, core::ge::DrawableComponent{enemyShape});
     registry.add_component(enemy, core::ge::TextureComponent{texture});
-
+    registry.add_component(enemy, core::ge::SceneComponent{static_cast<int>(Game::GameState::Playing)});
     std::vector<sf::IntRect> moveFrames;
     moveFrames.reserve(8);
     for (int i = 0; i < 5; i++) {
@@ -225,3 +231,35 @@ core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry &registry, cons
     return enemy;
 }
 
+core::ecs::Entity EntityFactory::createButton(core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void()>& onClick, int scene)
+{
+    core::ecs::Entity button = registry.spawn_entity();
+
+    sf::RectangleShape shape(size);
+    shape.setPosition(position);
+    shape.setFillColor(sf::Color::White);
+    shape.setOutlineThickness(2);
+    shape.setOutlineColor(sf::Color::Black);
+
+    sf::Font font;
+    if (!font.loadFromFile("assets/Fonts/Arial.ttf")) {
+        std::cerr << "Failed to load font: " << "assets/Fonts/Arial.ttf" << std::endl;
+        return button;
+    }
+
+    sf::Text text;
+    text.setFont(font);
+    text.setString(label);
+    text.setCharacterSize(24);
+    text.setFillColor(sf::Color::Black);
+
+    sf::FloatRect textBounds = text.getLocalBounds();
+    text.setOrigin(textBounds.left + textBounds.width / 2.0f, textBounds.top + textBounds.height / 2.0f);
+    text.setPosition(position.x + size.x / 2.0f, position.y + size.y / 2.0f);
+
+    registry.add_component(button, core::ge::DrawableComponent{shape});
+    registry.add_component(button, core::ge::TextComponent{text, font});
+    registry.add_component(button, core::ge::ButtonComponent{shape, onClick, false, false});
+    registry.add_component(button, core::ge::SceneComponent{scene});
+    return button;
+}
