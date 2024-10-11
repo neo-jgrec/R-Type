@@ -26,6 +26,8 @@ struct Enemy {
     uint8_t id;
 };
 
-struct Projectile {};
+struct Projectile {
+    uint8_t id;
+};
 
 #endif //COMPONENTS_HPP

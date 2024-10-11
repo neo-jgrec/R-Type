@@ -14,6 +14,8 @@ Server::Server()
 
     Systems::worldSystem(_gameEngine.registry);
     Systems::playerSystem(_gameEngine.registry, _players);
+    Systems::enemySystem(_gameEngine.registry, _players);
+    Systems::projectileSystem(_gameEngine.registry);
 
     _networkingService.addEvent(PlayerConnect, [&](const GDTPHeader &, const std::vector<uint8_t> &, const asio::ip::udp::endpoint &endpoint) {
         std::cout << "New connection from " << endpoint << std::endl;
@@ -57,28 +59,43 @@ Server::Server()
             return;
 
         {
-            const auto &playerComponent = _gameEngine.registry.get_component<Player>(_players[id].value());
-            _networkingService.sendRequest(
-                playerComponent->endpoint,
-                PlayerMove,
-                payload);
-            playerComponent->lastTimePacketReceived = std::time(nullptr);
+            const auto &transformComponent = _gameEngine.registry.get_component<core::ge::TransformComponent>(_players[id].value());
+            const uint32_t x = (payload[1] << 24) | (payload[2] << 16) | (payload[3] << 8) | payload[4];
+            const uint32_t y = (payload[5] << 24) | (payload[6] << 16) | (payload[7] << 8) | payload[8];
+            transformComponent->position = {static_cast<float>(x), static_cast<float>(y)};
         }
-
-        const auto &transformComponent = _gameEngine.registry.get_component<core::ge::TransformComponent>(_players[id].value());
-        const uint32_t x = (payload[1] << 24) | (payload[2] << 16) | (payload[3] << 8) | payload[4];
-        const uint32_t y = (payload[5] << 24) | (payload[6] << 16) | (payload[7] << 8) | payload[8];
-        transformComponent->position = {static_cast<float>(x), static_cast<float>(y)};
 
         for (const auto &playerEntity : _players) {
             if (!playerEntity.has_value())
                 continue;
             const auto &playerComponent = _gameEngine.registry.get_component<Player>(playerEntity.value());
-            if (playerComponent->id == id)
-                continue;
             _networkingService.sendRequest(
                 playerComponent->endpoint,
                 PlayerMove,
+                payload);
+            if (playerComponent->id == id)
+                playerComponent->lastTimePacketReceived = std::time(nullptr);
+        }
+    });
+    _networkingService.addEvent(PlayerShoot, [&](const GDTPHeader &, const std::vector<uint8_t> &payload, const asio::ip::udp::endpoint &)
+    {
+        if (!asPlayerConnected())
+            return;
+        const uint8_t id = payload[0];
+        if (id >= 4 || !_players[id].has_value())
+            return;
+
+        static uint8_t projectileId = 0;
+        EntityFactory::createProjectile(_gameEngine.registry, _players[id].value(), projectileId++);
+        std::cout << "Player " << id << " shot" << std::endl;
+
+        for (const auto &playerEntity : _players) {
+            if (!playerEntity.has_value())
+                continue;
+            const auto &playerComponent = _gameEngine.registry.get_component<Player>(playerEntity.value());
+            _networkingService.sendRequest(
+                playerComponent->endpoint,
+                PlayerShoot,
                 payload);
         }
     });
@@ -90,6 +107,8 @@ void Server::update()
     _gameEngine.registry.run_system<Network, World>();
     _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent>();
     _gameEngine.registry.run_system<Network, Player>();
+    _gameEngine.registry.run_system<Network, Enemy>();
+    _gameEngine.registry.run_system<Projectile>();
 }
 
 bool Server::asPlayerConnected()

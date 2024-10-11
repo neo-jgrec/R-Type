@@ -1,7 +1,9 @@
 #include "Systems.hpp"
 
 #include "Components.hpp"
+#include "../../../core/ecs/GameEngine/GameEngineComponents.hpp"
 #include "../../../game/RequestType.hpp"
+
 
 void Systems::worldSystem(core::ecs::Registry &registry)
 {
@@ -46,5 +48,47 @@ void Systems::playerSystem(core::ecs::Registry &registry, std::array<std::option
                 registry.kill_entity(entity);
                 players[player.id].reset();
             }
+        });
+}
+
+void Systems::enemySystem(core::ecs::Registry &registry, const std::array<std::optional<core::ecs::Entity>, 4> &players)
+{
+    registry.add_system<Network, Enemy>(
+        [&](const core::ecs::Entity &entity, const Network &network, const Enemy &enemy) {
+            const auto &transformComponent = registry.get_component<core::ge::TransformComponent>(entity);
+            transformComponent->position.x -= 10;
+
+            const sf::Vector2i position = {static_cast<int>(transformComponent->position.x), static_cast<int>(transformComponent->position.y)};
+            const std::vector payload = {
+                enemy.id,
+                static_cast<uint8_t>(position.x >> 24),
+                static_cast<uint8_t>(position.x >> 16),
+                static_cast<uint8_t>(position.x >> 8),
+                static_cast<uint8_t>(position.x),
+                static_cast<uint8_t>(position.y >> 24),
+                static_cast<uint8_t>(position.y >> 16),
+                static_cast<uint8_t>(position.y >> 8),
+                static_cast<uint8_t>(position.y)
+            };
+
+            for (auto &playerEntity : players) {
+                if (!playerEntity.has_value())
+                    continue;
+
+                const auto &playerComponent = registry.get_component<Player>(playerEntity.value());
+                network.service.sendRequest(
+                    playerComponent->endpoint,
+                    EnemyMove,
+                    payload);
+            }
+        });
+}
+
+void Systems::projectileSystem(core::ecs::Registry &registry)
+{
+    registry.add_system<Projectile>(
+        [&](const core::ecs::Entity &entity, const Projectile &) {
+            const auto &transformComponent = registry.get_component<core::ge::TransformComponent>(entity);
+            transformComponent->position.x += 10;
         });
 }
