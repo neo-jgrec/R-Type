@@ -3,6 +3,7 @@
 
 #include "../Registry/Registry.hpp"
 #include "./GameEngineComponents.hpp"
+#include "MusicManager.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <SFML/System/Clock.hpp>
@@ -12,11 +13,8 @@
 namespace core {
     class GameEngine {
         public:
-            GameEngine() : window(sf::VideoMode(800, 600), "R-Type")
+            GameEngine(bool initWindow = true)
             {
-                window.setFramerateLimit(60);
-                window.setKeyRepeatEnabled(true);
-
                 registry.register_component<core::ge::TransformComponent>();
                 registry.register_component<core::ge::DrawableComponent>();
                 registry.register_component<core::ge::KeyBinding>();
@@ -43,12 +41,19 @@ namespace core {
                 textSystem();
                 textInputSystem();
                 sliderSystem();
+
+                if (!initWindow)
+                    return;
+                window.create(sf::VideoMode(800, 600), "Game", sf::Style::Default);
+                window.setFramerateLimit(60);
+                window.setKeyRepeatEnabled(true);
             }
 
             ~GameEngine() = default;
 
             float delta_t = 0.0f;
             core::ecs::Registry registry;
+            MusicManager musicManager;
             sf::RenderWindow window;
             int currentScene = 0;
             sf::Clock clock;

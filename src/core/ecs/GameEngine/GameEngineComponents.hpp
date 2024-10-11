@@ -13,6 +13,8 @@ namespace core::ge {
 
     enum class AnimationState {
         Moving,
+        MovingUp,
+        MovingDown,
         Dying
     };
 

@@ -2,10 +2,11 @@
 #define COLLISIONMASK_HPP
 
 enum CollisionMask {
-    WORLD = 0b0001,
-    PLAYER = 0b0010,
-    ENEMY = 0b0100,
-    PLAYER_PROJECTILE = 0b1000,
+    WORLD = 0b00001,
+    PLAYER = 0b00010,
+    ENEMY = 0b00100,
+    TILE = 0b01000,
+    PLAYER_PROJECTILE = 0b10000,
 };
 
 #endif //COLLISIONMASK_HPP

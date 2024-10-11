@@ -10,8 +10,9 @@
 #include "../../../game/Components.hpp"
 #include "../../../game/CollisionMask.hpp"
 #include "../../../core/ecs/GameEngine/GameEngineComponents.hpp"
+#include "Game.hpp"
 
-core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, const sf::Vector2f& position, int color, sf::Vector2f gameScale)
+core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, const sf::Vector2f& position, int color, Game &game, sf::Vector2f gameScale)
 {
     core::ecs::Entity player = registry.spawn_entity();
 
@@ -19,6 +20,7 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, con
     registry.add_component(player, core::ge::CollisionComponent{PLAYER, {sf::FloatRect(0.0f, 0.0f, 33.0f, 17.0f)}, {
         { ENEMY, [&](const core::ecs::Entity self, [[maybe_unused]] const core::ecs::Entity other) {
                 registry.kill_entity(self);
+                game.releaseColor(color);
         }}}});
     registry.add_component(player, VelocityComponent{10.0f, 10.0f});
     registry.add_component(player, InputStateComponent{});
@@ -27,6 +29,7 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, con
     registry.add_component(player, ScoreComponent{0});
     registry.add_component(player, Player{});
     registry.add_component(player, ShootCounterComponent{0});
+    registry.add_component(player, PlayerColorComponent{color});
 
     std::string relativePath = "assets/player_sprite.png";
     std::string absolutePath = std::filesystem::absolute(relativePath).string();
@@ -155,6 +158,7 @@ core::ecs::Entity EntityFactory::createPlayerMissile(core::ecs::Registry &regist
     missileShape.setTextureRect(sf::IntRect(0, 0, 34, 12));
     registry.add_component(missile, core::ge::DrawableComponent{missileShape});
     registry.add_component(missile, core::ge::TextureComponent{texture});
+    registry.add_component(missile, core::ge::SceneComponent{static_cast<int>(Game::GameState::Playing)});
 
     std::vector<sf::IntRect> moveFrames;
     moveFrames.reserve(2);
