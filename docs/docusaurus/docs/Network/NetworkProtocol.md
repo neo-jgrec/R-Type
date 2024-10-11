@@ -1,7 +1,3 @@
-Understood, I'll provide a faithful transcription of the protocol documentation you shared, formatted in Markdown to match the structure and details in the original. Here is the complete protocol documentation:
-
----
-
 # Game Datagram Transfer Protocol (GDTP) — Binary Protocol for Client/Server Communications Using UDP
 
 ## Protocol Overview
