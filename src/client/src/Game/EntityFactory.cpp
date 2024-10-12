@@ -270,9 +270,11 @@ core::ecs::Entity EntityFactory::createButton(core::ecs::Registry& registry, con
     text.setOrigin(textBounds.left + textBounds.width / 2.0f, textBounds.top + textBounds.height / 2.0f);
     text.setPosition(position.x + size.x / 2.0f, position.y + size.y / 2.0f);
 
+    registry.add_component(button, core::ge::TransformComponent{position, size, sf::Vector2f(1.0f, 1.0f), 0.0f});
     registry.add_component(button, core::ge::DrawableComponent{shape});
     registry.add_component(button, core::ge::TextComponent{text, font});
-    registry.add_component(button, core::ge::ButtonComponent{shape, onClick, false, false});
+    registry.add_component(button, core::ge::ClickableComponent{false, false, onClick});
+    // registry.add_component(button, core::ge::ButtonComponent{shape, onClick, false, false});
     registry.add_component(button, core::ge::SceneComponent{scene});
     return button;
 }
