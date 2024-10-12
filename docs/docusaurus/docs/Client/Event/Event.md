@@ -1,7 +1,8 @@
-
+---
+sidebar_position: 1
 ---
 
-# Event Class Documentation
+# Event
 
 ## Overview
 

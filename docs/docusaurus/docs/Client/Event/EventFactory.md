@@ -1,6 +1,8 @@
+---
+sidebar_position: 2
+---
 
-```markdown
-# EventFactory Class
+# EventFactory
 
 ## Overview
 The `EventFactory` class is responsible for creating `Event` objects from received network data. It translates `GDTPHeader` information and raw payload data into structured `Event` instances that the game server or client can process. This class encapsulates the logic needed to interpret the various event types specified in the `GDTP` protocol.
@@ -211,4 +213,3 @@ Event EventFactory::handlePowerUpCollected(const GDTPHeader& header, const std::
 - **Dynamic Event Handling**: Uses a map to dynamically associate message types with event handler functions.
 - **Ease of Extension**: New event types can be added by simply defining a new handler function and adding it to the map.
 - **Encapsulation**: Keeps event creation logic separate from other parts of the system, promoting a cleaner architecture.
-```
