@@ -344,3 +344,26 @@ core::ecs::Entity EntityFactory::createSlider(core::ecs::Registry& registry, con
 
     return slider;
 }
+
+core::ecs::Entity EntityFactory::createImage(core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& texturePath, int scene)
+{
+    core::ecs::Entity img = registry.spawn_entity();
+
+    sf::RectangleShape shape(size);
+    shape.setPosition(position);
+
+    std::string absolutePath = std::filesystem::absolute(texturePath).string();
+    auto texture = std::make_shared<sf::Texture>();
+    if (!texture->loadFromFile(absolutePath)) {
+        std::cerr << "Failed to load texture: " << absolutePath << std::endl;
+        return img;
+    }
+
+    shape.setTexture(texture.get());
+
+    registry.add_component(img, core::ge::DrawableComponent{shape});
+    registry.add_component(img, core::ge::TextureComponent{texture});
+    registry.add_component(img, core::ge::SceneComponent{scene});
+
+    return img;
+}
