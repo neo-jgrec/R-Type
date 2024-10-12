@@ -17,12 +17,13 @@ Server::Server()
     Systems::enemySystem(_gameEngine.registry, _players);
     Systems::projectileSystem(_gameEngine.registry);
 
-    _networkingService.addEvent(PlayerConnect, [&](const GDTPHeader &, const std::vector<uint8_t> &, const asio::ip::udp::endpoint &endpoint) {
+    _networkingService.addEvent(PlayerConnect, [&](const GDTPHeader &header, const std::vector<uint8_t> &, const asio::ip::udp::endpoint &endpoint) {
         std::cout << "New connection from " << endpoint << std::endl;
         for (uint8_t i = 0; i < 4; i++) {
             if (_players[i].has_value())
                 continue;
             _players[i].emplace(EntityFactory::createPlayer(_gameEngine.registry, _networkingService, _players, endpoint, i));
+            _networkingService.sendRequestResponse(endpoint, header, {i});
             return;
         }
     });
