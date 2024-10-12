@@ -87,13 +87,13 @@ void Game::enemyMovementSystem(core::ecs::Registry& registry) const
 
 void Game::moveWindowViewSystem(core::ecs::Registry& registry)
 {
-    registry.add_system<ViewComponent, core::ge::SceneComponent>(
-        [&](core::ecs::Entity, ViewComponent &viewComponent, const core::ge::SceneComponent& scene) {
-            if (scene.sceneName != static_cast<int>(_gameEngine.currentScene))
-                return;
-            viewComponent.view.move(1.0f, 0.0f);
-            _gameEngine.window.setView(viewComponent.view);
-        });
+    // registry.add_system<ViewComponent, core::ge::SceneComponent>(
+    //     [&](core::ecs::Entity, ViewComponent &viewComponent, const core::ge::SceneComponent& scene) {
+    //         if (scene.sceneName != static_cast<int>(_gameEngine.currentScene))
+    //             return;
+    //         viewComponent.view.move(1.0f, 0.0f);
+    //         _gameEngine.window.setView(viewComponent.view);
+    //     });
 }
 
 void Game::eventSystem(core::ecs::Registry& registry)
@@ -117,6 +117,26 @@ void Game::eventSystem(core::ecs::Registry& registry)
                     auto playerEntity = registry.get_entities<Player>()[playerMovePayload.first];
                     auto playerTransform = registry.get_component<core::ge::TransformComponent>(playerEntity);
                     playerTransform->position = playerMovePayload.second;
+                } else if (type == RequestType::PlayerDie) {
+                    auto playerId = std::get<int>(event.getPayload());
+                    auto playerEntity = registry.get_entities<Player>()[playerId];
+                    registry.kill_entity(playerEntity);
+                } else if (type == RequestType::PlayerHit) {
+                    auto playerId = std::get<int>(event.getPayload());
+                    auto playerEntity = registry.get_entities<Player>()[playerId];
+                    auto playerComponent = registry.get_component<Player>(playerEntity);
+                    // TODO: Handle player hit
+                } else if (type == RequestType::GameOver) {
+                    _gameEngine.currentScene = static_cast<int>(GameState::GameOver);
+                } else if (type == RequestType::PlayerDisconnect) {
+                    auto playerId = std::get<int>(event.getPayload());
+                    auto playerEntity = registry.get_entities<Player>()[playerId];
+                    registry.kill_entity(playerEntity);
+                } else if (type == RequestType::MapScroll) {
+                    // auto scrollPayload = std::get<sf::Vector2f>(event.getPayload());
+                    // auto viewComponent = registry.get_component<ViewComponent>(_viewEntity);
+                    // viewComponent->view.move(scrollPayload);
+                    // _gameEngine.window.setView(viewComponent->view);
                 }
             }
         });
