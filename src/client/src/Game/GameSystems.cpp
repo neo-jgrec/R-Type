@@ -2,6 +2,7 @@
 #include "../../../game/Components.hpp"
 #include "EntityFactory.hpp"
 #include "Utils/ClientComponents.hpp"
+#include "src/event/EventPool.hpp"
 
 sf::Vector2f getViewBounds(const sf::RenderWindow& window);
 
@@ -72,5 +73,16 @@ void Game::moveWindowViewSystem(core::ecs::Registry& registry)
                 return;
             viewComponent.view.move(1.0f, 0.0f);
             _gameEngine.window.setView(viewComponent.view);
+        });
+}
+
+void Game::eventSystem(core::ecs::Registry& registry)
+{
+    registry.add_system<EventComponent>(
+        [&](core::ecs::Entity, EventComponent&) {
+            std::vector<Event> allEvents = EventPool::getInstance().getAllEvents();
+            for (auto &event : allEvents) {
+                std::cout << event << std::endl;
+            }
         });
 }

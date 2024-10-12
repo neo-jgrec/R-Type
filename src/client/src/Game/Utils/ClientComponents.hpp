@@ -14,4 +14,7 @@ struct ViewComponent {
     sf::View view; ///< The SFML View object that defines the visible area
 };
 
+struct EventComponent {
+};
+
 #endif /* !CLIENTCOMPONENTS_HPP_ */
