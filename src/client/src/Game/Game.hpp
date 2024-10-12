@@ -100,10 +100,7 @@ private:
      * @brief Initializes the main menu scene.
      */
     void initMainMenu();
-  
-    // TODO: remove these when networking is implemented
-    core::ecs::Entity _playerEntity = core::ecs::Entity();
-    core::ecs::Entity _enemyEntity = core::ecs::Entity();
+
     core::ecs::Entity _viewEntity = core::ecs::Entity();
 
     core::GameEngine _gameEngine; ///< Game engine responsible for managing entities, components, and systems.
@@ -154,7 +151,8 @@ private:
      *
      * @param registry
      */
-    static void eventSystem(core::ecs::Registry& registry);
+    void eventSystem(core::ecs::Registry& registry);
 
-    NetworkingService &networkingService = NetworkingService::getInstance();
+    NetworkingService &networkingService = NetworkingService::getInstance(); ///< Singleton instance of the networking service.
+    GDTPHeader playerConnectionHeader; ///< Header for player connection requests.
 };

@@ -37,15 +37,7 @@ void Game::init()
     _gameEngine.registry.register_component<ViewComponent>();
     _gameEngine.registry.register_component<EventComponent>();
 
-    int player1Color = assignColor();
-    if (player1Color >= 0) {
-        _playerEntity = EntityFactory::createPlayer(_gameEngine.registry, sf::Vector2f(100.0f, 400.0f), player1Color, *this, gameScale);
-    }
-    int player2Color = assignColor();
-    if (player2Color >= 0) {
-        _playerEntity = EntityFactory::createPlayer(_gameEngine.registry, sf::Vector2f(100.0f, 100.0f), player2Color, *this, gameScale);
-    }
-    _enemyEntity = EntityFactory::createEnemy(_gameEngine.registry, sf::Vector2f(700.0f, 100.0f), gameScale);
+    // _enemyEntity = EntityFactory::createEnemy(_gameEngine.registry, sf::Vector2f(700.0f, 100.0f), gameScale);
 
     initMainMenu();
 
@@ -62,7 +54,7 @@ void Game::init()
     setHandlers();
     networkingService.run();
 
-    networkingService.sendRequest("127.0.0.1", 1111, PlayerConnect, {});
+    playerConnectionHeader = networkingService.sendRequest("127.0.0.1", 1111, PlayerConnect, {});
 
     core::ecs::Entity EventEntity = _gameEngine.registry.spawn_entity();
     _gameEngine.registry.add_component(EventEntity, EventComponent{});
@@ -144,7 +136,7 @@ void Game::update()
     // events
     _gameEngine.registry.run_system<EventComponent>();
 
-    _gameEngine.registry.run_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, ShootCounterComponent>();
+    _gameEngine.registry.run_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, ShootCounterComponent, Player>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::TransformComponent>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::AnimationComponent>();
 
@@ -195,8 +187,10 @@ void Game::processEvents() {
                 _gameEngine.window.close();
             }
 
-            auto &inputStateOpt = _gameEngine.registry.get_components<InputStateComponent>()[_playerEntity];
-            auto &keyBindingOpt = _gameEngine.registry.get_components<core::ge::KeyBinding>()[_playerEntity];
+            auto playerEntity = _gameEngine.registry.get_entities<Player, InputStateComponent>()[0];
+
+            auto &inputStateOpt = _gameEngine.registry.get_components<InputStateComponent>()[playerEntity];
+            auto &keyBindingOpt = _gameEngine.registry.get_components<core::ge::KeyBinding>()[playerEntity];
 
             if (inputStateOpt.has_value()) {
                 auto &keyBinding = *keyBindingOpt.value();
