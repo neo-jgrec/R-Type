@@ -6,6 +6,7 @@
 #include "MusicManager.hpp"
 #include <SFML/Graphics.hpp>
 #include <SFML/System/Clock.hpp>
+#include <SFML/Window/WindowStyle.hpp>
 #include <iostream>
 
 namespace core {
@@ -60,7 +61,7 @@ public:
             return;
 
         // Initialize window if required
-        window.create(sf::VideoMode(800, 600), "Game", sf::Style::Default);
+        window.create(sf::VideoMode(1920, 1080), "Game", sf::Style::Default);
         window.setFramerateLimit(60);
         window.setKeyRepeatEnabled(true);
     }
