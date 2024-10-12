@@ -11,6 +11,10 @@ const config = {
   title: 'R-Type',
   tagline: 'Do you type the R',
   favicon: 'img/favicon.ico',
+  markdown: {
+    mermaid: true,
+  },
+  themes: ['@docusaurus/theme-mermaid'],
 
   // Set the production url of your site here
   url: 'https://r-type.jeffroy.eu',

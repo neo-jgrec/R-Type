@@ -1,0 +1,148 @@
+# Entity-Component-System (ECS) Documentation
+
+## Overview
+
+The Entity-Component-System (ECS) architecture is a design pattern used in game development and simulations to separate the data (components) from the behavior (systems). This document outlines the classes and their functionalities within the ECS framework defined in the provided code.
+
+## Namespace: `core::ecs`
+
+The core functionality of the ECS framework is encapsulated in the `core::ecs` namespace.
+
+### Classes
+
+#### 1. Entity
+
+```cpp
+class Entity {
+public:
+    explicit Entity(size_t id);
+    operator size_t() const;
+};
+```
+
+- **Purpose**: Represents an entity in the ECS. An entity is a unique identifier (ID) that serves as a container for components.
+- **Constructors**:
+  - `Entity()`: Default constructor.
+  - `Entity(size_t id)`: Constructs an entity with a specific ID.
+- **Operators**:
+  - `operator size_t()`: Converts the entity to its ID for easy access.
+
+#### 2. IComponentArray
+
+```cpp
+class IComponentArray {
+public:
+    virtual void erase(size_t id) = 0;
+};
+```
+
+- **Purpose**: An interface for component arrays, allowing polymorphic behavior for different component types.
+- **Methods**:
+  - `void erase(size_t id)`: Erases the component associated with the given entity ID.
+
+#### 3. ComponentArray
+
+```cpp
+template <typename Component>
+class ComponentArray : public IComponentArray {
+public:
+    SparseArray<std::shared_ptr<Component>> data;
+    void erase(size_t id) override;
+};
+```
+
+- **Purpose**: Stores components of a specific type for each entity.
+- **Template Parameter**: 
+  - `Component`: The type of the component stored in this array.
+- **Methods**:
+  - `void erase(size_t id)`: Erases the component associated with the given entity ID.
+
+#### 4. Registry
+
+```cpp
+class Registry {
+public:
+    template <class Component> SparseArray<std::shared_ptr<Component>> &register_component();
+    template <class Component> SparseArray<std::shared_ptr<Component>> &get_components();
+    Entity spawn_entity();
+    void kill_entity(Entity const &e);
+    template <typename Component> typename SparseArray<std::shared_ptr<Component>>::reference_type add_component(Entity const &to, Component &&c);
+    template <class... Components, typename Function> void add_system(Function &&f);
+    void run_systems();
+    template <typename... Components> std::vector<Entity> get_entities();
+    template <typename Component> bool has_component(Entity const &e) const;
+private:
+    std::unordered_map<std::type_index, std::shared_ptr<IComponentArray>> _components_arrays;
+    size_t _next_entity_id = 0;
+    std::vector<std::pair<std::function<void(Registry &)>, std::vector<std::type_index>>> _systems;
+};
+```
+
+- **Purpose**: The central manager of the ECS. It handles entities, components, and systems.
+- **Key Functions**:
+  - `register_component<Component>()`: Registers a new component type and returns its associated component array.
+  - `get_components<Component>()`: Retrieves the component array for the specified component type.
+  - `spawn_entity()`: Creates a new entity and returns its ID.
+  - `kill_entity(Entity const &e)`: Removes an entity and its associated components.
+  - `add_component<Component>(Entity const &to, Component &&c)`: Adds a component to a specified entity.
+  - `add_system<Components...>(Function &&f)`: Registers a system that operates on the specified components.
+  - `run_systems()`: Executes all registered systems.
+  - `get_entities<Components...>()`: Retrieves a list of entities that have all specified components.
+  - `has_component<Component>(Entity const &e) const`: Checks if a specific entity has a certain component.
+
+#### 5. SparseArray
+
+```cpp
+template <typename Component>
+class SparseArray {
+public:
+    reference_type operator[](size_t idx);
+    reference_type insert_at(size_type pos, Component const &comp);
+    void erase(size_type pos);
+    size_type get_index(value_type const &comp) const;
+private:
+    container_t _data;
+};
+```
+
+- **Purpose**: A sparse array implementation that efficiently manages components of varying entity IDs.
+- **Methods**:
+  - `operator[](size_t idx)`: Accesses a component at the given index.
+  - `insert_at(size_type pos, Component const &comp)`: Inserts a component at a specific position.
+  - `erase(size_type pos)`: Removes the component at a specified position.
+  - `get_index(value_type const &comp) const`: Returns the index of a specific component.
+
+## Usage
+
+1. **Creating the Registry**:
+   ```cpp
+   core::ecs::Registry registry;
+   ```
+
+2. **Registering a Component**:
+   ```cpp
+   struct Position { float x, y; };
+   registry.register_component<Position>();
+   ```
+
+3. **Creating Entities**:
+   ```cpp
+   auto entity = registry.spawn_entity();
+   ```
+
+4. **Adding Components**:
+   ```cpp
+   registry.add_component<Position>(entity, Position{0.0f, 0.0f});
+   ```
+
+5. **Running Systems**:
+   ```cpp
+   registry.add_system<Position>([](core::ecs::Registry &r) {
+       // System logic here
+   });
+   registry.run_systems();
+   ```
+
+## Conclusion
+
+This ECS framework provides a flexible and efficient way to manage entities and their associated components in a game or simulation environment. By separating data and behavior, it allows for better organization and scalability of code.
