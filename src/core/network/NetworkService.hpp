@@ -168,21 +168,17 @@ public:
      *
      * @see sendPacket() for how the constructed packet is sent.
      */
-void sendRequest(
-    const std::string& recipient,
-    const int port,
-    uint8_t messageType,
-    const std::vector<uint8_t>& payload = {}
-) {
-
+    GDTPHeader sendRequest(
+        const std::string& recipient,
+        const int port,
+        const uint8_t messageType,
+        const std::vector<uint8_t>& payload = {}
+    ) {
         GDTPHeader header{};
         header.version = 0x01;
-        header.messageType = static_cast<uint8_t>(messageType);
-
+        header.messageType = messageType;
         header.packetId = std::chrono::system_clock::now().time_since_epoch().count();
-
         header.payloadSize = static_cast<uint16_t>(payload.size());
-
         header.sequenceNumber = 1;
         header.totalPackets = 1;
 
@@ -191,6 +187,7 @@ void sendRequest(
         headerBuffer.insert(headerBuffer.end(), payload.begin(), payload.end());
 
         sendPacket(headerBuffer, recipient, port);
+        return header;
     }
 
 
@@ -233,16 +230,14 @@ void sendRequest(
     * // `responsePayload` as the data.
     * @endcode
     */
-    void sendRequestResponse(
+    GDTPHeader sendRequestResponse(
         const std::string& recipient,
         const int port,
         const GDTPHeader& headerOrigin,
         const std::vector<uint8_t>& payload = {}
     ) {
         GDTPHeader header = headerOrigin;
-
         header.payloadSize = static_cast<uint16_t>(payload.size());
-
         header.sequenceNumber = 1;
         header.totalPackets = 1;
 
@@ -251,6 +246,7 @@ void sendRequest(
         headerBuffer.insert(headerBuffer.end(), payload.begin(), payload.end());
 
         sendPacket(headerBuffer, recipient, port);
+        return header;
     }
 
 
@@ -292,12 +288,12 @@ void sendRequest(
     * // `responsePayload` as the data.
     * @endcode
     */
-    void sendRequestResponse(
+    GDTPHeader sendRequestResponse(
         const asio::ip::udp::endpoint& client_endpoint,
         const GDTPHeader& headerOrigin,
         const std::vector<uint8_t>& payload = {}
     ) {
-        sendRequestResponse(client_endpoint.address().to_string(), client_endpoint.port(), headerOrigin, payload);
+        return sendRequestResponse(client_endpoint.address().to_string(), client_endpoint.port(), headerOrigin, payload);
     }
 
     /**
@@ -321,12 +317,12 @@ void sendRequest(
      * sendRequest(clientEndpoint, messageType, payload);
      * @endcode
      */
-    void sendRequest(
+    GDTPHeader sendRequest(
         const asio::ip::udp::endpoint& client_endpoint,
         const uint8_t messageType,
         const std::vector<uint8_t>& payloads = {}
     ) {
-        sendRequest(client_endpoint.address().to_string(), client_endpoint.port(), messageType, payloads);
+        return sendRequest(client_endpoint.address().to_string(), client_endpoint.port(), messageType, payloads);
     }
 
 
