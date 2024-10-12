@@ -43,6 +43,8 @@ public:
         registry.register_component<core::ge::ButtonComponent>();
         registry.register_component<core::ge::TextComponent>();
         registry.register_component<core::ge::SceneComponent>();
+        registry.register_component<core::ge::TextInputComponent>();
+        registry.register_component<core::ge::SliderComponent>();
 
         // Initialize systems
         positionSystem();
@@ -52,6 +54,8 @@ public:
         collisionSystem();
         buttonSystem();
         textSystem();
+        textInputSystem();
+        sliderSystem();
 
         if (!initWindow)
             return;
