@@ -197,6 +197,31 @@ struct SceneComponent {
     int sceneName;
 };
 
+/**
+ * @struct TextInputComponent
+ * @brief Component for text input fields.
+ */
+struct TextInputComponent {
+    std::string text;
+    std::string placeholder;
+    bool isActive = false;
+    size_t cursorPosition = 0;
+    size_t maxLength = 100;
+};
+
+/**
+ * @struct SliderComponent
+ * @brief Component for slider entities.
+ */
+struct SliderComponent {
+    float minValue;
+    float maxValue;
+    float currentValue;
+    sf::RectangleShape bar;
+    sf::CircleShape handle;
+    std::function<void(float)> onChange;
+};
+
 } // namespace core::ge
 
 #endif /* !GAMEENGINECOMPONENTS_HPP_ */

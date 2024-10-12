@@ -85,6 +85,14 @@ public:
         }
     }
 
+    /**
+     * @brief Gets the current volume of the playing music.
+     * @return The current volume level (0.0f to 100.0f).
+     */
+    float getVolume() {
+        return _musicMap[_currentState]->getVolume();
+    }
+
 private:
     std::unordered_map<std::string, std::unique_ptr<sf::Music>> _musicMap; ///< A map of game state identifiers to music tracks.
     std::string _currentState; ///< The identifier of the currently playing music state.
