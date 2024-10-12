@@ -9,7 +9,6 @@
 #include <iostream>
 
 namespace core {
-
 /**
  * @class GameEngine
  * @brief Manages the core game loop, systems, and rendering operations.
@@ -306,7 +305,6 @@ protected:
                 if (slider.onChange)
                     slider.onChange(slider.currentValue);
             });
-    }
     };
 }
 
