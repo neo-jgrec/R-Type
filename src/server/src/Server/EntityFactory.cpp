@@ -153,12 +153,13 @@ core::ecs::Entity EntityFactory::createPlayer(
         if (!playerEntity.has_value())
             continue;
         const auto &playerComponent = registry.get_component<Player>(playerEntity.value());
-        networkingService.sendRequest(
-            playerComponent->endpoint,
-            PlayerConnect,
-            {id});
-        if (playerEntity.value() == player)
-            continue;
+
+        if (playerEntity.value() != player) {
+            networkingService.sendRequest(
+                playerComponent->endpoint,
+                PlayerConnect,
+                {id});
+        }
         // Send the existing players to the new player
         networkingService.sendRequest(
             endpoint,
