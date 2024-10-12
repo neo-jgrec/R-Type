@@ -54,8 +54,6 @@ void Game::init()
     setHandlers();
     networkingService.run();
 
-    playerConnectionHeader = networkingService.sendRequest("127.0.0.1", 1111, PlayerConnect, {});
-
     core::ecs::Entity EventEntity = _gameEngine.registry.spawn_entity();
     _gameEngine.registry.add_component(EventEntity, EventComponent{});
     eventSystem(_gameEngine.registry);
@@ -90,7 +88,8 @@ void Game::initMainMenu()
         "Start Game",
         [this]() {
             _gameEngine.currentScene = static_cast<int>(GameState::Playing);
-            networkingService.sendRequest("127.0.0.1", 1111, PlayerConnect, {});
+            playerConnectionHeader = networkingService.sendRequest("127.0.0.1", 1111, PlayerConnect, {});
+            networkingService.sendRequest("127.0.0.1", 1111, GameStart, {});
         },
         static_cast<int>(GameState::MainMenu)
     );

@@ -154,5 +154,5 @@ private:
     void eventSystem(core::ecs::Registry& registry);
 
     NetworkingService &networkingService = NetworkingService::getInstance(); ///< Singleton instance of the networking service.
-    GDTPHeader playerConnectionHeader; ///< Header for player connection requests.
+    GDTPHeader playerConnectionHeader{}; ///< Header for player connection requests.
 };
