@@ -7,6 +7,7 @@ enum CollisionMask {
     ENEMY = 0b00100,
     TILE = 0b01000,
     PLAYER_PROJECTILE = 0b10000,
+    PLAYER_MISSILE = 0b100000
 };
 
 #endif //COLLISIONMASK_HPP

@@ -49,7 +49,7 @@ void Game::init()
     enemyMovementSystem(_gameEngine.registry);
 
     _viewEntity = _gameEngine.registry.spawn_entity();
-    _gameEngine.registry.add_component(_viewEntity, ViewComponent{});
+    _gameEngine.registry.add_component(_viewEntity, ViewComponent{_gameEngine.window.getDefaultView()});
     _gameEngine.registry.add_component(_viewEntity, core::ge::SceneComponent{static_cast<int>(GameState::Playing)});
     moveWindowViewSystem(_gameEngine.registry);
 }
@@ -178,8 +178,8 @@ void Game::processEvents() {
         }
 
         if (event.type == sf::Event::Resized) {
-            gameScale.x = static_cast<float>(_gameEngine.window.getSize().x) / 800.0f;
-            gameScale.y = static_cast<float>(_gameEngine.window.getSize().y) / 600.0f;
+            gameScale.x = static_cast<float>(_gameEngine.window.getSize().x) / 1920.0f;
+            gameScale.y = static_cast<float>(_gameEngine.window.getSize().y) / 1080.0f;
             auto entities = _gameEngine.registry.get_entities<core::ge::TransformComponent>();
             for (auto entity : entities) {
                 auto &transform = _gameEngine.registry.get_components<core::ge::DrawableComponent>()[entity];
