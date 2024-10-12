@@ -40,7 +40,6 @@ public:
         registry.register_component<core::ge::ClickableComponent>();
         registry.register_component<core::ge::ColorComponent>();
         registry.register_component<core::ge::CollisionComponent>();
-        // registry.register_component<core::ge::ButtonComponent>();
         registry.register_component<core::ge::TextComponent>();
         registry.register_component<core::ge::SceneComponent>();
         registry.register_component<core::ge::TextInputComponent>();

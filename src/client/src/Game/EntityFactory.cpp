@@ -274,7 +274,6 @@ core::ecs::Entity EntityFactory::createButton(core::ecs::Registry& registry, con
     registry.add_component(button, core::ge::DrawableComponent{shape});
     registry.add_component(button, core::ge::TextComponent{text, font});
     registry.add_component(button, core::ge::ClickableComponent{false, false, onClick});
-    // registry.add_component(button, core::ge::ButtonComponent{shape, onClick, false, false});
     registry.add_component(button, core::ge::SceneComponent{scene});
     return button;
 }

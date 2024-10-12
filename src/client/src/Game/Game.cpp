@@ -137,7 +137,7 @@ void Game::update()
     // Collision detection
     _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent, core::ge::SceneComponent>();
 
-    // Button
+    // Clickable
     _gameEngine.registry.run_system<core::ge::ClickableComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent, core::ge::TransformComponent>();
 
     // TextInput
