@@ -99,6 +99,16 @@ Server::Server()
                 payload);
         }
     });
+    _networkingService.addEvent(PlayerDisconnect, [&](const GDTPHeader &, const std::vector<uint8_t> &payload, const asio::ip::udp::endpoint &)
+    {
+        const uint8_t id = payload[0];
+        if (id >= 4 || !_players[id].has_value())
+            return;
+
+        std::cout << "Player " << id << " disconnected" << std::endl;
+        _gameEngine.registry.kill_entity(_players[id].value());
+        _players[id].reset();
+    });
 }
 
 void Server::update()
@@ -106,7 +116,7 @@ void Server::update()
     std::cout << "↻ Updating server" << std::endl;
     _gameEngine.registry.run_system<Network, World>();
     _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent>();
-    _gameEngine.registry.run_system<Network, Player>();
+    // _gameEngine.registry.run_system<Network, Player>();
     _gameEngine.registry.run_system<Network, Enemy>();
     _gameEngine.registry.run_system<Projectile>();
 }
