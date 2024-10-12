@@ -12,11 +12,6 @@ struct World {
     uint32_t scroll = 0;
 
     std::pair<uint32_t, uint32_t> size;
-    std::vector<std::vector<uint8_t>> tiles;
-};
-
-struct ConnectionHub {
-    std::array<std::optional<core::ecs::Entity>, 4> &players;
 };
 
 struct Player {
@@ -30,6 +25,10 @@ struct Enemy {
     uint8_t id;
 };
 
-struct Projectile {};
+struct Projectile {
+    uint8_t id;
+};
+
+struct Tile {};
 
 #endif //COMPONENTS_HPP

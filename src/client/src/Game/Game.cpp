@@ -17,9 +17,9 @@ void Game::init()
     _gameEngine.window.setFramerateLimit(60);
     _gameEngine.window.setKeyRepeatEnabled(true);
 
-    _musicManager.loadMusic("level1", "assets/music/level1.ogg");
+    _gameEngine.musicManager.loadMusic("level1", "assets/music/level1.ogg");
     // TODO: load every level music
-    _musicManager.playMusic("level1");
+    _gameEngine.musicManager.playMusic("level1");
 
     // TODO: implement a way to load maps at runtimes dynamically
     parseMap(_gameEngine.registry, "./JY_map.json", _gameEngine.window);
@@ -34,15 +34,16 @@ void Game::init()
     _gameEngine.registry.register_component<Missile>();
     _gameEngine.registry.register_component<ShootCounterComponent>();
     _gameEngine.registry.register_component<DamageComponent>();
+    _gameEngine.registry.register_component<PlayerColorComponent>();
     _gameEngine.registry.register_component<ViewComponent>();
 
     int player1Color = assignColor();
     if (player1Color >= 0) {
-        _playerEntity = EntityFactory::createPlayer(_gameEngine.registry, sf::Vector2f(100.0f, 400.0f), player1Color, gameScale);
+        _playerEntity = EntityFactory::createPlayer(_gameEngine.registry, sf::Vector2f(100.0f, 400.0f), player1Color, *this, gameScale);
     }
     int player2Color = assignColor();
     if (player2Color >= 0) {
-        _playerEntity = EntityFactory::createPlayer(_gameEngine.registry, sf::Vector2f(100.0f, 100.0f), player2Color, gameScale);
+        _playerEntity = EntityFactory::createPlayer(_gameEngine.registry, sf::Vector2f(100.0f, 100.0f), player2Color, *this, gameScale);
     }
     _enemyEntity = EntityFactory::createEnemy(_gameEngine.registry, sf::Vector2f(700.0f, 100.0f), gameScale);
 
@@ -176,10 +177,6 @@ void Game::processEvents() {
             }
         }
     }
-}
-
-void Game::setMusicVolume(float volume) {
-    _musicManager.setVolume(volume);
 }
 
 int Game::assignColor() {
