@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>EventPool</title>
+    <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,700,300italic,400italic,700italic|Source+Code+Pro:300,400,700' rel='stylesheet' type='text/css'>
+<link rel="stylesheet" href="../assets/css/bootstrap.css">
+<link rel="stylesheet" href="../assets/css/jquery.bonsai.css">
+<link rel="stylesheet" href="../assets/css/main.css">
+<link rel="stylesheet" href="../assets/icon-font/icons.css">
+<script type="text/javascript" src="../assets/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript" src="../assets/js/bootstrap.js"></script>
+<script type="text/javascript" src="../assets/js/jquery.bonsai.js"></script>
+<script type="text/javascript" src="../assets/js/imageMapResizer.min.js"></script>
+
+  </head>
+  <body>
+    <div>
+
+      <!-- Name Title -->
+
+      <h1>EventPool</h1>
+
+      <!-- Type and Stereotype -->
+
+      <section style="margin-top: .5em;">
+        <span class="alert alert-info">
+          <span class="node-icon staruml-icon icon-UMLClass"></span>
+          UMLClass
+        </span>
+        
+      </section>
+
+      <!-- Path -->
+
+      <section style="margin-top: 10px">
+        
+        
+        
+          
+          <span class="label label-info"><a href='cf9c8b720f3815adeccaf3ef6e48c6c4.html'><span class='node-icon staruml-icon icon-Project'></span>Untitled</a></span>
+        
+          <span>::</span>
+          <span class="label label-info"><a href='594af663de577680f35b13183109d675.html'><span class='node-icon staruml-icon icon-UMLModel'></span>Model</a></span>
+        
+          <span>::</span>
+          <span class="label label-info"><a href='e1bc1d584974bb07677c5287b10311b3.html'><span class='node-icon staruml-icon icon-UMLPackage'></span>Entity</a></span>
+        
+          <span>::</span>
+          <span class="label label-info"><a href='44edd6b740f238f11dae8fa7df671df9.html'><span class='node-icon staruml-icon icon-UMLClass'></span>EventPool</a></span>
+        
+      </section>
+
+      <!-- Diagram -->
+
+      
+
+      <!-- Description -->
+
+      
+      <section>
+        <h3>Description</h3>
+        <div>
+          
+            <span class="label label-info">none</span>
+          
+        </div>
+      </section>
+      
+
+      <!-- Specification -->
+
+      
+
+      <!-- Directed Relationship -->
+
+      
+
+      <!-- Undirected Relationship -->
+
+      
+
+      <!-- Classifier -->
+
+      
+        
+        
+
+
+        
+        
+
+
+        
+        
+
+
+        
+        
+
+
+        
+        
+
+      
+
+      <!-- Interface -->
+
+      
+
+      <!-- Component -->
+
+      
+
+      <!-- Node -->
+
+      
+
+      <!-- Actor -->
+
+      
+
+      <!-- Use Case -->
+
+      
+
+      <!-- Template Parameters -->
+
+      
+
+      <!-- Literals -->
+
+      
+
+      <!-- Attributes -->
+
+      
+      <section>
+        <h3>Attributes</h3>
+        <table class="table table-striped table-bordered">
+          <tr>
+            <th>Visibility</th>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+          
+          <tr>
+            <td>private</td>
+            <td><a href="1722f63995422eee0d03fab71b80b23b.html">eventQueue</a></td>
+            <td><a href='ddf751fc6f52ae9204329c1a1e7bcaec.html'><span class='node-icon staruml-icon icon-UMLDataType'></span>std.deque</a> </td>
+            <td></td>
+          </tr>
+          
+          <tr>
+            <td>private</td>
+            <td><a href="a8e82fb6ed81f5405326ce459e528448.html">eventMutex</a></td>
+            <td><a href='9a0a2eed532b12695aa7d5d0d1195510.html'><span class='node-icon staruml-icon icon-UMLDataType'></span>std.mutex</a> </td>
+            <td></td>
+          </tr>
+          
+          <tr>
+            <td>private</td>
+            <td><a href="3deef08906c3c286e0675864f78f2bf7.html">condition</a></td>
+            <td><a href='0386af14e07c0145a1a5676b9cc59258.html'><span class='node-icon staruml-icon icon-UMLDataType'></span>std.condition_variable</a> </td>
+            <td></td>
+          </tr>
+          
+          <tr>
+            <td>private</td>
+            <td><a href="fb83a648e93fe26dbe21db267ee2a4c3.html">_handler</a></td>
+            <td><a href='43c0a07358386b9ae7179e863bd01848.html'><span class='node-icon staruml-icon icon-UMLDataType'></span>std.optional</a> </td>
+            <td></td>
+          </tr>
+          
+        </table>
+      </section>
+      
+
+      <!-- Operations -->
+
+      
+      <section>
+        <h3>Operations</h3>
+        <table class="table table-striped table-bordered">
+          <tr>
+            <th>Visibility</th>
+            <th>Name</th>
+            <th>Description</th>
+          </tr>
+          
+          <tr>
+            <td>public</td>
+            <td><a href="c55c7e5ad26556f9f61d51792aa63bf9.html">EventPool(): null</a></td>
+            <td></td>
+          </tr>
+          
+          <tr>
+            <td>public</td>
+            <td><a href="4776926b0a028194b84558da46d5f014.html">pushEvent(inout event: const Event): void</a></td>
+            <td></td>
+          </tr>
+          
+          <tr>
+            <td>public</td>
+            <td><a href="253ec8294ecc98bf9b4a43913794365f.html">popEvent(): std.optional</a></td>
+            <td></td>
+          </tr>
+          
+          <tr>
+            <td>public</td>
+            <td><a href="555d995aca0172b2cd9d528a8c7f7fec.html">isEmpty(): bool</a></td>
+            <td></td>
+          </tr>
+          
+          <tr>
+            <td>public</td>
+            <td><a href="c058ce22fc46aa95c5d1229a80f7bc45.html">setNewHandler(inout newHandler: const std.function): void</a></td>
+            <td></td>
+          </tr>
+          
+          <tr>
+            <td>public</td>
+            <td><a href="8d03877b65ff165b6b23a0e6e02bb2eb.html">getNextEvent(): Event</a></td>
+            <td></td>
+          </tr>
+          
+          <tr>
+            <td>public</td>
+            <td><a href="bf13b5a3b0c73caaa677d1b2b458add1.html">getAllEvents(): std.vector</a></td>
+            <td></td>
+          </tr>
+          
+          <tr>
+            <td>public</td>
+            <td><a href="ec1dc20bc650d8b85682a1b76f1612be.html">deleteEvent(inout event: Event): void</a></td>
+            <td></td>
+          </tr>
+          
+          <tr>
+            <td>public</td>
+            <td><a href="43d610782468fd1ec508cf9282995e1d.html">getInstance(): EventPool</a></td>
+            <td></td>
+          </tr>
+          
+          <tr>
+            <td>public</td>
+            <td><a href="7b5df57953e10cd933949ad05fed31fa.html">handler(inout header: const GDTPHeader, inout payload: const std.vector, inout client_endpoint: const asio.ip.udp.endpoint): void</a></td>
+            <td></td>
+          </tr>
+          
+          <tr>
+            <td>public</td>
+            <td><a href="59da81c63085e8b2acd0d109fc7c5b5c.html">setNewHandler(inout newHandler: const std.function): void</a></td>
+            <td></td>
+          </tr>
+          
+          <tr>
+            <td>public</td>
+            <td><a href="d6e99bd74901a4a7e6ccf7f79a667244.html">handler(inout header: const GDTPHeader, inout payload: const std.vector, inout client_endpoint: const asio.ip.udp.endpoint): void</a></td>
+            <td></td>
+          </tr>
+          
+        </table>
+      </section>
+      
+
+      <!-- Receptions -->
+
+      
+
+      <!-- Extension Points -->
+
+      
+
+      <!-- Parameters -->
+
+      
+
+      <!-- Diagrams -->
+
+      
+      
+
+      <!-- Behavior -->
+
+      
+
+      <!-- Action -->
+
+      
+
+      <!-- Interaction -->
+
+      
+
+      <!-- CombinedFragment -->
+
+      
+
+      <!-- Activity -->
+
+      
+
+      <!-- State Machine -->
+
+      
+
+      <!-- State Machine -->
+
+      
+
+      <!-- State -->
+
+      
+
+      <!-- Vertex -->
+
+      
+
+      <!-- Transition -->
+
+      
+
+      <!-- Data Model (ERD) -->
+
+      
+
+      <!-- Columns (ERD) -->
+
+      
+
+      <!-- Related Entities (ERD) -->
+
+      
+
+      <!-- Data Flows (DFD) -->
+
+      
+
+      <!-- Flows (Flowchart) -->
+
+      
+
+      <!-- Properties -->
+
+      <section>
+        <h3>Properties</h3>
+        
+        <table class="table table-striped table-bordered">
+    <tr>
+        <th width="50%">Name</th>
+        <th width="50%">Value</th>
+    </tr>
+    
+    
+    
+    
+    
+    
+    
+    <tr>
+        <td>name</td>
+        <td>EventPool</td>
+    </tr>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <tr>
+        <td>stereotype</td>
+        <td><span class='label label-info'>null</span></td>
+    </tr>
+    
+    
+    
+    
+    
+    <tr>
+        <td>visibility</td>
+        <td>public</td>
+    </tr>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <tr>
+        <td>isAbstract</td>
+        <td><span class='label label-info'>false</span></td>
+    </tr>
+    
+    
+    
+    
+    
+    <tr>
+        <td>isFinalSpecialization</td>
+        <td><span class='label label-info'>false</span></td>
+    </tr>
+    
+    
+    
+    
+    
+    <tr>
+        <td>isLeaf</td>
+        <td><span class='label label-info'>false</span></td>
+    </tr>
+    
+    
+    
+    
+    
+    <tr>
+        <td>isActive</td>
+        <td><span class='label label-info'>false</span></td>
+    </tr>
+    
+    
+    
+</table>                
+
+      </section>
+
+      <!-- Tags -->
+
+      
+
+      <!-- Constraints, Dependencies, Dependants -->
+
+      
+        
+        
+
+
+        
+        
+<section class="element-list">
+    <h3>Dependencies</h3>
+    <ul class="nav nav-list">
+        
+        <li><a href='6183c0dcb8518cb7cbeea294c0998f97.html'><span class='node-icon staruml-icon icon-UMLClass'></span>Event</a></li>
+        
+    </ul>
+</section>
+
+
+
+        
+        
+
+      
+
+      <!-- Relationships -->
+
+      
+      
+<section class="element-list">
+    <h3>Relationships</h3>
+    <ul class="nav nav-list">
+        
+        <li><a href='7238c96d9955fcdb11fb8bbce68b7a2b.html'><span class='node-icon staruml-icon icon-UMLAssociation'></span>(EventPool—Event)</a></li>
+        
+        <li><a href='2848e4439305efa2d34e191cab1353cb.html'><span class='node-icon staruml-icon icon-UMLDependency'></span>(EventPool→Event)</a></li>
+        
+    </ul>
+</section>
+
+
+
+      <!-- Owned Elements -->
+
+      
+      
+<section class="element-list">
+    <h3>Owned Elements</h3>
+    <ul class="nav nav-list">
+        
+        <li><a href='9c4b792c896f3a6ba60077ef11b6d6a9.html'><span class='node-icon staruml-icon icon-UMLClass'></span>UnknownEvent</a></li>
+        
+    </ul>
+</section>
+
+
+
+      <!-- Image Map Resizer (https://github.com/davidjbradshaw/image-map-resizer) -->
+      <script>
+      imageMapResize();
+      </script>
+    </div>
+  </body>
+</html>
