@@ -17,12 +17,13 @@ Server::Server()
     Systems::enemySystem(_gameEngine.registry, _players);
     Systems::projectileSystem(_gameEngine.registry);
 
-    _networkingService.addEvent(PlayerConnect, [&](const GDTPHeader &, const std::vector<uint8_t> &, const asio::ip::udp::endpoint &endpoint) {
+    _networkingService.addEvent(PlayerConnect, [&](const GDTPHeader &header, const std::vector<uint8_t> &, const asio::ip::udp::endpoint &endpoint) {
         std::cout << "New connection from " << endpoint << std::endl;
         for (uint8_t i = 0; i < 4; i++) {
             if (_players[i].has_value())
                 continue;
             _players[i].emplace(EntityFactory::createPlayer(_gameEngine.registry, _networkingService, _players, endpoint, i));
+            _networkingService.sendRequestResponse(endpoint, header, {i});
             return;
         }
     });
@@ -99,6 +100,16 @@ Server::Server()
                 payload);
         }
     });
+    _networkingService.addEvent(PlayerDisconnect, [&](const GDTPHeader &, const std::vector<uint8_t> &payload, const asio::ip::udp::endpoint &)
+    {
+        const uint8_t id = payload[0];
+        if (id >= 4 || !_players[id].has_value())
+            return;
+
+        std::cout << "Player " << id << " disconnected" << std::endl;
+        _gameEngine.registry.kill_entity(_players[id].value());
+        _players[id].reset();
+    });
 }
 
 void Server::update()
@@ -106,7 +117,7 @@ void Server::update()
     std::cout << "↻ Updating server" << std::endl;
     _gameEngine.registry.run_system<Network, World>();
     _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent>();
-    _gameEngine.registry.run_system<Network, Player>();
+    // _gameEngine.registry.run_system<Network, Player>();
     _gameEngine.registry.run_system<Network, Enemy>();
     _gameEngine.registry.run_system<Projectile>();
 }

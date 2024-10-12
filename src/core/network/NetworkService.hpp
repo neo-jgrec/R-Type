@@ -168,21 +168,17 @@ public:
      *
      * @see sendPacket() for how the constructed packet is sent.
      */
-void sendRequest(
-    const std::string& recipient,
-    const int port,
-    uint8_t messageType,
-    const std::vector<uint8_t>& payload = {}
-) {
-
+    GDTPHeader sendRequest(
+        const std::string& recipient,
+        const int port,
+        const uint8_t messageType,
+        const std::vector<uint8_t>& payload = {}
+    ) {
         GDTPHeader header{};
         header.version = 0x01;
-        header.messageType = static_cast<uint8_t>(messageType);
-
+        header.messageType = messageType;
         header.packetId = std::chrono::system_clock::now().time_since_epoch().count();
-
         header.payloadSize = static_cast<uint16_t>(payload.size());
-
         header.sequenceNumber = 1;
         header.totalPackets = 1;
 
@@ -191,6 +187,7 @@ void sendRequest(
         headerBuffer.insert(headerBuffer.end(), payload.begin(), payload.end());
 
         sendPacket(headerBuffer, recipient, port);
+        return header;
     }
 
 
@@ -233,17 +230,14 @@ void sendRequest(
     * // `responsePayload` as the data.
     * @endcode
     */
-    void sendRequestResponse(
-    const std::string& recipient,
-    const int port,
-    GDTPHeader headerOrigin,
-    const std::vector<uint8_t>& payload = {}
-) {
-
+    GDTPHeader sendRequestResponse(
+        const std::string& recipient,
+        const int port,
+        const GDTPHeader& headerOrigin,
+        const std::vector<uint8_t>& payload = {}
+    ) {
         GDTPHeader header = headerOrigin;
-
         header.payloadSize = static_cast<uint16_t>(payload.size());
-
         header.sequenceNumber = 1;
         header.totalPackets = 1;
 
@@ -252,6 +246,54 @@ void sendRequest(
         headerBuffer.insert(headerBuffer.end(), payload.begin(), payload.end());
 
         sendPacket(headerBuffer, recipient, port);
+        return header;
+    }
+
+
+    /**
+    * @brief Sends a response to a specific recipient using the given header as a basis.
+    *
+    * This method is designed to send a response message to a specified recipient by reusing
+    * the `GDTPHeader` from an initial request. The payload size is automatically adjusted
+    * based on the provided payload, and the header's sequence number and total packets
+    * are set to default values (1). The method then composes the header and payload
+    * into a complete message and sends it using the `sendPacket` method.
+    *
+    * @param client_endpoint The UDP endpoint of the client, which includes the IP address and port.
+    * @param headerOrigin The original `GDTPHeader` from the request, which serves as the basis
+    *                     for the response header.
+    * @param payload The payload data to be sent with the response. Defaults to an empty vector.
+    *
+    * @details
+    * - The method starts by creating a copy of `headerOrigin` to modify.
+    * - The `payloadSize` of the header is updated to match the size of the provided `payload`.
+    * - `sequenceNumber` and `totalPackets` are set to `1`, indicating that the message is sent
+    *   in a single packet.
+    * - The method then converts the header into a byte buffer using `toBuffer()` and appends
+    *   the `payload` to this buffer.
+    * - Finally, the combined header and payload are sent to the specified recipient using the
+    *   `sendPacket` method.
+    *
+    * @note The header's version and message type are preserved from the `headerOrigin`, allowing
+    *       the response to maintain consistency with the original request.
+    *
+    * @throws std::runtime_error if the `sendPacket` method encounters an error during transmission.
+    *
+    * @code
+    * GDTPHeader originalHeader = ...; // Received or created earlier
+    * std::vector<uint8_t> responsePayload = { ... }; // Data to include in the response
+    *
+    * sendRequestResponse("192.168.1.100", 8080, originalHeader, responsePayload);
+    * // This sends a response using the header information from `originalHeader` and includes
+    * // `responsePayload` as the data.
+    * @endcode
+    */
+    GDTPHeader sendRequestResponse(
+        const asio::ip::udp::endpoint& client_endpoint,
+        const GDTPHeader& headerOrigin,
+        const std::vector<uint8_t>& payload = {}
+    ) {
+        return sendRequestResponse(client_endpoint.address().to_string(), client_endpoint.port(), headerOrigin, payload);
     }
 
     /**
@@ -275,12 +317,12 @@ void sendRequest(
      * sendRequest(clientEndpoint, messageType, payload);
      * @endcode
      */
-    void sendRequest(
+    GDTPHeader sendRequest(
         const asio::ip::udp::endpoint& client_endpoint,
         const uint8_t messageType,
         const std::vector<uint8_t>& payloads = {}
     ) {
-        sendRequest(client_endpoint.address().to_string(), client_endpoint.port(), messageType, payloads);
+        return sendRequest(client_endpoint.address().to_string(), client_endpoint.port(), messageType, payloads);
     }
 
 
