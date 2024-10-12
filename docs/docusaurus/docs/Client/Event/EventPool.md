@@ -1,7 +1,8 @@
-
+---
+sidebar_position: 2
 ---
 
-# EventPool Documentation
+# EventPool
 
 ## Overview
 
