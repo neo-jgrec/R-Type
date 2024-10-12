@@ -16,7 +16,7 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, con
 {
     core::ecs::Entity player = registry.spawn_entity();
 
-    registry.add_component(player, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 17.0f), gameScale, 0.0f});
+    registry.add_component(player, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 17.0f), gameScale * 1.3f, 0.0f});
     registry.add_component(player, core::ge::CollisionComponent{PLAYER, {sf::FloatRect(0.0f, 0.0f, 33.0f, 17.0f)}, {
         { ENEMY, [&](const core::ecs::Entity self, [[maybe_unused]] const core::ecs::Entity other) {
                 registry.kill_entity(self);
@@ -80,9 +80,9 @@ core::ecs::Entity EntityFactory::createPlayerProjectile(core::ecs::Registry& reg
     startPosition.x += playerWidth;
     startPosition.y += (playerHeight / 2.0f) - (projectileSize.y / 2.0f);
 
-    registry.add_component(projectile, core::ge::TransformComponent{startPosition, projectileSize, gameScale, 0.0f});
+    registry.add_component(projectile, core::ge::TransformComponent{startPosition, projectileSize, gameScale * 3.0f, 0.0f});
     registry.add_component(projectile, core::ge::CollisionComponent{PLAYER_PROJECTILE, {sf::FloatRect(0.0f, 0.0f, 18.0f, 5.0f)}});
-    registry.add_component(projectile, VelocityComponent{10.0f, 10.0f});
+    registry.add_component(projectile, VelocityComponent{20.0f, 20.0f});
     registry.add_component(projectile, DamageComponent{10});
     registry.add_component(projectile, Projectile{});
 
@@ -120,7 +120,7 @@ core::ecs::Entity EntityFactory::createPlayerMissile(core::ecs::Registry &regist
     core::ecs::Entity missile = registry.spawn_entity();
 
     sf::Vector2f missileSize(34.5f, 12.0f);
-    sf::Vector2f scale = gameScale;
+    sf::Vector2f scale = gameScale * 4.0f;
     sf::Vector2f startPosition = playerTransform.position;
     float playerWidth = playerTransform.size.x * playerTransform.scale.x;
     float playerHeight = playerTransform.size.y * playerTransform.scale.y;
@@ -129,10 +129,11 @@ core::ecs::Entity EntityFactory::createPlayerMissile(core::ecs::Registry &regist
 
 
     registry.add_component(missile, core::ge::TransformComponent{startPosition, missileSize, scale, 0.0f});
-    registry.add_component(missile, core::ge::CollisionComponent{PLAYER_PROJECTILE, {sf::FloatRect(0.0f, 0.0f, 34.5f, 12.0f)}});
+    registry.add_component(missile, core::ge::CollisionComponent{PLAYER_MISSILE, {sf::FloatRect(0.0f, 0.0f, 34.5f, 12.0f)}});
     registry.add_component(missile, VelocityComponent{10.0f, 10.0f});
     registry.add_component(missile, DamageComponent{20});
     registry.add_component(missile, Projectile{});
+    registry.add_component(missile, HealthComponent{50});
 
     auto buffer = std::make_shared<sf::SoundBuffer>();
     std::string soundPath = "assets/missile_sound.ogg";
@@ -192,7 +193,19 @@ core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry& registry, cons
                 registry.kill_entity(self);
             }
             registry.kill_entity(other);
-        }}}});
+        }},
+        {PLAYER_MISSILE, [&](const core::ecs::Entity self, [[maybe_unused]] const core::ecs::Entity other) {
+            const auto &damageDone = registry.get_components<DamageComponent>() [other];
+            const auto &health = registry.get_components<HealthComponent>() [self];
+            const auto &healthOther = registry.get_components<HealthComponent>() [other];
+            health->get()->health -= damageDone->get()->damage;
+            healthOther->get()->health -= damageDone->get()->damage;
+            if (health->get()->health <= 0)
+                registry.kill_entity(self);
+            if (healthOther->get()->health <= 0)
+                registry.kill_entity(other);
+        }}
+    }});
     registry.add_component(enemy, VelocityComponent{10.0f, 10.0f});
     registry.add_component(enemy, HealthComponent{10});
     registry.add_component(enemy, DamageComponent{10});
@@ -262,4 +275,72 @@ core::ecs::Entity EntityFactory::createButton(core::ecs::Registry& registry, con
     registry.add_component(button, core::ge::ButtonComponent{shape, onClick, false, false});
     registry.add_component(button, core::ge::SceneComponent{scene});
     return button;
+}
+
+core::ecs::Entity EntityFactory::createTextInput(core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& placeholder, int scene)
+{
+    core::ecs::Entity textInput = registry.spawn_entity();
+
+    sf::RectangleShape shape(size);
+    shape.setPosition(position);
+    shape.setFillColor(sf::Color::White);
+    shape.setOutlineThickness(2);
+    shape.setOutlineColor(sf::Color::Black);
+
+    sf::Font font;
+    if (!font.loadFromFile("assets/Fonts/Arial.ttf")) {
+        std::cerr << "Failed to load font: " << "assets/Fonts/Arial.ttf" << std::endl;
+        return textInput;
+    }
+
+    sf::Text text;
+    text.setFont(font);
+    text.setString(placeholder);
+    text.setCharacterSize(24);
+    text.setFillColor(sf::Color::Black);
+
+    sf::FloatRect textBounds = text.getLocalBounds();
+    text.setOrigin(textBounds.left + textBounds.width / 2.0f, textBounds.top + textBounds.height / 2.0f);
+    text.setPosition(position.x + size.x / 2.0f, position.y + size.y / 2.0f);
+
+    registry.add_component(textInput, core::ge::DrawableComponent{shape});
+    registry.add_component(textInput, core::ge::TextComponent{text, font});
+    registry.add_component(textInput, core::ge::TextInputComponent{placeholder, placeholder, false, 0, 100});
+    registry.add_component(textInput, core::ge::SceneComponent{scene});
+
+    return textInput;
+}
+
+core::ecs::Entity EntityFactory::createSlider(core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void(float)>& onChange, int scene, float currentValue)
+{
+    core::ecs::Entity slider = registry.spawn_entity();
+
+    sf::RectangleShape bar(size);
+    bar.setPosition(position);
+    bar.setFillColor(sf::Color::White);
+    bar.setOutlineThickness(2);
+    bar.setOutlineColor(sf::Color::Black);
+
+    sf::CircleShape handle(15);
+    handle.setPosition(position.x + size.x, position.y + size.y / 2);
+    handle.setFillColor(sf::Color::Red);
+
+    sf::Font font;
+    if (!font.loadFromFile("assets/Fonts/Arial.ttf")) {
+        std::cerr << "Failed to load font: " << "assets/Fonts/Arial.ttf" << std::endl;
+        return slider;
+    }
+
+    sf::Text text;
+    text.setFont(font);
+    text.setString(label);
+    text.setCharacterSize(24);
+    text.setFillColor(sf::Color::White);
+    text.setPosition(position.x, position.y - 40.0f);
+
+    registry.add_component(slider, core::ge::SliderComponent{0, 100, currentValue, bar, handle, onChange});
+    registry.add_component(slider, core::ge::SceneComponent{scene});
+    registry.add_component(slider, core::ge::TextComponent{text, font});
+
+    return slider;
 }

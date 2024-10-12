@@ -95,6 +95,11 @@ private:
      */
     int assignColor();
 
+    /**
+     * @brief Initializes the main menu scene.
+     */
+    void initMainMenu();
+  
     // TODO: remove these when networking is implemented
     core::ecs::Entity _playerEntity = core::ecs::Entity();
     core::ecs::Entity _enemyEntity = core::ecs::Entity();

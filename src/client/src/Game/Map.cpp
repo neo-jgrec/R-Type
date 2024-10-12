@@ -3,6 +3,7 @@
 #include <nlohmann/json.hpp>
 
 #include "Game.hpp"
+#include "../../../game/Components.hpp"
 #include "../../../game/CollisionMask.hpp"
 
 std::shared_ptr<sf::Texture> loadTextureOrRed(const std::string& filePath)
@@ -122,6 +123,14 @@ void Game::parseMap(core::ecs::Registry& registry, const std::string& mapFilePat
                             registry.kill_entity(self);
                         }
                         registry.kill_entity(other);
+                    }},
+                    {PLAYER_MISSILE, [&](const core::ecs::Entity self, [[maybe_unused]] const core::ecs::Entity other) {
+                        const auto &health = registry.get_components<HealthComponent>() [other];
+                        health->get()->health -= 10;
+                        if (isDestructible)
+                            registry.kill_entity(self);
+                        if (health->get()->health <= 0)
+                            registry.kill_entity(other);
                     }},
                     {PLAYER, [&](const core::ecs::Entity, const core::ecs::Entity other) {
                         if (isDestructible) {
