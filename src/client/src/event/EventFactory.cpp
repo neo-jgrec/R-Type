@@ -43,12 +43,18 @@ Event EventFactory::createEvent(const GDTPHeader& header, const std::vector<uint
 
 Event EventFactory::handleMapScroll([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload)
 {
+    if (payload.size() != 4) {
+        throw std::runtime_error("Invalid payload size for MapScroll event");
+    }
     std::uint32_t mapScroll = (payload[0] << 24) | (payload[1] << 16) | (payload[2] << 8) | payload[3];
     return {RequestType::MapScroll, header, static_cast<int>(mapScroll)}; // TODO: change the var in the constructor to allow uint32_t
 }
 
 Event EventFactory::handleTileDestroy([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload)
 {
+    if (payload.size() != 8) {
+        throw std::runtime_error("Invalid payload size for TileDestroy event");
+    }
     std::uint32_t x = (payload[0] << 24) | (payload[1] << 16) | (payload[2] << 8) | payload[3];
     std::uint32_t y = (payload[4] << 24) | (payload[5] << 16) | (payload[6] << 8) | payload[7];
     return {RequestType::TileDestroy, header, sf::Vector2f{static_cast<float>(x), static_cast<float>(y)}};
@@ -56,12 +62,18 @@ Event EventFactory::handleTileDestroy([[maybe_unused]] const GDTPHeader& header,
 
 Event EventFactory::handlePlayerShoot([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload)
 {
+    if (payload.size() != 1) {
+        throw std::runtime_error("Invalid payload size for PlayerShoot event");
+    }
     std::uint8_t projectileId = payload[0];
     return {RequestType::PlayerShoot, header, projectileId};
 }
 
 Event EventFactory::handlePlayerMove([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload)
 {
+    if (payload.size() != 9) {
+        throw std::runtime_error("Invalid payload size for PlayerMove event");
+    }
     std::uint8_t playerId = payload[0];
     std::uint32_t x = (payload[1] << 24) | (payload[2] << 16) | (payload[3] << 8) | payload[4];
     std::uint32_t y = (payload[5] << 24) | (payload[6] << 16) | (payload[7] << 8) | payload[8];
@@ -70,6 +82,9 @@ Event EventFactory::handlePlayerMove([[maybe_unused]] const GDTPHeader& header, 
 
 Event EventFactory::handlePlayerCollide([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload)
 {
+    if (payload.size() != 9) {
+        throw std::runtime_error("Invalid payload size for PlayerCollide event");
+    }
     std::uint8_t playerId = payload[0];
     std::uint32_t x = (payload[1] << 24) | (payload[2] << 16) | (payload[3] << 8) | payload[4];
     std::uint32_t y = (payload[5] << 24) | (payload[6] << 16) | (payload[7] << 8) | payload[8];
@@ -78,18 +93,27 @@ Event EventFactory::handlePlayerCollide([[maybe_unused]] const GDTPHeader& heade
 
 Event EventFactory::handlePlayerHit([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload)
 {
+    if (payload.size() != 1) {
+        throw std::runtime_error("Invalid payload size for PlayerHit event");
+    }
     std::uint8_t playerId = payload[0];
     return {RequestType::PlayerHit, header, playerId};
 }
 
 Event EventFactory::handlePlayerDie([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload)
 {
+    if (payload.size() != 1) {
+        throw std::runtime_error("Invalid payload size for PlayerDie event");
+    }
     std::uint8_t playerId = payload[0];
     return {RequestType::PlayerDie, header, playerId};
 }
 
 Event EventFactory::handleEnemySpawn([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload)
 {
+    if (payload.size() != 9) {
+        throw std::runtime_error("Invalid payload size for EnemySpawn event");
+    }
     std::uint8_t enemyId = payload[0];
     std::uint32_t x = (payload[1] << 24) | (payload[2] << 16) | (payload[3] << 8) | payload[4];
     std::uint32_t y = (payload[5] << 24) | (payload[6] << 16) | (payload[7] << 8) | payload[8];
@@ -98,6 +122,9 @@ Event EventFactory::handleEnemySpawn([[maybe_unused]] const GDTPHeader& header, 
 
 Event EventFactory::handleEnemyMove([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload)
 {
+    if (payload.size() != 9) {
+        throw std::runtime_error("Invalid payload size for EnemyMove event");
+    }
     std::uint8_t enemyId = payload[0];
     std::uint32_t x = (payload[1] << 24) | (payload[2] << 16) | (payload[3] << 8) | payload[4];
     std::uint32_t y = (payload[5] << 24) | (payload[6] << 16) | (payload[7] << 8) | payload[8];
@@ -106,28 +133,43 @@ Event EventFactory::handleEnemyMove([[maybe_unused]] const GDTPHeader& header, c
 
 Event EventFactory::handleEnemyDie([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload)
 {
+    if (payload.size() != 1) {
+        throw std::runtime_error("Invalid payload size for EnemyDie event");
+    }
     std::uint8_t enemyId = payload[0];
     return {RequestType::EnemyDie, header, enemyId};
 }
 
 Event EventFactory::handlePlayerConnect([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload)
 {
+    if (payload.size() != 1) {
+        throw std::runtime_error("Invalid payload size for PlayerConnect event");
+    }
     std::uint8_t playerId = payload[0];
     return {RequestType::PlayerConnect, header, playerId};
 }
 
 Event EventFactory::handlePlayerDisconnect([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload)
 {
+    if (payload.size() != 1) {
+        throw std::runtime_error("Invalid payload size for PlayerDisconnect event");
+    }
     std::uint8_t playerId = payload[0];
     return {RequestType::PlayerDisconnect, header, playerId};
 }
 
 Event EventFactory::handleGameStart([[maybe_unused]] const GDTPHeader& header, [[maybe_unused]] const std::vector<uint8_t>& payload)
 {
+    if (payload.empty()) {
+        throw std::runtime_error("Invalid payload size for GameStart event");
+    }
     return {RequestType::GameStart, header};
 }
 
 Event EventFactory::handleGameOver([[maybe_unused]] const GDTPHeader& header, [[maybe_unused]] const std::vector<uint8_t>& payload)
 {
+    if (payload.empty()y) {
+        throw std::runtime_error("Invalid payload size for GameOver event");
+    }
     return {RequestType::GameOver, header};
 }
