@@ -305,6 +305,7 @@ protected:
                 if (slider.onChange)
                     slider.onChange(slider.currentValue);
             });
+    }
     };
 }
 
