@@ -4,7 +4,6 @@
 #include "EntityFactory.hpp"
 #include "../../../game/Components.hpp"
 #include "src/Game/Utils/ClientComponents.hpp"
-#include "src/event/Event.hpp"
 #include "src/event/EventPool.hpp"
 #include <iostream>
 #include <vector>
@@ -36,6 +35,7 @@ void Game::init()
     _gameEngine.registry.register_component<DamageComponent>();
     _gameEngine.registry.register_component<PlayerColorComponent>();
     _gameEngine.registry.register_component<ViewComponent>();
+    _gameEngine.registry.register_component<EventComponent>();
 
     int player1Color = assignColor();
     if (player1Color >= 0) {
@@ -51,7 +51,10 @@ void Game::init()
         sf::Vector2f(300.0f, 200.0f),
         sf::Vector2f(200.0f, 50.0f),
         "Start Game",
-        [this]() { _gameEngine.currentScene = static_cast<int>(GameState::Playing); },
+        [this]() {
+            _gameEngine.currentScene = static_cast<int>(GameState::Playing);
+            networkingService.sendRequest("127.0.0.1", 1111, PlayerConnect, {});
+        },
         static_cast<int>(GameState::MainMenu)
     );
 
@@ -89,14 +92,16 @@ void Game::init()
 
     networkingService.sendRequest("127.0.0.1", 1111, PlayerConnect, {});
 
-    std::vector<Event> oui = EventPool::getInstance().getAllEvents();
-    for (auto &event : oui) {
-        std::cout << "Event: " << event.getType() << std::endl;
-    }
+    core::ecs::Entity EventEntity = _gameEngine.registry.spawn_entity();
+    _gameEngine.registry.add_component(EventEntity, EventComponent{});
+    eventSystem(_gameEngine.registry);
 }
 
 void Game::update()
 {
+    // events
+    _gameEngine.registry.run_system<EventComponent>();
+
     _gameEngine.registry.run_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, ShootCounterComponent>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::TransformComponent>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::AnimationComponent>();

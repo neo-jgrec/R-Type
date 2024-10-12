@@ -7,4 +7,7 @@ struct ViewComponent {
     sf::View view;
 };
 
+struct EventComponent {
+};
+
 #endif /* !CLIENTCOMPONENTS_HPP_ */

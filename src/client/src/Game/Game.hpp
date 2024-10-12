@@ -143,5 +143,12 @@ private:
      */
     void parseMap(core::ecs::Registry& registry, const std::string& mapFilePath, sf::RenderWindow& window);
 
+    /**
+     * @brief Handles game events such as player collisions, enemy attacks, and power-ups.
+     *
+     * @param registry
+     */
+    static void eventSystem(core::ecs::Registry& registry);
+
     NetworkingService &networkingService = NetworkingService::getInstance();
 };
