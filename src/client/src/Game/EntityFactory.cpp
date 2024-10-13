@@ -191,25 +191,12 @@ core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry& registry, cons
     registry.add_component(enemy, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 36.0f), gameScale * 3.5f, 0.0f});
     registry.add_component(enemy, core::ge::CollisionComponent{ENEMY, {sf::FloatRect(0.0f, 0.0f, 33.0f, 36.0f)}, {
         { PLAYER_PROJECTILE, [&](const core::ecs::Entity self, const core::ecs::Entity other) {
-            const auto &damageDone = registry.get_components<DamageComponent>() [other];
-            const auto &health = registry.get_components<HealthComponent>() [self];
-            health->get()->health -= damageDone->get()->damage;
-            if (health->get()->health <= 0) {
                 registry.kill_entity(self);
-            }
-            registry.kill_entity(other);
-        }},
-        {PLAYER_MISSILE, [&](const core::ecs::Entity self, [[maybe_unused]] const core::ecs::Entity other) {
-            const auto &damageDone = registry.get_components<DamageComponent>() [other];
-            const auto &health = registry.get_components<HealthComponent>() [self];
-            const auto &healthOther = registry.get_components<HealthComponent>() [other];
-            health->get()->health -= damageDone->get()->damage;
-            healthOther->get()->health -= damageDone->get()->damage;
-            if (health->get()->health <= 0)
-                registry.kill_entity(self);
-            if (healthOther->get()->health <= 0)
                 registry.kill_entity(other);
-        }}
+        }}, { PLAYER_MISSILE, [&](const core::ecs::Entity self, const core::ecs::Entity other) {
+                registry.kill_entity(self);
+                registry.kill_entity(other);
+        }},
     }});
     registry.add_component(enemy, VelocityComponent{10.0f, 10.0f});
     registry.add_component(enemy, HealthComponent{10});
