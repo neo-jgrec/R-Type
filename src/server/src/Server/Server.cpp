@@ -12,7 +12,7 @@ Server::Server()
     _gameEngine.registry.register_component<Enemy>();
     _gameEngine.registry.register_component<Projectile>();
 
-    Systems::worldSystem(_gameEngine.registry, _players, _enemies);
+    Systems::worldSystem(_gameEngine.registry, _players);
     Systems::playerSystem(_gameEngine.registry, _players);
     Systems::enemySystem(_gameEngine.registry, _players);
     Systems::projectileSystem(_gameEngine.registry);
@@ -59,7 +59,7 @@ Server::Server()
         if (id >= 4 || !_players[id].has_value())
             return;
 
-        std::cout << "Player " << id << " disconnected" << std::endl;
+        std::cout << "Player " << static_cast<int>(id) << " disconnected" << std::endl;
         _gameEngine.registry.kill_entity(_players[id].value());
         _players[id].reset();
     });
@@ -118,7 +118,7 @@ void Server::run()
             if (!playerEntity.has_value())
                 continue;
             const auto &playerComponent = _gameEngine.registry.get_component<Player>(playerEntity.value());
-            std::cout << "Sending player move to " << playerComponent->id << std::endl;
+            std::cout << "Sending player move to " << static_cast<int>(playerComponent->id) << std::endl;
             _networkingService.sendRequest(
                 playerComponent->endpoint,
                 PlayerMove,
@@ -137,7 +137,7 @@ void Server::run()
 
         static uint8_t projectileId = 0;
         EntityFactory::createProjectile(_gameEngine.registry, _players[id].value(), projectileId++);
-        std::cout << "Player " << id << " shot" << std::endl;
+        std::cout << "Player " << static_cast<int>(id) << " shot" << std::endl;
 
         for (const auto &playerEntity : _players) {
             if (!playerEntity.has_value())
