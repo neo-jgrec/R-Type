@@ -2,6 +2,7 @@
 #include "../../../game/Components.hpp"
 #include "EntityFactory.hpp"
 #include "Utils/ClientComponents.hpp"
+#include "src/event/Event.hpp"
 #include "src/event/EventPool.hpp"
 #include "../../../game/RequestType.hpp"
 
@@ -118,10 +119,15 @@ void Game::eventSystem(core::ecs::Registry& registry)
                             EntityFactory::createPlayer(registry, sf::Vector2f(_gameEngine.window.getView().getSize().x / 2.0f, _gameEngine.window.getView().getSize().y / 2.0f), playerId, *this, gameScale, playerId, false);
                         }
                     } else if (type == RequestType::PlayerMove) {
-                        auto playerMovePayload = std::get<std::pair<unsigned long, sf::Vector2f>>(event.getPayload());
-                        auto playerEntity = registry.get_entities<Player>()[playerMovePayload.first];
-                        auto playerTransform = registry.get_component<core::ge::TransformComponent>(playerEntity);
-                        playerTransform->position = playerMovePayload.second;
+                        auto playerMovePayload = std::get<std::pair<std::uint8_t, sf::Vector2u>>(event.getPayload());
+                        auto playerEntities = registry.get_entities<Player>();
+                        for (auto playerEntity : playerEntities) {
+                            auto playerComponent = registry.get_component<Player>(playerEntity);
+                            if (playerComponent->id == playerMovePayload.first) {
+                                auto playerTransform = registry.get_component<core::ge::TransformComponent>(playerEntity);
+                                playerTransform->position = sf::Vector2f(static_cast<float>(playerMovePayload.second.x), static_cast<float>(playerMovePayload.second.y));
+                            }
+                        }
                     } else if (type == RequestType::PlayerDie) {
                         auto playerId = std::get<int>(event.getPayload());
                         auto playerEntity = registry.get_entities<Player>()[playerId];
@@ -138,10 +144,48 @@ void Game::eventSystem(core::ecs::Registry& registry)
                         auto playerEntity = registry.get_entities<Player>()[playerId];
                         registry.kill_entity(playerEntity);
                     } else if (type == RequestType::MapScroll) {
-                        auto scrollPayload = std::get<sf::Vector2f>(event.getPayload());
+                        auto scrollPayload = std::get<sf::Vector2u>(event.getPayload());
                         auto viewComponent = registry.get_component<ViewComponent>(_viewEntity);
-                        viewComponent->view.move(scrollPayload);
+                        viewComponent->view.move(static_cast<float>(scrollPayload.x), static_cast<float>(scrollPayload.y));
                         _gameEngine.window.setView(viewComponent->view);
+                    } else if (type == RequestType::TileDestroy) {
+                        auto tileDestroyPayload = std::get<sf::Vector2u>(event.getPayload());
+                        auto tileEntities = registry.get_entities<Tile>();
+                        for (auto tileEntity : tileEntities) {
+                            auto tileComponent = registry.get_component<Tile>(tileEntity);
+                            if (tileComponent->position == sf::Vector2f(tileDestroyPayload)) {
+                                registry.kill_entity(tileEntity);
+                            }
+                        }
+                    } else if (type == RequestType::PlayerShoot) {
+                        auto playerShootPayload = std::get<int>(event.getPayload());
+                        auto playerEntities = registry.get_entities<Player>();
+                        for (auto playerEntity : playerEntities) {
+                            auto playerComponent = registry.get_component<Player>(playerEntity);
+                            if (playerComponent->id == playerShootPayload) {
+                                auto playerTransform = registry.get_component<core::ge::TransformComponent>(playerEntity);
+                                EntityFactory::createPlayerProjectile(registry, *playerTransform, gameScale);
+                            }
+                        }
+                    } else if (type == RequestType::EnemySpawn) {
+                        auto enemySpawnPayload = std::get<std::pair<std::uint8_t, sf::Vector2u>>(event.getPayload());
+                        EntityFactory::createEnemy(registry, sf::Vector2f(enemySpawnPayload.second), gameScale, enemySpawnPayload.first);
+                    } else if (type == RequestType::EnemyMove) {
+                        auto enemyMovePayload = std::get<sf::Vector2u>(event.getPayload());
+                        auto enemyEntities = registry.get_entities<Enemy>();
+                        for (auto enemyEntity : enemyEntities) {
+                            auto enemyTransform = registry.get_component<core::ge::TransformComponent>(enemyEntity);
+                            enemyTransform->position = sf::Vector2f(enemyMovePayload);
+                        }
+                    } else if (type == RequestType::EnemyDie) {
+                        auto enemyDiePayload = std::get<int>(event.getPayload());
+                        auto enemyEntities = registry.get_entities<Enemy>();
+                        for (auto enemyEntity : enemyEntities) {
+                            auto enemyComponent = registry.get_component<Enemy>(enemyEntity);
+                            if (enemyComponent->id == enemyDiePayload) {
+                                registry.kill_entity(enemyEntity);
+                            }
+                        }
                     }
                 } catch (const std::exception &e) {
                     std::cerr << "Error processing event: " << e.what() << std::endl;

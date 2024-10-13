@@ -196,7 +196,7 @@ public:
      * @brief Constructor for an event without a payload.
      * @param type The type of the event.
      */
-    Event(RequestType type, const GDTPHeader& header, std::variant<std::monostate, PlayerMovement, ChatMessage, PlayerShootEvent, PowerUpCollected, EntityUpdate, PlayerHealthUpdate, EntitySpawn, EntityDestroy, NoData, int, std::string, sf::Vector2f, std::pair<size_t, sf::Vector2f>> payload = std::monostate{});
+    Event(RequestType type, const GDTPHeader& header, std::variant<std::monostate, PlayerMovement, ChatMessage, PlayerShootEvent, PowerUpCollected, EntityUpdate, PlayerHealthUpdate, EntitySpawn, EntityDestroy, NoData, int, std::string, sf::Vector2u, std::pair<std::uint8_t, sf::Vector2u>, std::uint32_t> payload = std::monostate{});
 
     /**
      * @brief Returns the type of the event.
@@ -212,7 +212,7 @@ public:
      *
      * @return A variant containing the event payload.
      */
-    [[nodiscard]] const std::variant<std::monostate, PlayerMovement, ChatMessage, PlayerShootEvent, PowerUpCollected, EntityUpdate, PlayerHealthUpdate, EntitySpawn, EntityDestroy, NoData, int, std::string, sf::Vector2f, std::pair<size_t, sf::Vector2f>>& getPayload() const;
+    [[nodiscard]] const std::variant<std::monostate, PlayerMovement, ChatMessage, PlayerShootEvent, PowerUpCollected, EntityUpdate, PlayerHealthUpdate, EntitySpawn, EntityDestroy, NoData, int, std::string, sf::Vector2u, std::pair<std::uint8_t, sf::Vector2u>, std::uint32_t>& getPayload() const;
 
     /**
      * @brief Equality operator to compare two Event objects.
@@ -251,10 +251,12 @@ public:
                 os << "NoData{}";
             } else if constexpr (std::is_same_v<T, std::string>) {
                 os << "string{" << payload << "}";
-            } else if constexpr (std::is_same_v<T, sf::Vector2f>) {
+            } else if constexpr (std::is_same_v<T, sf::Vector2u>) {
                 os << "Vector2f{x=" << payload.x << ", y=" << payload.y << "}";
-            } else if constexpr (std::is_same_v<T, std::pair<size_t, sf::Vector2f>>) {
+            } else if constexpr (std::is_same_v<T, std::pair<std::uint8_t, sf::Vector2u>>) {
                 os << "pair{first=" << payload.first << ", second={x=" << payload.second.x << ", y=" << payload.second.y << "}}";
+            } else if constexpr (std::is_same_v<T, std::uint32_t>) {
+                os << "uint32_t{" << payload << "}";
             } else {
                 static_assert(always_false<T>::value, "non-exhaustive visitor!");
             }
@@ -273,7 +275,7 @@ private:
     struct always_false : std::false_type {};
     RequestType type; ///< The type of the event.
     GDTPHeader header;  // Store the GDTPHeader
-    std::variant<std::monostate, PlayerMovement, ChatMessage, PlayerShootEvent, PowerUpCollected, EntityUpdate, PlayerHealthUpdate, EntitySpawn, EntityDestroy, NoData, int, std::string, sf::Vector2f, std::pair<size_t, sf::Vector2f>> payload; ///< The payload of the event.
+    std::variant<std::monostate, PlayerMovement, ChatMessage, PlayerShootEvent, PowerUpCollected, EntityUpdate, PlayerHealthUpdate, EntitySpawn, EntityDestroy, NoData, int, std::string, sf::Vector2u, std::pair<std::uint8_t, sf::Vector2u>, std::uint32_t> payload; ///< The payload of the event.
 };
 
 #endif // EVENT_HPP

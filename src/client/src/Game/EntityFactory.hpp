@@ -68,7 +68,7 @@ public:
      * @param gameScale The scale factor for the game to adjust entity sizes.
      * @return The created enemy entity.
      */
-    static core::ecs::Entity createEnemy(core::ecs::Registry& registry, const sf::Vector2f& position, sf::Vector2f gameScale);
+    static core::ecs::Entity createEnemy(core::ecs::Registry& registry, const sf::Vector2f& position, sf::Vector2f gameScale, std::uint8_t enemyId);
 
     /**
      * @brief Creates a button entity for the game's UI.

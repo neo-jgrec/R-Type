@@ -47,7 +47,7 @@ Event EventFactory::handleMapScroll([[maybe_unused]] const GDTPHeader& header, c
         throw std::runtime_error("Invalid payload size for MapScroll event");
     }
     std::uint32_t mapScroll = (payload[0] << 24) | (payload[1] << 16) | (payload[2] << 8) | payload[3];
-    return {RequestType::MapScroll, header, static_cast<int>(mapScroll)}; // TODO: change the var in the constructor to allow uint32_t
+    return {RequestType::MapScroll, header, mapScroll};
 }
 
 Event EventFactory::handleTileDestroy([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload)
@@ -57,7 +57,7 @@ Event EventFactory::handleTileDestroy([[maybe_unused]] const GDTPHeader& header,
     }
     std::uint32_t x = (payload[0] << 24) | (payload[1] << 16) | (payload[2] << 8) | payload[3];
     std::uint32_t y = (payload[4] << 24) | (payload[5] << 16) | (payload[6] << 8) | payload[7];
-    return {RequestType::TileDestroy, header, sf::Vector2f{static_cast<float>(x), static_cast<float>(y)}};
+    return {RequestType::TileDestroy, header, sf::Vector2u{x, y}};
 }
 
 Event EventFactory::handlePlayerShoot([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload)
@@ -77,7 +77,7 @@ Event EventFactory::handlePlayerMove([[maybe_unused]] const GDTPHeader& header, 
     std::uint8_t playerId = payload[0];
     std::uint32_t x = (payload[1] << 24) | (payload[2] << 16) | (payload[3] << 8) | payload[4];
     std::uint32_t y = (payload[5] << 24) | (payload[6] << 16) | (payload[7] << 8) | payload[8];
-    return {RequestType::PlayerMove, header, std::make_pair(playerId, sf::Vector2f{static_cast<float>(x), static_cast<float>(y)})};
+    return {RequestType::PlayerMove, header, std::make_pair(playerId, sf::Vector2u{x, y})};
 }
 
 Event EventFactory::handlePlayerCollide([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload)
@@ -88,7 +88,7 @@ Event EventFactory::handlePlayerCollide([[maybe_unused]] const GDTPHeader& heade
     std::uint8_t playerId = payload[0];
     std::uint32_t x = (payload[1] << 24) | (payload[2] << 16) | (payload[3] << 8) | payload[4];
     std::uint32_t y = (payload[5] << 24) | (payload[6] << 16) | (payload[7] << 8) | payload[8];
-    return {RequestType::PlayerCollide, header, std::make_pair(playerId, sf::Vector2f{static_cast<float>(x), static_cast<float>(y)})};
+    return {RequestType::PlayerCollide, header, std::make_pair(playerId, sf::Vector2u{x, y})};
 }
 
 Event EventFactory::handlePlayerHit([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload)
@@ -117,7 +117,7 @@ Event EventFactory::handleEnemySpawn([[maybe_unused]] const GDTPHeader& header, 
     std::uint8_t enemyId = payload[0];
     std::uint32_t x = (payload[1] << 24) | (payload[2] << 16) | (payload[3] << 8) | payload[4];
     std::uint32_t y = (payload[5] << 24) | (payload[6] << 16) | (payload[7] << 8) | payload[8];
-    return {RequestType::EnemySpawn, header, std::make_pair(enemyId, sf::Vector2f{static_cast<float>(x), static_cast<float>(y)})};
+    return {RequestType::EnemySpawn, header, std::make_pair(enemyId, sf::Vector2u{x, y})};
 }
 
 Event EventFactory::handleEnemyMove([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload)
@@ -128,7 +128,7 @@ Event EventFactory::handleEnemyMove([[maybe_unused]] const GDTPHeader& header, c
     std::uint8_t enemyId = payload[0];
     std::uint32_t x = (payload[1] << 24) | (payload[2] << 16) | (payload[3] << 8) | payload[4];
     std::uint32_t y = (payload[5] << 24) | (payload[6] << 16) | (payload[7] << 8) | payload[8];
-    return {RequestType::EnemyMove, header, std::make_pair(enemyId, sf::Vector2f{static_cast<float>(x), static_cast<float>(y)})};
+    return {RequestType::EnemyMove, header, std::make_pair(enemyId, sf::Vector2u{x, y})};
 }
 
 Event EventFactory::handleEnemyDie([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload)

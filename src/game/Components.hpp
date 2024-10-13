@@ -101,7 +101,9 @@ struct Player {
  * 
  * This tag is applied to enemy entities to distinguish them in systems or logic that targets enemies.
  */
-struct Enemy {};
+struct Enemy {
+    std::uint8_t id = 0;
+};
 
 /**
  * @struct Projectile
