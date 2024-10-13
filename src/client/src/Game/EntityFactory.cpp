@@ -188,7 +188,7 @@ core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry& registry, cons
 {
     core::ecs::Entity enemy = registry.spawn_entity();
 
-    registry.add_component(enemy, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 36.0f), gameScale, 0.0f});
+    registry.add_component(enemy, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 36.0f), gameScale * 3.5f, 0.0f});
     registry.add_component(enemy, core::ge::CollisionComponent{ENEMY, {sf::FloatRect(0.0f, 0.0f, 33.0f, 36.0f)}, {
         { PLAYER_PROJECTILE, [&](const core::ecs::Entity self, const core::ecs::Entity other) {
             const auto &damageDone = registry.get_components<DamageComponent>() [other];
