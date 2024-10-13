@@ -3,6 +3,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <SFML/System/Vector2.hpp>
+#include <cstdint>
 
 /**
  * @struct InputStateComponent
@@ -90,7 +91,7 @@ struct PlayerColorComponent {
  * This tag is applied to player entities to distinguish them in systems or logic that targets players.
  */
 struct Player {
-    int id = 0;
+    std::uint8_t id = 0;
     bool self = false;
 };
 
