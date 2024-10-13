@@ -15,7 +15,7 @@ struct World {
 };
 
 struct Player {
-    const asio::ip::udp::endpoint &endpoint;
+    std::shared_ptr<asio::ip::udp::endpoint> endpoint;
     uint8_t id;
     uint8_t health;
     time_t lastTimePacketReceived;

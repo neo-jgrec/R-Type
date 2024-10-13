@@ -70,7 +70,7 @@ core::ecs::Entity EntityFactory::createPlayer(
                 continue;
             const auto &playerComponent = registry.get_component<Player>(playerEntity.value());
             networkingService.sendRequest(
-                playerComponent->endpoint,
+                *playerComponent->endpoint,
                 requestType,
                 {playerComponent->id});
         }
@@ -90,7 +90,7 @@ core::ecs::Entity EntityFactory::createPlayer(
                     continue;
                 const auto &playerComponent = registry.get_component<Player>(playerEntity.value());
                 networkingService.sendRequest(
-                    playerComponent->endpoint,
+                    *playerComponent->endpoint,
                     GameOver,
                     {});
             }
@@ -115,7 +115,7 @@ core::ecs::Entity EntityFactory::createPlayer(
                     continue;
                 const auto &playerComponent = registry.get_component<Player>(playerEntity.value());
                 networkingService.sendRequest(
-                    playerComponent->endpoint,
+                    *playerComponent->endpoint,
                     requestType,
                     {playerComponent->id});
             }
@@ -139,7 +139,7 @@ core::ecs::Entity EntityFactory::createPlayer(
                     continue;
                 const auto &playerComponent = registry.get_component<Player>(playerEntity.value());
                 networkingService.sendRequest(
-                    playerComponent->endpoint,
+                    *playerComponent->endpoint,
                     requestType,
                     {playerComponent->id});
             }
@@ -147,24 +147,41 @@ core::ecs::Entity EntityFactory::createPlayer(
             if (requestType == PlayerDie)
                 registry.kill_entity(entity);
         }}}});
-    registry.add_component(player, Player{endpoint, id, 3, std::time(nullptr)});
+
+    registry.add_component(player, Player{std::make_shared<asio::ip::udp::endpoint>(endpoint), id, 3, 0});
+
 
     for (auto &playerEntity : players) {
         if (!playerEntity.has_value())
             continue;
-        const auto &playerComponent = registry.get_component<Player>(playerEntity.value());
 
-        if (playerEntity.value() != player) {
-            networkingService.sendRequest(
-                playerComponent->endpoint,
-                PlayerConnect,
-                {id});
-        }
-        // Send the existing players to the new player
-        networkingService.sendRequest(
-            endpoint,
-            PlayerConnect,
-            {playerComponent->id});
+        const auto &playerComponent = registry.get_component<Player>(playerEntity.value());
+        const auto &playerTransform = registry.get_component<core::ge::TransformComponent>(playerEntity.value());
+
+        // if (playerComponent->id != id) {
+        //     networkingService.sendRequest(
+        //         *playerComponent->endpoint,
+        //         PlayerConnect,
+        //         {playerComponent->id});
+        //     const auto x = static_cast<uint8_t>(playerTransform->position.x);
+        //     const auto y = static_cast<uint8_t>(playerTransform->position.y);
+        //     const std::vector payload = {
+        //         id,
+        //         static_cast<uint8_t>(x >> 24),
+        //         static_cast<uint8_t>(x >> 16),
+        //         static_cast<uint8_t>(x >> 8),
+        //         static_cast<uint8_t>(x),
+        //         static_cast<uint8_t>(y >> 24),
+        //         static_cast<uint8_t>(y >> 16),
+        //         static_cast<uint8_t>(y >> 8),
+        //         static_cast<uint8_t>(y)
+        //     };
+        //
+        //     networkingService.sendRequest(
+        //         endpoint,
+        //         PlayerMove,
+        //         payload);
+        // }
     }
 
     std::cout << "Player " << static_cast<int>(id) << " created" << std::endl;
@@ -196,7 +213,7 @@ core::ecs::Entity EntityFactory::createEnemy(
                     continue;
                 const auto &playerComponent = registry.get_component<Player>(playerEntity.value());
                 networkingService.sendRequest(
-                    playerComponent->endpoint,
+                    *playerComponent->endpoint,
                     EnemyDie,
                     {enemyComponent->id});
             }
@@ -221,7 +238,7 @@ core::ecs::Entity EntityFactory::createEnemy(
             continue;
         const auto &playerComponent = registry.get_component<Player>(playerEntity.value());
         networkingService.sendRequest(
-            playerComponent->endpoint,
+            *playerComponent->endpoint,
             EnemySpawn,
             payload);
     }
@@ -276,7 +293,7 @@ core::ecs::Entity EntityFactory::createTile(
                     continue;
                 const auto &playerComponent = registry.get_component<Player>(playerEntity.value());
                 networkingService.sendRequest(
-                    playerComponent->endpoint,
+                    *playerComponent->endpoint,
                     TileDestroy,
                     {playerComponent->id});
             }

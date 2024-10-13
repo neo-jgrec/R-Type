@@ -23,7 +23,7 @@ void Systems::worldSystem(core::ecs::Registry &registry, const std::array<std::o
                 const auto &playerComponent = registry.get_component<Player>(playerEntity);
 
                 network.service.sendRequest(
-                    playerComponent->endpoint,
+                    *playerComponent->endpoint,
                     MapScroll,
                     payload);
             }
@@ -33,25 +33,25 @@ void Systems::worldSystem(core::ecs::Registry &registry, const std::array<std::o
         });
 }
 
-void Systems::playerSystem(core::ecs::Registry &registry, std::array<std::optional<core::ecs::Entity>, 4> &players)
+void Systems::playerSystem(core::ecs::Registry &registry, NetworkingService &networkingService, std::array<std::optional<core::ecs::Entity>, 4> &players)
 {
     registry.add_system<Network, Player>(
         [&](const core::ecs::Entity &entity, const Network &network, Player &player) {
-            if (player.lastTimePacketReceived + 5 < std::time(nullptr)) {
-                for (auto &playerEntity : players) {
-                    if (!playerEntity.has_value())
-                        continue;
-
-                    const auto &playerComponent = registry.get_component<Player>(playerEntity.value());
-                    network.service.sendRequest(
-                        playerComponent->endpoint,
-                        PlayerDisconnect,
-                        {player.id});
-                }
-
-                registry.kill_entity(entity);
-                players[player.id].reset();
-            }
+            // if (player.lastTimePacketReceived + 5 < std::time(nullptr)) {
+            //     for (auto &playerEntity : players) {
+            //         if (!playerEntity.has_value())
+            //             continue;
+            //
+            //         const auto &playerComponent = registry.get_component<Player>(playerEntity.value());
+            //         network.service.sendRequest(
+            //             playerComponent->endpoint,
+            //             PlayerDisconnect,
+            //             {player.id});
+            //     }
+            //
+            //     registry.kill_entity(entity);
+            //     players[player.id].reset();
+            // }
         });
 }
 
@@ -85,7 +85,7 @@ void Systems::enemySystem(core::ecs::Registry &registry, const std::array<std::o
 
                 const auto &playerComponent = registry.get_component<Player>(playerEntity.value());
                 network.service.sendRequest(
-                    playerComponent->endpoint,
+                    *playerComponent->endpoint,
                     EnemyMove,
                     payload);
             }
