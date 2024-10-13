@@ -1,4 +1,5 @@
 #include <SFML/System/Vector2.hpp>
+#include <cstdint>
 #include "Game.hpp"
 #include "../../../game/Components.hpp"
 #include "EntityFactory.hpp"
@@ -126,9 +127,18 @@ void Game::eventSystem(core::ecs::Registry& registry)
                         auto playerEntity = registry.get_entities<Player>()[playerId];
                         registry.kill_entity(playerEntity);
                     } else if (type == RequestType::PlayerHit) {
-                        auto playerId = std::get<int>(event.getPayload());
-                        auto playerEntity = registry.get_entities<Player>()[playerId];
-                        auto playerComponent = registry.get_component<Player>(playerEntity);
+                        auto playerId = std::get<std::uint8_t>(event.getPayload());
+                        auto playerEntities = registry.get_entities<Player>();
+                        for (auto playerEntity : playerEntities) {
+                            auto playerComponent = registry.get_component<Player>(playerEntity);
+                            if (playerComponent->id == playerId) {
+                                auto healthComponent = registry.get_component<HealthComponent>(playerEntity);
+                                healthComponent->health -= 10;
+                                if (healthComponent->health <= 0) {
+                                    registry.kill_entity(playerEntity);
+                                }
+                            }
+                        }
                         // TODO: Handle player hit
                     } else if (type == RequestType::GameOver) {
                         _gameEngine.currentScene = static_cast<int>(GameState::GameOver);
@@ -167,12 +177,15 @@ void Game::eventSystem(core::ecs::Registry& registry)
                         auto enemySpawnPayload = std::get<std::pair<std::uint8_t, sf::Vector2u>>(event.getPayload());
                         EntityFactory::createEnemy(registry, sf::Vector2f(enemySpawnPayload.second), gameScale, enemySpawnPayload.first);
                     } else if (type == RequestType::EnemyMove) {
-                        auto enemyMovePayload = std::get<sf::Vector2u>(event.getPayload());
-                        auto enemyEntities = registry.get_entities<Enemy>();
-                        for (auto enemyEntity : enemyEntities) {
-                            auto enemyTransform = registry.get_component<core::ge::TransformComponent>(enemyEntity);
-                            enemyTransform->position = sf::Vector2f(enemyMovePayload);
-                        }
+                        // auto enemyMovePayload = std::get<std::pair<std::uint8_t, sf::Vector2u>>(event.getPayload());
+                        // auto enemyEntities = registry.get_entities<Enemy>();
+                        // for (auto enemyEntity : enemyEntities) {
+                        //     auto enemyComponent = registry.get_component<Enemy>(enemyEntity);
+                        //     if (enemyComponent->id == enemyMovePayload.first) {
+                        //         auto enemyTransform = registry.get_component<core::ge::TransformComponent>(enemyEntity);
+                        //         enemyTransform->position = sf::Vector2f(static_cast<float>(enemyMovePayload.second.x), static_cast<float>(enemyMovePayload.second.y));
+                        //     }
+                        // }
                     } else if (type == RequestType::EnemyDie) {
                         auto enemyDiePayload = std::get<int>(event.getPayload());
                         auto enemyEntities = registry.get_entities<Enemy>();

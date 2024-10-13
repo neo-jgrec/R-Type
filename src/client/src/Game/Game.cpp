@@ -168,26 +168,29 @@ void Game::processEvents() {
                 _gameEngine.window.close();
             }
 
-            auto playerEntity = _gameEngine.registry.get_entities<Player, InputStateComponent>()[0];
+            auto allEntit = _gameEngine.registry.get_entities<Player, InputStateComponent>();
+            if (!allEntit.empty()) {
+                auto playerEntity = allEntit[0];
 
-            auto &inputStateOpt = _gameEngine.registry.get_components<InputStateComponent>()[playerEntity];
-            auto &keyBindingOpt = _gameEngine.registry.get_components<core::ge::KeyBinding>()[playerEntity];
+                auto &inputStateOpt = _gameEngine.registry.get_components<InputStateComponent>()[playerEntity];
+                auto &keyBindingOpt = _gameEngine.registry.get_components<core::ge::KeyBinding>()[playerEntity];
 
-            if (inputStateOpt.has_value()) {
-                auto &keyBinding = *keyBindingOpt.value();
-                auto &inputState = *inputStateOpt.value();
+                if (inputStateOpt.has_value()) {
+                    auto &keyBinding = *keyBindingOpt.value();
+                    auto &inputState = *inputStateOpt.value();
 
-                auto set_input_state = [&event, isPressed](auto key, bool &state) {
-                    if (event.key.code == key) {
-                        state = isPressed;
-                    }
-                };
+                    auto set_input_state = [&event, isPressed](auto key, bool &state) {
+                        if (event.key.code == key) {
+                            state = isPressed;
+                        }
+                    };
 
-                set_input_state(keyBinding.moveUpKey, inputState.up);
-                set_input_state(keyBinding.moveDownKey, inputState.down);
-                set_input_state(keyBinding.moveLeftKey, inputState.left);
-                set_input_state(keyBinding.moveRightKey, inputState.right);
-                set_input_state(keyBinding.fireKey, inputState.fire);
+                    set_input_state(keyBinding.moveUpKey, inputState.up);
+                    set_input_state(keyBinding.moveDownKey, inputState.down);
+                    set_input_state(keyBinding.moveLeftKey, inputState.left);
+                    set_input_state(keyBinding.moveRightKey, inputState.right);
+                    set_input_state(keyBinding.fireKey, inputState.fire);
+                }
             }
         }
 
