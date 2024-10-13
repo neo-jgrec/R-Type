@@ -29,7 +29,7 @@ void Systems::worldSystem(core::ecs::Registry &registry, const std::array<std::o
             }
 
             if (rand() % 100 < 25)
-                EntityFactory::createEnemy(registry, network.service, players);
+                EntityFactory::createEnemy(registry, network.service, players, world.scroll * 100 + 2000);
         });
 }
 
@@ -60,7 +60,11 @@ void Systems::enemySystem(core::ecs::Registry &registry, const std::array<std::o
     registry.add_system<Network, Enemy>(
         [&](const core::ecs::Entity &entity, const Network &network, const Enemy &enemy) {
             const auto &transformComponent = registry.get_component<core::ge::TransformComponent>(entity);
-            transformComponent->position.x -= 10;
+            if (transformComponent->position.x < 75) {
+                registry.kill_entity(entity);
+                return;
+            }
+            transformComponent->position.x -= 75;
 
             const sf::Vector2i position = {static_cast<int>(transformComponent->position.x), static_cast<int>(transformComponent->position.y)};
             const std::vector payload = {
