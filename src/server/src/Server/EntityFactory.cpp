@@ -174,7 +174,8 @@ core::ecs::Entity EntityFactory::createPlayer(
 core::ecs::Entity EntityFactory::createEnemy(
     core::ecs::Registry& registry,
     NetworkingService &networkingService,
-    const std::array<std::optional<core::ecs::Entity>, 4> &players)
+    const std::array<std::optional<core::ecs::Entity>, 4> &players,
+    const uint32_t x)
 {
     static uint8_t id = 0;
     if (id >= 255)
@@ -182,7 +183,7 @@ core::ecs::Entity EntityFactory::createEnemy(
 
     const core::ecs::Entity enemy = registry.spawn_entity();
 
-    const sf::Vector2i position = {rand() % 800, rand() % 600};
+    const sf::Vector2i position = {static_cast<int>(x), rand() % 880 + 100};
     registry.add_component(enemy, Network{networkingService});
     registry.add_component(enemy, core::ge::TransformComponent{sf::Vector2f(position), sf::Vector2f(32, 32), sf::Vector2f(1, 1), 0});
     registry.add_component(enemy, core::ge::CollisionComponent{ENEMY, std::vector{sf::FloatRect(0, 0, 32, 32)},{
