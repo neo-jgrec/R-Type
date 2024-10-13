@@ -44,10 +44,21 @@ Server::Server()
                 playerComponent->endpoint,
                 MapScroll,
                 {0, 0, 0, 0});
+            const std::vector<uint8_t> payload = {
+                playerComponent->id,
+                static_cast<uint8_t>(100 >> 24),
+                static_cast<uint8_t>(100 >> 16),
+                static_cast<uint8_t>(100 >> 8),
+                static_cast<uint8_t>(100),
+                static_cast<uint8_t>(100 >> 24),
+                static_cast<uint8_t>(100 >> 16),
+                static_cast<uint8_t>(100 >> 8),
+                static_cast<uint8_t>(100),
+            };
             _networkingService.sendRequest(
                 playerComponent->endpoint,
                 PlayerMove,
-                {playerComponent->id, 0, 0, 0, 0, 0, 0, 0, 0});
+                payload);
             playerComponent->lastTimePacketReceived = std::time(nullptr);
             playerComponent->health = 3;
         }
