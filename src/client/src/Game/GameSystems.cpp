@@ -33,6 +33,12 @@ void Game::inputSystem(core::ecs::Registry& registry)
                     shootCounter.shotCount++;
                 }
                 input.fire = false;
+                networkingService.sendRequest(
+                    "127.0.0.1",
+                    1111,
+                    PlayerShoot,
+                    std::vector<uint8_t>{static_cast<uint8_t>(player.id)}
+                );
             }
             if (transform.position.x < getViewBounds(_gameEngine.window).x) {
                 transform.position.x = getViewBounds(_gameEngine.window).x;
