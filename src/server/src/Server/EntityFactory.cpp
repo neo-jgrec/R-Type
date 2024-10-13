@@ -55,7 +55,7 @@ core::ecs::Entity EntityFactory::createPlayer(
     const core::ecs::Entity player = registry.spawn_entity();
 
     const std::function onCollision = [&](const core::ecs::Entity& entity, const core::ecs::Entity&) {
-        std::cout << "Player " << id << " collided with enemy" << std::endl;
+        std::cout << "Player " << static_cast<int>(id) << " collided with enemy" << std::endl;
 
         RequestType requestType = PlayerHit;
         {
@@ -100,7 +100,7 @@ core::ecs::Entity EntityFactory::createPlayer(
     registry.add_component(player, core::ge::TransformComponent{sf::Vector2f(0, 0), sf::Vector2f(32, 32), sf::Vector2f(1, 1), 0});
     registry.add_component(player, core::ge::CollisionComponent{PLAYER, std::vector{sf::FloatRect(0, 0, 32, 32)},{
         { ENEMY, [&](const core::ecs::Entity& entity, const core::ecs::Entity&) {
-            std::cout << "Player " << id << " collided with enemy" << std::endl;
+            std::cout << "Player " << static_cast<int>(id) << " collided with enemy" << std::endl;
 
             RequestType requestType = PlayerHit;
             {
@@ -124,7 +124,7 @@ core::ecs::Entity EntityFactory::createPlayer(
                registry.kill_entity(entity);
         }},
         { TILE, [&](const core::ecs::Entity& entity, const core::ecs::Entity&) {
-            std::cout << "Player " << id << " collided with enemy" << std::endl;
+            std::cout << "Player " << static_cast<int>(id) << " collided with enemy" << std::endl;
 
             RequestType requestType = PlayerHit;
             {
@@ -167,7 +167,7 @@ core::ecs::Entity EntityFactory::createPlayer(
             {playerComponent->id});
     }
 
-    std::cout << "Player " << id << " created" << std::endl;
+    std::cout << "Player " << static_cast<int>(id) << " created" << std::endl;
     return player;
 }
 
@@ -177,6 +177,9 @@ core::ecs::Entity EntityFactory::createEnemy(
     const std::array<std::optional<core::ecs::Entity>, 4> &players)
 {
     static uint8_t id = 0;
+    if (id >= 255)
+        return core::ecs::Entity{};
+
     const core::ecs::Entity enemy = registry.spawn_entity();
 
     const sf::Vector2i position = {rand() % 800, rand() % 600};
@@ -184,7 +187,7 @@ core::ecs::Entity EntityFactory::createEnemy(
     registry.add_component(enemy, core::ge::TransformComponent{sf::Vector2f(position), sf::Vector2f(32, 32), sf::Vector2f(1, 1), 0});
     registry.add_component(enemy, core::ge::CollisionComponent{ENEMY, std::vector{sf::FloatRect(0, 0, 32, 32)},{
         { PLAYER, [&](const core::ecs::Entity& entity, const core::ecs::Entity&) {
-            std::cout << "Enemy " << id << " collided with player" << std::endl;
+            std::cout << "Enemy " << static_cast<int>(id) << " collided with player" << std::endl;
 
             const auto &enemyComponent = registry.get_component<Enemy>(entity);
             for (auto &playerEntity : players) {
@@ -222,14 +225,14 @@ core::ecs::Entity EntityFactory::createEnemy(
             payload);
     }
 
-    std::cout << "Enemy " << id++ << " created" << std::endl;
+    std::cout << "Enemy " << static_cast<int>(id++) << " created" << std::endl;
     return enemy;
 }
 
 core::ecs::Entity EntityFactory::createProjectile(
     core::ecs::Registry &registry,
     const core::ecs::Entity &player,
-    uint8_t id)
+    const uint8_t id)
 {
     const core::ecs::Entity projectile = registry.spawn_entity();
 
