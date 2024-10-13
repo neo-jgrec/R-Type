@@ -1,5 +1,3 @@
-# Installation
-
 This guide will help you set up the **R-Type** project on your local machine for development.
 
 ## Prerequisites

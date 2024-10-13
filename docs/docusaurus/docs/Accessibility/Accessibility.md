@@ -7,7 +7,6 @@ This section assesses the accessibility features of our R-Type game and highligh
 | Feature                         | Status               | Description                                          |
 |----------------------------------|----------------------|------------------------------------------------------|
 | **Volume Control**               | Implemented          | Adjustable game volume to suit player preferences.    |
-| **Customizable Keybindings**     | Implemented          | Players can change controls for easier play.          |
 
 While these features lay the groundwork for accessibility, they focus primarily on player convenience rather than inclusivity for those with specific disabilities.
 
@@ -39,7 +38,7 @@ While these features lay the groundwork for accessibility, they focus primarily 
 
 | Category                    | Current Status | Planned Improvements                        | Score (A-F) |
 |-----------------------------|----------------|---------------------------------------------|-------------|
-| **Physical Accessibility**   | Customizable controls | One-handed mode, Auto-fire, Slow-motion mode, Input choice | C           |
+| **Physical Accessibility**   | None | Customizable controls, Auto-fire, Slow-motion mode, Input choice | D           |
 | **Visual Accessibility**     | None           | Subtitles, Sound icons, Colorblind filters, High contrast, Adjustable text | D           |
 | **Audio Accessibility**      | Volume control | Subtitles, Sound icons                      | C           |
 | **Cognitive Accessibility**  | None           | Simple UI, Difficulty settings, Tutorials, Save/pause | D           |

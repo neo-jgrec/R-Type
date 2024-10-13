@@ -7,7 +7,7 @@ In **R-Type**, you take control of a spaceship, fighting your way through waves 
 R-Type is a side-scrolling shooter game where you control a spaceship to fight against waves of enemies. To start the game:
 
 :::info
-First, you need to compile the project. Please refer to the [Installation Help Page](../installation/) for step-by-step guidance.
+First, you need to compile the project. Please refer to the [Installation Help Page](../Overview/Installation.md) for step-by-step guidance.
 :::
 
 1. Launch the game executable.

@@ -1,3 +1,9 @@
+---
+sidebar_position: 1
+---
+
+# Get Started
+
 ### Table of Contents
 
 1. [Introduction](#introduction)
