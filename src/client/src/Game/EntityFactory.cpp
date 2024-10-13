@@ -277,9 +277,10 @@ core::ecs::Entity EntityFactory::createButton(core::ecs::Registry& registry, con
     text.setOrigin(textBounds.left + textBounds.width / 2.0f, textBounds.top + textBounds.height / 2.0f);
     text.setPosition(position.x + size.x / 2.0f, position.y + size.y / 2.0f);
 
+    registry.add_component(button, core::ge::TransformComponent{position, size, sf::Vector2f(1.0f, 1.0f), 0.0f});
     registry.add_component(button, core::ge::DrawableComponent{shape});
     registry.add_component(button, core::ge::TextComponent{text, font});
-    registry.add_component(button, core::ge::ButtonComponent{shape, onClick, false, false});
+    registry.add_component(button, core::ge::ClickableComponent{false, false, onClick});
     registry.add_component(button, core::ge::SceneComponent{scene});
     return button;
 }
@@ -350,4 +351,27 @@ core::ecs::Entity EntityFactory::createSlider(core::ecs::Registry& registry, con
     registry.add_component(slider, core::ge::TextComponent{text, font});
 
     return slider;
+}
+
+core::ecs::Entity EntityFactory::createImage(core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& texturePath, int scene)
+{
+    core::ecs::Entity img = registry.spawn_entity();
+
+    sf::RectangleShape shape(size);
+    shape.setPosition(position);
+
+    std::string absolutePath = std::filesystem::absolute(texturePath).string();
+    auto texture = std::make_shared<sf::Texture>();
+    if (!texture->loadFromFile(absolutePath)) {
+        std::cerr << "Failed to load texture: " << absolutePath << std::endl;
+        return img;
+    }
+
+    shape.setTexture(texture.get());
+
+    registry.add_component(img, core::ge::DrawableComponent{shape});
+    registry.add_component(img, core::ge::TextureComponent{texture});
+    registry.add_component(img, core::ge::SceneComponent{scene});
+
+    return img;
 }

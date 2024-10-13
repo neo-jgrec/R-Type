@@ -62,10 +62,24 @@ void Game::initMainMenu()
 {
     sf::Vector2u windowSize = _gameEngine.window.getSize();
     float centerX = static_cast<float>(windowSize.x) / 2.0f;
-    float centerY = static_cast<float>(windowSize.y) / 4.0f;
+    float centerY = static_cast<float>(windowSize.y) / 2.0f;
 
     sf::Vector2f buttonSize(200.0f, 50.0f);
     float buttonSpacing = 20.0f;
+
+    EntityFactory::createImage(_gameEngine.registry,
+        sf::Vector2f(0.0f, 0.0f),
+        sf::Vector2f(static_cast<float>(_gameEngine.window.getSize().x), static_cast<float>(windowSize.y)),
+        "assets/background.png",
+        static_cast<int>(GameState::MainMenu)
+    );
+
+    EntityFactory::createImage(_gameEngine.registry,
+        sf::Vector2f(centerX - 500.0f, centerY - 400.0f),
+        sf::Vector2f(1000.0f, 300.0f),
+        "assets/logo.png",
+        static_cast<int>(GameState::MainMenu)
+    );
 
     EntityFactory::createButton(_gameEngine.registry,
         sf::Vector2f(centerX - buttonSize.x / 2, centerY - buttonSize.y - buttonSpacing),
@@ -91,7 +105,10 @@ void Game::initMainMenu()
         sf::Vector2f(centerX - buttonSize.x / 2, centerY + buttonSize.y + buttonSpacing),
         buttonSize,
         "Quit",
-        [this]() { _windowOpen = false; },
+        [this]() {
+            _windowOpen = false;
+            networkingService.stop();
+        },
         static_cast<int>(GameState::MainMenu)
     );
 
@@ -134,8 +151,8 @@ void Game::update()
     // Collision detection
     _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent, core::ge::SceneComponent>();
 
-    // Button
-    _gameEngine.registry.run_system<core::ge::ButtonComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent>();
+    // Clickable
+    _gameEngine.registry.run_system<core::ge::ClickableComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent, core::ge::TransformComponent>();
 
     // TextInput
     _gameEngine.registry.run_system<core::ge::TextInputComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent>();

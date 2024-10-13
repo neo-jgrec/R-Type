@@ -1,21 +1,3 @@
-The `ButtonComponent` represents a clickable UI element within the ECS architecture. It can be visually customized and linked to specific functionality through an `onClick` event. This component is used in conjunction with other components like `DrawableComponent`, `TextComponent`, and `SceneComponent` to provide a fully interactive button in the game.
-
-## Structure
-
-```cpp
-struct ButtonComponent {
-    sf::RectangleShape shape;
-    std::function<void()> onClick;
-    bool isHovered = false;
-    bool isPressed = false;
-};
-```
-
-- **shape**: Defines the visual appearance of the button, such as its size, position, and color.
-- **onClick**: The function that is called when the button is clicked.
-- **isHovered**: A boolean that determines if the mouse is currently hovering over the button.
-- **isPressed**: A boolean that indicates if the button is being pressed.
-
 ## Creating a Button
 
 You can create a button using the `createButton` function, which initializes a new entity and assigns the necessary components:
@@ -48,7 +30,7 @@ core::ecs::Entity EntityFactory::createButton(core::ecs::Registry& registry, con
 
     registry.add_component(button, core::ge::DrawableComponent{shape});
     registry.add_component(button, core::ge::TextComponent{text, font});
-    registry.add_component(button, core::ge::ButtonComponent{shape, onClick, false, false});
+    registry.add_component(button, core::ge::ClickableComponent{shape, onClick, false, false});
     registry.add_component(button, core::ge::SceneComponent{scene});
     return button;
 }
@@ -99,7 +81,9 @@ To update buttons in your game loop, you need to run the appropriate systems. He
 
 ```cpp
 void Game::update() {
-    _gameEngine.registry.run_system<core::ge::ButtonComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent>();
+    _gameEngine.registry.run_system<core::ge::ClickableComponent, core::ge::SceneComponent, core::ge::DrawableComponent, 
+    core::ge::TransformComponent,
+    core::ge::TextComponent>();
 }
 ```
 
@@ -116,7 +100,8 @@ The button system manages the interaction with buttons by handling mouse events,
 
 ```cpp
 void buttonSystem() {
-    registry.add_system<core::ge::ButtonComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent>([&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::ButtonComponent &button, core::ge::SceneComponent &scene, core::ge::DrawableComponent &drawable, core::ge::TextComponent &text) {
+    registry.add_system<core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent>([&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::ClickableComponent &button, core::ge::SceneComponent &scene, core::ge::DrawableComponent &drawable, core::ge::TextComponent &text,
+    core::ge::TransformComponent &transform){
         if (scene.sceneName != currentScene)
             return;
         
@@ -128,13 +113,13 @@ void buttonSystem() {
 
         if (button.isPressed) {
             button.onClick();
-            drawable.shape.setSize(button.shape.getSize() * 0.98f);
+            drawable.shape.setSize(transform.size * 0.98f);
             text.text.setScale(sf::Vector2f(0.98f, 0.98f));
         } else if (button.isHovered) {
-            drawable.shape.setSize(button.shape.getSize() * 1.02f);
+            drawable.shape.setSize(transform.size * 1.02f);
             text.text.setScale(sf::Vector2f(1.02f, 1.02f));
         } else {
-            drawable.shape.setSize(button.shape.getSize());
+            drawable.shape.setSize(transform.size);
             text.text.setScale(sf::Vector2f(1.0f, 1.0f));
         }
     });

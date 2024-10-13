@@ -92,6 +92,7 @@ struct TransformComponent {
  */
 struct ClickableComponent {
     bool clicked = false;
+    bool hovered = false;
     std::function<void()> onClick;
 };
 
@@ -161,19 +162,6 @@ struct CollisionComponent {
     uint32_t collisionMask = 0;
     std::vector<sf::FloatRect> collisionBoxes;
     std::vector<std::pair<uint32_t, std::function<void(const ecs::Entity&, const ecs::Entity&)>>> onCollision = {};
-};
-
-/**
- * @struct ButtonComponent
- * @brief Defines a button entity, including its appearance and on-click behavior.
- * 
- * Stores the button's shape and the action to be executed when it is clicked. It also tracks hover and pressed states.
- */
-struct ButtonComponent {
-    sf::RectangleShape shape;
-    std::function<void()> onClick;
-    bool isHovered = false;
-    bool isPressed = false;
 };
 
 /**

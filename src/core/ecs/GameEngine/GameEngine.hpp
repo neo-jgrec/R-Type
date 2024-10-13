@@ -40,7 +40,6 @@ public:
         registry.register_component<core::ge::ClickableComponent>();
         registry.register_component<core::ge::ColorComponent>();
         registry.register_component<core::ge::CollisionComponent>();
-        registry.register_component<core::ge::ButtonComponent>();
         registry.register_component<core::ge::TextComponent>();
         registry.register_component<core::ge::SceneComponent>();
         registry.register_component<core::ge::TextInputComponent>();
@@ -52,7 +51,7 @@ public:
         animationSystem();
         soundSystem();
         collisionSystem();
-        buttonSystem();
+        clickableSystem();
         textSystem();
         textInputSystem();
         sliderSystem();
@@ -197,31 +196,31 @@ protected:
     }
 
     /**
-     * @brief Sets up the button interaction system.
+     * @brief Sets up the clicable interaction system.
      * 
      * This system handles user interactions with buttons, including hover and click states, and adjusts their size when hovered or clicked.
      */
-    void buttonSystem() {
-        registry.add_system<core::ge::ButtonComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent>(
-            [&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::ButtonComponent &button, core::ge::SceneComponent &scene, core::ge::DrawableComponent &drawable, core::ge::TextComponent &text) {
+    void clickableSystem() {
+        registry.add_system<core::ge::ClickableComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent, core::ge::TransformComponent>(
+            [&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::ClickableComponent &button, core::ge::SceneComponent &scene, core::ge::DrawableComponent &drawable, core::ge::TextComponent &text, core::ge::TransformComponent &transform) {
                 if (scene.sceneName != currentScene)
                     return;
 
                 sf::Vector2i mousePosition = sf::Mouse::getPosition(window);
                 sf::Vector2f worldPos = window.mapPixelToCoords(mousePosition);
 
-                button.isHovered = button.shape.getGlobalBounds().contains(worldPos);
-                button.isPressed = button.isHovered && sf::Mouse::isButtonPressed(sf::Mouse::Left);
+                button.hovered = drawable.shape.getGlobalBounds().contains(worldPos);
+                button.clicked = button.hovered && sf::Mouse::isButtonPressed(sf::Mouse::Left);
 
-                if (button.isPressed) {
+                if (button.clicked) {
                     button.onClick();
-                    drawable.shape.setSize(button.shape.getSize() * 0.98f);
+                    drawable.shape.setSize(transform.size * 0.98f);
                     text.text.setScale(sf::Vector2f(0.98f, 0.98f));
-                } else if (button.isHovered) {
-                    drawable.shape.setSize(button.shape.getSize() * 1.02f);
+                } else if (button.hovered) {
+                    drawable.shape.setSize(transform.size * 1.02f);
                     text.text.setScale(sf::Vector2f(1.02f, 1.02f));
                 } else {
-                    drawable.shape.setSize(button.shape.getSize());
+                    drawable.shape.setSize(transform.size);
                     text.text.setScale(sf::Vector2f(1.0f, 1.0f));
                 }
             });
