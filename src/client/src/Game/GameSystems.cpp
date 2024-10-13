@@ -145,19 +145,24 @@ void Game::eventSystem(core::ecs::Registry& registry)
                         }
                     } else if (type == RequestType::PlayerDie) {
                         auto playerId = std::get<std::uint8_t>(event.getPayload());
-                        auto playerEntity = registry.get_entities<Player>()[playerId];
-                        registry.kill_entity(playerEntity);
+                        auto playerEntities = registry.get_entities<Player>();
+                        for (auto playerEntity : playerEntities) {
+                            auto playerComponent = registry.get_component<Player>(playerEntity);
+                            if (playerComponent->id == playerId) {
+                                registry.kill_entity(playerEntity);
+                            }
+                        }
                     } else if (type == RequestType::PlayerHit) {
                         auto playerId = std::get<std::uint8_t>(event.getPayload());
                         auto playerEntities = registry.get_entities<Player>();
                         for (auto playerEntity : playerEntities) {
                             auto playerComponent = registry.get_component<Player>(playerEntity);
                             if (playerComponent->id == playerId) {
-                                // auto healthComponent = registry.get_component<HealthComponent>(playerEntity);
-                                // healthComponent->health -= 10;
-                                // if (healthComponent->health <= 0) {
-                                //     registry.kill_entity(playerEntity);
-                                // }
+                                auto healthComponent = registry.get_component<HealthComponent>(playerEntity);
+                                healthComponent->health -= 10;
+                                if (healthComponent->health <= 0) {
+                                    registry.kill_entity(playerEntity);
+                                }
                             }
                         }
                         // TODO: Handle player hit
