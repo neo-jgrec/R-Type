@@ -10,18 +10,53 @@
 
 sf::Vector2f getViewBounds(const sf::RenderWindow& window);
 
+static void sendPayloadMove(NetworkingService& networkingService, const sf::Vector2f& position, uint8_t playerId)
+{
+    std::cout << "Sending move payload" << std::endl;
+    try {
+        const std::vector payload = {
+            static_cast<uint8_t>(playerId),
+            static_cast<uint8_t>(static_cast<int>(position.x) >> 24),
+            static_cast<uint8_t>(static_cast<int>(position.x) >> 16),
+            static_cast<uint8_t>(static_cast<int>(position.x) >> 8),
+            static_cast<uint8_t>(static_cast<int>(position.x)),
+            static_cast<uint8_t>(static_cast<int>(position.y) >> 24),
+            static_cast<uint8_t>(static_cast<int>(position.y) >> 16),
+            static_cast<uint8_t>(static_cast<int>(position.y) >> 8),
+            static_cast<uint8_t>(static_cast<int>(position.y))
+        };
+
+        networkingService.sendRequest(
+            "127.0.0.1",
+            1111,
+            PlayerMove,
+            payload
+        );
+    } catch (const std::exception &e) {
+        std::cerr << e.what() << std::endl;
+    }
+}
+
 void Game::inputSystem(core::ecs::Registry& registry)
 {
     registry.add_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, ShootCounterComponent, Player>
     ([&](core::ecs::Entity, core::ge::TransformComponent &transform, const VelocityComponent &vel, InputStateComponent &input, ShootCounterComponent &shootCounter, Player &player) {
-            if (input.up)
+            if (input.up) {
                 transform.position.y -= vel.dy;
-            if (input.down)
+                sendPayloadMove(networkingService, transform.position, player.id);
+            }
+            if (input.down) {
                 transform.position.y += vel.dy;
-            if (input.left)
+                sendPayloadMove(networkingService, transform.position, player.id);
+            }
+            if (input.left) {
                 transform.position.x -= vel.dx;
-            if (input.right)
+                sendPayloadMove(networkingService, transform.position, player.id);
+            }
+            if (input.right) {
                 transform.position.x += vel.dx;
+                sendPayloadMove(networkingService, transform.position, player.id);
+            }
             if (input.fire) {
                 if (shootCounter.shotCount >= 6) {
                     EntityFactory::createPlayerMissile(registry, transform, gameScale);
@@ -42,34 +77,17 @@ void Game::inputSystem(core::ecs::Registry& registry)
             }
             if (transform.position.x < getViewBounds(_gameEngine.window).x) {
                 transform.position.x = getViewBounds(_gameEngine.window).x;
-            } else if (transform.position.x > getViewBounds(_gameEngine.window).x + _gameEngine.window.getView().getSize().x)
+                sendPayloadMove(networkingService, transform.position, player.id);
+            } else if (transform.position.x > getViewBounds(_gameEngine.window).x + _gameEngine.window.getView().getSize().x) {
                 transform.position.x = getViewBounds(_gameEngine.window).x + _gameEngine.window.getView().getSize().x;
+                sendPayloadMove(networkingService, transform.position, player.id);
+            }
             if (transform.position.y < getViewBounds(_gameEngine.window).y) {
                 transform.position.y = getViewBounds(_gameEngine.window).y;
-            } else if (transform.position.y > getViewBounds(_gameEngine.window).y + _gameEngine.window.getView().getSize().y)
+                sendPayloadMove(networkingService, transform.position, player.id);
+            } else if (transform.position.y > getViewBounds(_gameEngine.window).y + _gameEngine.window.getView().getSize().y) {
                 transform.position.y = getViewBounds(_gameEngine.window).y + _gameEngine.window.getView().getSize().y;
-
-            try {
-                const std::vector payload = {
-                    static_cast<uint8_t>(player.id),
-                    static_cast<uint8_t>(static_cast<int>(transform.position.x) >> 24),
-                    static_cast<uint8_t>(static_cast<int>(transform.position.x) >> 16),
-                    static_cast<uint8_t>(static_cast<int>(transform.position.x) >> 8),
-                    static_cast<uint8_t>(static_cast<int>(transform.position.x)),
-                    static_cast<uint8_t>(static_cast<int>(transform.position.y) >> 24),
-                    static_cast<uint8_t>(static_cast<int>(transform.position.y) >> 16),
-                    static_cast<uint8_t>(static_cast<int>(transform.position.y) >> 8),
-                    static_cast<uint8_t>(static_cast<int>(transform.position.y))
-                };
-
-                networkingService.sendRequest(
-                    "127.0.0.1",
-                    1111,
-                    PlayerMove,
-                    payload
-                );
-            } catch (const std::exception &e) {
-                std::cerr << e.what() << std::endl;
+                sendPayloadMove(networkingService, transform.position, player.id);
             }
     });
 }
