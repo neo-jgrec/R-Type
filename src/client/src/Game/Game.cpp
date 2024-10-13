@@ -168,7 +168,8 @@ void Game::render()
     _gameEngine.window.display();
 }
 
-void Game::processEvents() {
+void Game::processEvents()
+{
     sf::Event event{};
     while (_gameEngine.window.pollEvent(event)) {
         if (event.type == sf::Event::Closed) {
@@ -185,14 +186,15 @@ void Game::processEvents() {
                 _gameEngine.window.close();
             }
 
-            auto allEntit = _gameEngine.registry.get_entities<Player, InputStateComponent>();
-            if (!allEntit.empty()) {
-                auto playerEntity = allEntit[0];
+            auto playerEntities = _gameEngine.registry.get_entities<Player, InputStateComponent>();
+
+            if (!playerEntities.empty()) {
+                auto playerEntity = playerEntities[0];
 
                 auto &inputStateOpt = _gameEngine.registry.get_components<InputStateComponent>()[playerEntity];
                 auto &keyBindingOpt = _gameEngine.registry.get_components<core::ge::KeyBinding>()[playerEntity];
 
-                if (inputStateOpt.has_value()) {
+                if (inputStateOpt.has_value() && keyBindingOpt.has_value()) {
                     auto &keyBinding = *keyBindingOpt.value();
                     auto &inputState = *inputStateOpt.value();
 
