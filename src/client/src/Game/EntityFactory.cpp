@@ -184,7 +184,7 @@ core::ecs::Entity EntityFactory::createPlayerMissile(core::ecs::Registry &regist
     return missile;
 }
 
-core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry& registry, const sf::Vector2f& position, sf::Vector2f gameScale)
+core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry& registry, const sf::Vector2f& position, sf::Vector2f gameScale, std::uint8_t enemyId)
 {
     core::ecs::Entity enemy = registry.spawn_entity();
 
@@ -214,7 +214,9 @@ core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry& registry, cons
     registry.add_component(enemy, VelocityComponent{10.0f, 10.0f});
     registry.add_component(enemy, HealthComponent{10});
     registry.add_component(enemy, DamageComponent{10});
-    registry.add_component(enemy, Enemy{});
+    registry.add_component(enemy, Enemy{
+        .id = enemyId
+    });
 
     std::string relativePath = "assets/basic_enemy_sprite.png";
     std::string absolutePath = std::filesystem::absolute(relativePath).string();
