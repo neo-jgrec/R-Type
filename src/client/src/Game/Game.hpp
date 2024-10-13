@@ -128,12 +128,6 @@ private:
      */
     void enemyMovementSystem(core::ecs::Registry& registry) const;
 
-    /**
-     * @brief Adjusts the view of the game window based on player movements.
-     * @param registry The entity-component system registry managing game entities.
-     */
-    void moveWindowViewSystem(core::ecs::Registry& registry);
-
     std::vector<int> availableColors = {0, 1, 2, 3, 4}; ///< Pool of available colors for players.
 
     std::vector<std::vector<Tile>> _tileMap; ///< Represents the game map as a grid of tiles.
