@@ -177,15 +177,15 @@ void Game::eventSystem(core::ecs::Registry& registry)
                         auto enemySpawnPayload = std::get<std::pair<std::uint8_t, sf::Vector2u>>(event.getPayload());
                         EntityFactory::createEnemy(registry, sf::Vector2f(enemySpawnPayload.second), gameScale, enemySpawnPayload.first);
                     } else if (type == RequestType::EnemyMove) {
-                        // auto enemyMovePayload = std::get<std::pair<std::uint8_t, sf::Vector2u>>(event.getPayload());
-                        // auto enemyEntities = registry.get_entities<Enemy>();
-                        // for (auto enemyEntity : enemyEntities) {
-                        //     auto enemyComponent = registry.get_component<Enemy>(enemyEntity);
-                        //     if (enemyComponent->id == enemyMovePayload.first) {
-                        //         auto enemyTransform = registry.get_component<core::ge::TransformComponent>(enemyEntity);
-                        //         enemyTransform->position = sf::Vector2f(static_cast<float>(enemyMovePayload.second.x), static_cast<float>(enemyMovePayload.second.y));
-                        //     }
-                        // }
+                        auto enemyMovePayload = std::get<std::pair<std::uint8_t, sf::Vector2u>>(event.getPayload());
+                        auto enemyEntities = registry.get_entities<Enemy>();
+                        for (auto enemyEntity : enemyEntities) {
+                            auto enemyComponent = registry.get_component<Enemy>(enemyEntity);
+                            if (enemyComponent->id == enemyMovePayload.first) {
+                                auto enemyTransform = registry.get_component<core::ge::TransformComponent>(enemyEntity);
+                                enemyTransform->position = sf::Vector2f(static_cast<float>(enemyMovePayload.second.x), static_cast<float>(enemyMovePayload.second.y));
+                            }
+                        }
                     } else if (type == RequestType::EnemyDie) {
                         auto enemyDiePayload = std::get<int>(event.getPayload());
                         auto enemyEntities = registry.get_entities<Enemy>();
