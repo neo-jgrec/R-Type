@@ -48,7 +48,6 @@ void Game::init()
     _viewEntity = _gameEngine.registry.spawn_entity();
     _gameEngine.registry.add_component(_viewEntity, ViewComponent{_gameEngine.window.getDefaultView()});
     _gameEngine.registry.add_component(_viewEntity, core::ge::SceneComponent{static_cast<int>(GameState::Playing)});
-    moveWindowViewSystem(_gameEngine.registry);
 
     networkingService.init();
     setHandlers();

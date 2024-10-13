@@ -90,17 +90,6 @@ void Game::enemyMovementSystem(core::ecs::Registry& registry) const
         });
 }
 
-void Game::moveWindowViewSystem(core::ecs::Registry& registry)
-{
-    // registry.add_system<ViewComponent, core::ge::SceneComponent>(
-    //     [&](core::ecs::Entity, ViewComponent &viewComponent, const core::ge::SceneComponent& scene) {
-    //         if (scene.sceneName != static_cast<int>(_gameEngine.currentScene))
-    //             return;
-    //         viewComponent.view.move(1.0f, 0.0f);
-    //         _gameEngine.window.setView(viewComponent.view);
-    //     });
-}
-
 void Game::eventSystem(core::ecs::Registry& registry)
 {
     registry.add_system<EventComponent>(
@@ -146,7 +135,10 @@ void Game::eventSystem(core::ecs::Registry& registry)
                     } else if (type == RequestType::MapScroll) {
                         auto scrollPayload = std::get<std::uint32_t>(event.getPayload());
                         auto viewComponent = registry.get_component<ViewComponent>(_viewEntity);
-                        viewComponent->view.move(static_cast<float>(scrollPayload), 0.0f);
+                        float targetX = static_cast<float>(scrollPayload) * 75;
+                        float currentX = viewComponent->view.getCenter().x;
+                        float deltaX = (targetX - currentX) * 0.1f;
+                        viewComponent->view.move(deltaX, 0.0f);
                         _gameEngine.window.setView(viewComponent->view);
                     } else if (type == RequestType::TileDestroy) {
                         auto tileDestroyPayload = std::get<sf::Vector2u>(event.getPayload());
