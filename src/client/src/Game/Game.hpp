@@ -3,7 +3,6 @@
 #include <SFML/System/Vector2.hpp>
 #include "../../../core/ecs/Entity/Entity.hpp"
 #include "../../../core/ecs/GameEngine/GameEngine.hpp"
-#include "MusicManager.hpp"
 #include "../../../core/network/NetworkService.hpp"
 
 /**
