@@ -63,7 +63,7 @@ const config = {
         title: 'R-Type',
         logo: {
           alt: 'R-Type',
-          src: 'img/doom.png',
+          src: 'img/icon.png',
         },
         items: [
           {

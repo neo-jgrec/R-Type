@@ -16,5 +16,4 @@ sidebar_position: 1
    - [ECS Implementation](architecture/ecs-implementation.md)
 
 3. [Updating the Project](#updating-the-project)
-   - [Using ECS](Update%20the%20project/using-ecs.md)
-
+   - [Using ECS](Update the project/using-ecs.md)

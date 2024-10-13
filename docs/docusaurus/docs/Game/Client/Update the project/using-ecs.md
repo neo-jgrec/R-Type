@@ -239,5 +239,5 @@ We developed a custom network protocol, Game Datagram Transfer Protocol (GDTP), 
 3. **Flexibility**: The custom protocol allows us to easily add new message types as needed.
 
 :::info
-You can refer to the [protocol documentation](../../../Network/NetworkProtocol.md).
+You can refer to the [protocol documentation](../../../Network/Game Datagram Transfer Protocol (GDTP)).
 :::
