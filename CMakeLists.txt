@@ -26,7 +26,7 @@ if(CCACHE_FOUND)
 endif()
 
 if (UNIX)
-	add_compile_options(-Wall -Wextra)
+	add_compile_options(-Wall -Wextra -g3)
 elseif (WIN32)
 	add_compile_options(/W4)
 endif()
