@@ -1,4 +1,8 @@
-### NetworkingService - User Documentation
+---
+sidebar_position: 2
+---
+
+### User Documentation
 
 ---
 

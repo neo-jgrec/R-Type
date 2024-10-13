@@ -1,4 +1,8 @@
-# NetworkingService Developer Documentation
+---
+sidebar_position: 3
+---
+
+# Developer Documentation
 
 ## Overview
 The `NetworkingService` class manages real-time communication between clients and servers using the Game Datagram Transfer Protocol (GDTP) over UDP. It supports sending and receiving game-related data such as player movements, entity updates, and events. This class is designed to ensure low-latency communication, making it suitable for real-time multiplayer game environments.
@@ -166,4 +170,3 @@ The GDTP protocol uses a fixed header structure:
     - Use `sendRequestResponse()` to reply to received messages, preserving header metadata.
 
 ---
-
