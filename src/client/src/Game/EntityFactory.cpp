@@ -30,7 +30,7 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, con
     registry.add_component(player, HealthComponent{10});
     registry.add_component(player, ScoreComponent{0});
     registry.add_component(player, Player{
-        .id = playerId,
+        .id = static_cast<uint8_t>(playerId),
         .self = self
     });
     registry.add_component(player, ShootCounterComponent{0});
