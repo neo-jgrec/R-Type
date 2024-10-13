@@ -153,11 +153,11 @@ void Game::eventSystem(core::ecs::Registry& registry)
                         for (auto playerEntity : playerEntities) {
                             auto playerComponent = registry.get_component<Player>(playerEntity);
                             if (playerComponent->id == playerId) {
-                                auto healthComponent = registry.get_component<HealthComponent>(playerEntity);
-                                healthComponent->health -= 10;
-                                if (healthComponent->health <= 0) {
-                                    registry.kill_entity(playerEntity);
-                                }
+                                // auto healthComponent = registry.get_component<HealthComponent>(playerEntity);
+                                // healthComponent->health -= 10;
+                                // if (healthComponent->health <= 0) {
+                                //     registry.kill_entity(playerEntity);
+                                // }
                             }
                         }
                         // TODO: Handle player hit
