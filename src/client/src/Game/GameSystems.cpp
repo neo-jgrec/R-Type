@@ -1,3 +1,4 @@
+#include <SFML/System/Vector2.hpp>
 #include "Game.hpp"
 #include "../../../game/Components.hpp"
 #include "EntityFactory.hpp"
@@ -12,6 +13,7 @@ void Game::inputSystem(core::ecs::Registry& registry)
 {
     registry.add_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, ShootCounterComponent, Player>
     ([&](core::ecs::Entity, core::ge::TransformComponent &transform, const VelocityComponent &vel, InputStateComponent &input, ShootCounterComponent &shootCounter, Player &player) {
+            const sf::Vector2f enteredPosition = transform.position;
             if (input.up)
                 transform.position.y -= vel.dy;
             if (input.down)
@@ -41,6 +43,8 @@ void Game::inputSystem(core::ecs::Registry& registry)
             } else if (transform.position.y > getViewBounds(_gameEngine.window).y + _gameEngine.window.getView().getSize().y)
                 transform.position.y = getViewBounds(_gameEngine.window).y + _gameEngine.window.getView().getSize().y;
 
+            if (enteredPosition == transform.position)
+                return;
             try {
                 const std::vector payload = {
                     static_cast<uint8_t>(player.id),
