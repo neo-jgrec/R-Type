@@ -3,6 +3,7 @@
 #include <SFML/System/Vector2.hpp>
 #include "../../../core/ecs/Entity/Entity.hpp"
 #include "../../../core/ecs/GameEngine/GameEngine.hpp"
+#include "../../../core/network/NetworkService.hpp"
 
 /**
  * @struct Tile
@@ -98,10 +99,7 @@ private:
      * @brief Initializes the main menu scene.
      */
     void initMainMenu();
-  
-    // TODO: remove these when networking is implemented
-    core::ecs::Entity _playerEntity = core::ecs::Entity();
-    core::ecs::Entity _enemyEntity = core::ecs::Entity();
+
     core::ecs::Entity _viewEntity = core::ecs::Entity();
 
     core::GameEngine _gameEngine; ///< Game engine responsible for managing entities, components, and systems.
@@ -129,12 +127,6 @@ private:
      */
     void enemyMovementSystem(core::ecs::Registry& registry) const;
 
-    /**
-     * @brief Adjusts the view of the game window based on player movements.
-     * @param registry The entity-component system registry managing game entities.
-     */
-    void moveWindowViewSystem(core::ecs::Registry& registry);
-
     std::vector<int> availableColors = {0, 1, 2, 3, 4}; ///< Pool of available colors for players.
 
     std::vector<std::vector<Tile>> _tileMap; ///< Represents the game map as a grid of tiles.
@@ -146,4 +138,14 @@ private:
      * @param window The SFML render window for the game.
      */
     void parseMap(core::ecs::Registry& registry, const std::string& mapFilePath, sf::RenderWindow& window);
+
+    /**
+     * @brief Handles game events such as player collisions, enemy attacks, and power-ups.
+     *
+     * @param registry
+     */
+    void eventSystem(core::ecs::Registry& registry);
+
+    NetworkingService &networkingService = NetworkingService::getInstance(); ///< Singleton instance of the networking service.
+    GDTPHeader playerConnectionHeader{}; ///< Header for player connection requests.
 };

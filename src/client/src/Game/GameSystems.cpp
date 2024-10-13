@@ -2,13 +2,16 @@
 #include "../../../game/Components.hpp"
 #include "EntityFactory.hpp"
 #include "Utils/ClientComponents.hpp"
+#include "src/event/Event.hpp"
+#include "src/event/EventPool.hpp"
+#include "../../../game/RequestType.hpp"
 
 sf::Vector2f getViewBounds(const sf::RenderWindow& window);
 
 void Game::inputSystem(core::ecs::Registry& registry)
 {
-    registry.add_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, ShootCounterComponent>
-    ([&](core::ecs::Entity, core::ge::TransformComponent &transform, const VelocityComponent &vel, InputStateComponent &input, ShootCounterComponent &shootCounter) {
+    registry.add_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, ShootCounterComponent, Player>
+    ([&](core::ecs::Entity, core::ge::TransformComponent &transform, const VelocityComponent &vel, InputStateComponent &input, ShootCounterComponent &shootCounter, Player &player) {
             if (input.up)
                 transform.position.y -= vel.dy;
             if (input.down)
@@ -37,6 +40,29 @@ void Game::inputSystem(core::ecs::Registry& registry)
                 transform.position.y = getViewBounds(_gameEngine.window).y;
             } else if (transform.position.y > getViewBounds(_gameEngine.window).y + _gameEngine.window.getView().getSize().y)
                 transform.position.y = getViewBounds(_gameEngine.window).y + _gameEngine.window.getView().getSize().y;
+
+            try {
+                const std::vector payload = {
+                    static_cast<uint8_t>(player.id),
+                    static_cast<uint8_t>(static_cast<int>(transform.position.x) >> 24),
+                    static_cast<uint8_t>(static_cast<int>(transform.position.x) >> 16),
+                    static_cast<uint8_t>(static_cast<int>(transform.position.x) >> 8),
+                    static_cast<uint8_t>(static_cast<int>(transform.position.x)),
+                    static_cast<uint8_t>(static_cast<int>(transform.position.y) >> 24),
+                    static_cast<uint8_t>(static_cast<int>(transform.position.y) >> 16),
+                    static_cast<uint8_t>(static_cast<int>(transform.position.y) >> 8),
+                    static_cast<uint8_t>(static_cast<int>(transform.position.y))
+                };
+
+                networkingService.sendRequest(
+                    "127.0.0.1",
+                    1111,
+                    PlayerMove,
+                    payload
+                );
+            } catch (const std::exception &e) {
+                std::cerr << e.what() << std::endl;
+            }
     });
 }
 
@@ -64,13 +90,98 @@ void Game::enemyMovementSystem(core::ecs::Registry& registry) const
         });
 }
 
-void Game::moveWindowViewSystem(core::ecs::Registry& registry)
+void Game::eventSystem(core::ecs::Registry& registry)
 {
-    registry.add_system<ViewComponent, core::ge::SceneComponent>(
-        [&](core::ecs::Entity, ViewComponent &viewComponent, const core::ge::SceneComponent& scene) {
-            if (scene.sceneName != static_cast<int>(_gameEngine.currentScene))
-                return;
-            viewComponent.view.move(1.0f, 0.0f);
-            _gameEngine.window.setView(viewComponent.view);
+    registry.add_system<EventComponent>(
+        [&](core::ecs::Entity, EventComponent&) {
+            std::vector<Event> allEvents = EventPool::getInstance().getAllEvents();
+            for (auto &event : allEvents) {
+                try {
+                    std::cout << event << "/" << event.getType() << std::endl;
+                    RequestType type = event.getType();
+                    if (type == RequestType::PlayerConnect) {
+                        if (event.getHeader().packetId == playerConnectionHeader.packetId) {
+                            auto playerId = std::get<int>(event.getPayload());
+                            EntityFactory::createPlayer(registry, sf::Vector2f(_gameEngine.window.getView().getSize().x / 2.0f, _gameEngine.window.getView().getSize().y / 2.0f), playerId, *this, gameScale, playerId, true);
+                        } else {
+                            auto playerId = std::get<int>(event.getPayload());
+                            EntityFactory::createPlayer(registry, sf::Vector2f(_gameEngine.window.getView().getSize().x / 2.0f, _gameEngine.window.getView().getSize().y / 2.0f), playerId, *this, gameScale, playerId, false);
+                        }
+                    } else if (type == RequestType::PlayerMove) {
+                        auto playerMovePayload = std::get<std::pair<std::uint8_t, sf::Vector2u>>(event.getPayload());
+                        auto playerEntities = registry.get_entities<Player>();
+                        for (auto playerEntity : playerEntities) {
+                            auto playerComponent = registry.get_component<Player>(playerEntity);
+                            if (playerComponent->id == playerMovePayload.first) {
+                                auto playerTransform = registry.get_component<core::ge::TransformComponent>(playerEntity);
+                                playerTransform->position = sf::Vector2f(static_cast<float>(playerMovePayload.second.x), static_cast<float>(playerMovePayload.second.y));
+                            }
+                        }
+                    } else if (type == RequestType::PlayerDie) {
+                        auto playerId = std::get<int>(event.getPayload());
+                        auto playerEntity = registry.get_entities<Player>()[playerId];
+                        registry.kill_entity(playerEntity);
+                    } else if (type == RequestType::PlayerHit) {
+                        auto playerId = std::get<int>(event.getPayload());
+                        auto playerEntity = registry.get_entities<Player>()[playerId];
+                        auto playerComponent = registry.get_component<Player>(playerEntity);
+                        // TODO: Handle player hit
+                    } else if (type == RequestType::GameOver) {
+                        _gameEngine.currentScene = static_cast<int>(GameState::GameOver);
+                    } else if (type == RequestType::PlayerDisconnect) {
+                        auto playerId = std::get<int>(event.getPayload());
+                        auto playerEntity = registry.get_entities<Player>()[playerId];
+                        registry.kill_entity(playerEntity);
+                    } else if (type == RequestType::MapScroll) {
+                        auto scrollPayload = std::get<std::uint32_t>(event.getPayload());
+                        auto viewComponent = registry.get_component<ViewComponent>(_viewEntity);
+                        float targetX = static_cast<float>(scrollPayload) * 75;
+                        float currentX = viewComponent->view.getCenter().x;
+                        float deltaX = (targetX - currentX) * 0.1f;
+                        viewComponent->view.move(deltaX, 0.0f);
+                        _gameEngine.window.setView(viewComponent->view);
+                    } else if (type == RequestType::TileDestroy) {
+                        auto tileDestroyPayload = std::get<sf::Vector2u>(event.getPayload());
+                        auto tileEntities = registry.get_entities<Tile>();
+                        for (auto tileEntity : tileEntities) {
+                            auto tileComponent = registry.get_component<Tile>(tileEntity);
+                            if (tileComponent->position == sf::Vector2f(tileDestroyPayload)) {
+                                registry.kill_entity(tileEntity);
+                            }
+                        }
+                    } else if (type == RequestType::PlayerShoot) {
+                        auto playerShootPayload = std::get<int>(event.getPayload());
+                        auto playerEntities = registry.get_entities<Player>();
+                        for (auto playerEntity : playerEntities) {
+                            auto playerComponent = registry.get_component<Player>(playerEntity);
+                            if (playerComponent->id == playerShootPayload) {
+                                auto playerTransform = registry.get_component<core::ge::TransformComponent>(playerEntity);
+                                EntityFactory::createPlayerProjectile(registry, *playerTransform, gameScale);
+                            }
+                        }
+                    } else if (type == RequestType::EnemySpawn) {
+                        auto enemySpawnPayload = std::get<std::pair<std::uint8_t, sf::Vector2u>>(event.getPayload());
+                        EntityFactory::createEnemy(registry, sf::Vector2f(enemySpawnPayload.second), gameScale, enemySpawnPayload.first);
+                    } else if (type == RequestType::EnemyMove) {
+                        auto enemyMovePayload = std::get<sf::Vector2u>(event.getPayload());
+                        auto enemyEntities = registry.get_entities<Enemy>();
+                        for (auto enemyEntity : enemyEntities) {
+                            auto enemyTransform = registry.get_component<core::ge::TransformComponent>(enemyEntity);
+                            enemyTransform->position = sf::Vector2f(enemyMovePayload);
+                        }
+                    } else if (type == RequestType::EnemyDie) {
+                        auto enemyDiePayload = std::get<int>(event.getPayload());
+                        auto enemyEntities = registry.get_entities<Enemy>();
+                        for (auto enemyEntity : enemyEntities) {
+                            auto enemyComponent = registry.get_component<Enemy>(enemyEntity);
+                            if (enemyComponent->id == enemyDiePayload) {
+                                registry.kill_entity(enemyEntity);
+                            }
+                        }
+                    }
+                } catch (const std::exception &e) {
+                    std::cerr << "Error processing event: " << e.what() << std::endl;
+                }
+            }
         });
 }

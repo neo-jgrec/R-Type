@@ -42,13 +42,20 @@ private:
     using EventHandler = std::function<Event(const GDTPHeader&, const std::vector<uint8_t>&)>;
     static const std::unordered_map<uint8_t, EventHandler> handlers;
 
-    // Handlers for each specific event type
-    static Event handlePlayerMovement(const GDTPHeader& header, const std::vector<uint8_t>& payload);
+    static Event handlePlayerConnect(const GDTPHeader& header, const std::vector<uint8_t>& payload);
+    static Event handlePlayerDisconnect(const GDTPHeader& header, const std::vector<uint8_t>& payload);
+    static Event handleGameStart(const GDTPHeader& header, const std::vector<uint8_t>& payload);
+    static Event handleGameOver(const GDTPHeader& header, const std::vector<uint8_t>& payload);
+    static Event handleMapScroll(const GDTPHeader& header, const std::vector<uint8_t>& payload);
+    static Event handleTileDestroy(const GDTPHeader& header, const std::vector<uint8_t>& payload);
     static Event handlePlayerShoot(const GDTPHeader& header, const std::vector<uint8_t>& payload);
-    static Event handleChatMessage(const GDTPHeader& header, const std::vector<uint8_t>& payload);
-    static Event handlePlayerHealthUpdate(const GDTPHeader& header, const std::vector<uint8_t>& payload);
-    static Event handleEntitySpawn(const GDTPHeader& header, const std::vector<uint8_t>& payload);
-    static Event handleEntityDestroy(const GDTPHeader& header, const std::vector<uint8_t>& payload);
+    static Event handlePlayerMove(const GDTPHeader& header, const std::vector<uint8_t>& payload);
+    static Event handlePlayerCollide(const GDTPHeader& header, const std::vector<uint8_t>& payload);
+    static Event handlePlayerHit(const GDTPHeader& header, const std::vector<uint8_t>& payload);
+    static Event handlePlayerDie(const GDTPHeader& header, const std::vector<uint8_t>& payload);
+    static Event handleEnemySpawn(const GDTPHeader& header, const std::vector<uint8_t>& payload);
+    static Event handleEnemyMove(const GDTPHeader& header, const std::vector<uint8_t>& payload);
+    static Event handleEnemyDie(const GDTPHeader& header, const std::vector<uint8_t>& payload);
 };
 
 #endif // EVENTFACTORY_HPP

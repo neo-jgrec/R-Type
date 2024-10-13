@@ -12,7 +12,7 @@
 #include "../../../core/ecs/GameEngine/GameEngineComponents.hpp"
 #include "Game.hpp"
 
-core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, const sf::Vector2f& position, int color, Game &game, sf::Vector2f gameScale)
+core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, const sf::Vector2f& position, int color, Game &game, sf::Vector2f gameScale, std::uint16_t playerId, bool self)
 {
     core::ecs::Entity player = registry.spawn_entity();
 
@@ -23,11 +23,16 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, con
                 game.releaseColor(color);
         }}}});
     registry.add_component(player, VelocityComponent{10.0f, 10.0f});
-    registry.add_component(player, InputStateComponent{});
+    if (self) {
+        registry.add_component(player, InputStateComponent{});
+    }
     registry.add_component(player, core::ge::KeyBinding{});
     registry.add_component(player, HealthComponent{10});
     registry.add_component(player, ScoreComponent{0});
-    registry.add_component(player, Player{});
+    registry.add_component(player, Player{
+        .id = static_cast<uint8_t>(playerId),
+        .self = self
+    });
     registry.add_component(player, ShootCounterComponent{0});
     registry.add_component(player, PlayerColorComponent{color});
 
@@ -179,7 +184,7 @@ core::ecs::Entity EntityFactory::createPlayerMissile(core::ecs::Registry &regist
     return missile;
 }
 
-core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry& registry, const sf::Vector2f& position, sf::Vector2f gameScale)
+core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry& registry, const sf::Vector2f& position, sf::Vector2f gameScale, std::uint8_t enemyId)
 {
     core::ecs::Entity enemy = registry.spawn_entity();
 
@@ -209,7 +214,9 @@ core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry& registry, cons
     registry.add_component(enemy, VelocityComponent{10.0f, 10.0f});
     registry.add_component(enemy, HealthComponent{10});
     registry.add_component(enemy, DamageComponent{10});
-    registry.add_component(enemy, Enemy{});
+    registry.add_component(enemy, Enemy{
+        .id = enemyId
+    });
 
     std::string relativePath = "assets/basic_enemy_sprite.png";
     std::string absolutePath = std::filesystem::absolute(relativePath).string();

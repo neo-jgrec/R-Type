@@ -3,7 +3,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <SFML/System/Vector2.hpp>
-#include <functional>
+#include <cstdint>
 
 /**
  * @struct InputStateComponent
@@ -90,7 +90,10 @@ struct PlayerColorComponent {
  * 
  * This tag is applied to player entities to distinguish them in systems or logic that targets players.
  */
-struct Player {};
+struct Player {
+    std::uint8_t id = 0;
+    bool self = false;
+};
 
 /**
  * @struct Enemy
@@ -98,7 +101,9 @@ struct Player {};
  * 
  * This tag is applied to enemy entities to distinguish them in systems or logic that targets enemies.
  */
-struct Enemy {};
+struct Enemy {
+    std::uint8_t id = 0;
+};
 
 /**
  * @struct Projectile

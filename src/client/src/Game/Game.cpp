@@ -4,6 +4,10 @@
 #include "EntityFactory.hpp"
 #include "../../../game/Components.hpp"
 #include "src/Game/Utils/ClientComponents.hpp"
+#include "src/event/EventPool.hpp"
+#include <iostream>
+#include <vector>
+#include "../../../game/RequestType.hpp"
 
 void Game::init()
 {
@@ -31,16 +35,9 @@ void Game::init()
     _gameEngine.registry.register_component<DamageComponent>();
     _gameEngine.registry.register_component<PlayerColorComponent>();
     _gameEngine.registry.register_component<ViewComponent>();
+    _gameEngine.registry.register_component<EventComponent>();
 
-    int player1Color = assignColor();
-    if (player1Color >= 0) {
-        _playerEntity = EntityFactory::createPlayer(_gameEngine.registry, sf::Vector2f(100.0f, 400.0f), player1Color, *this, gameScale);
-    }
-    int player2Color = assignColor();
-    if (player2Color >= 0) {
-        _playerEntity = EntityFactory::createPlayer(_gameEngine.registry, sf::Vector2f(100.0f, 100.0f), player2Color, *this, gameScale);
-    }
-    _enemyEntity = EntityFactory::createEnemy(_gameEngine.registry, sf::Vector2f(700.0f, 100.0f), gameScale);
+    // _enemyEntity = EntityFactory::createEnemy(_gameEngine.registry, sf::Vector2f(700.0f, 100.0f), gameScale);
 
     initMainMenu();
 
@@ -51,7 +48,14 @@ void Game::init()
     _viewEntity = _gameEngine.registry.spawn_entity();
     _gameEngine.registry.add_component(_viewEntity, ViewComponent{_gameEngine.window.getDefaultView()});
     _gameEngine.registry.add_component(_viewEntity, core::ge::SceneComponent{static_cast<int>(GameState::Playing)});
-    moveWindowViewSystem(_gameEngine.registry);
+
+    networkingService.init();
+    setHandlers();
+    networkingService.run();
+
+    core::ecs::Entity EventEntity = _gameEngine.registry.spawn_entity();
+    _gameEngine.registry.add_component(EventEntity, EventComponent{});
+    eventSystem(_gameEngine.registry);
 }
 
 void Game::initMainMenu()
@@ -67,7 +71,11 @@ void Game::initMainMenu()
         sf::Vector2f(centerX - buttonSize.x / 2, centerY - buttonSize.y - buttonSpacing),
         buttonSize,
         "Start Game",
-        [this]() { _gameEngine.currentScene = static_cast<int>(GameState::Playing); },
+        [this]() {
+            _gameEngine.currentScene = static_cast<int>(GameState::Playing);
+            playerConnectionHeader = networkingService.sendRequest("127.0.0.1", 1111, PlayerConnect, {});
+            networkingService.sendRequest("127.0.0.1", 1111, GameStart, {});
+        },
         static_cast<int>(GameState::MainMenu)
     );
 
@@ -106,7 +114,10 @@ void Game::initMainMenu()
 
 void Game::update()
 {
-    _gameEngine.registry.run_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, ShootCounterComponent>();
+    // events
+    _gameEngine.registry.run_system<EventComponent>();
+
+    _gameEngine.registry.run_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, ShootCounterComponent, Player>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::TransformComponent>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::AnimationComponent>();
 
@@ -146,6 +157,7 @@ void Game::processEvents() {
         if (event.type == sf::Event::Closed) {
             _windowOpen = false;
             _gameEngine.window.close();
+            networkingService.stop();
         }
 
         if (event.type == sf::Event::KeyPressed || event.type == sf::Event::KeyReleased) {
@@ -156,8 +168,10 @@ void Game::processEvents() {
                 _gameEngine.window.close();
             }
 
-            auto &inputStateOpt = _gameEngine.registry.get_components<InputStateComponent>()[_playerEntity];
-            auto &keyBindingOpt = _gameEngine.registry.get_components<core::ge::KeyBinding>()[_playerEntity];
+            auto playerEntity = _gameEngine.registry.get_entities<Player, InputStateComponent>()[0];
+
+            auto &inputStateOpt = _gameEngine.registry.get_components<InputStateComponent>()[playerEntity];
+            auto &keyBindingOpt = _gameEngine.registry.get_components<core::ge::KeyBinding>()[playerEntity];
 
             if (inputStateOpt.has_value()) {
                 auto &keyBinding = *keyBindingOpt.value();

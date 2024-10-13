@@ -6,15 +6,17 @@
 */
 
 #include "Event.hpp"
-
 #include <utility>
 
-Event::Event(uint8_t type, std::variant<std::monostate, PlayerMovement, ChatMessage, PlayerShoot, PowerUpCollected, EntityUpdate, PlayerHealthUpdate, EntitySpawn, EntityDestroy, NoData, int, std::string> payload)
-    : type(type), payload(std::move(payload)) {}
+Event::Event(RequestType type, const GDTPHeader& header, std::variant<std::monostate, PlayerMovement, ChatMessage, PlayerShootEvent, PowerUpCollected, EntityUpdate, PlayerHealthUpdate, EntitySpawn, EntityDestroy, NoData, int, std::string, sf::Vector2u, std::pair<std::uint8_t, sf::Vector2u>, std::uint32_t> payload)
+    : type(type), header(header), payload(std::move(payload)) {}
 
-uint8_t Event::getType() const {
+RequestType Event::getType() const
+{
     return type;
 }
-const std::variant<std::monostate, PlayerMovement, ChatMessage, PlayerShoot, PowerUpCollected, EntityUpdate, PlayerHealthUpdate, EntitySpawn, EntityDestroy, NoData, int, std::string>& Event::getPayload() const {
+
+const std::variant<std::monostate, PlayerMovement, ChatMessage, PlayerShootEvent, PowerUpCollected, EntityUpdate, PlayerHealthUpdate, EntitySpawn, EntityDestroy, NoData, int, std::string, sf::Vector2u, std::pair<std::uint8_t, sf::Vector2u>, std::uint32_t>& Event::getPayload() const
+{
     return payload;
 }

@@ -49,7 +49,7 @@ public:
      * @endcode
      */
     static NetworkingService& getInstance(
-        const int port = 12345
+        const int port = 0
     ) {
         static NetworkingService instance(port);
         return instance;
@@ -545,7 +545,7 @@ public:
 
         [[nodiscard]] const char *what() const noexcept override
         {
-            return "Payload Message handlers is missing for this message type: " + static_cast<int>(this->messageType);
+            return &"Payload Message handlers is missing for this message type: " [ static_cast<int>(this->messageType)];
         }
     };
 

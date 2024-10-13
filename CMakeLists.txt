@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.23 FATAL_ERROR)
 project(R-Type)
 
+set(CMAKE_BUILD_TYPE Debug)
+
 # Use pthreads if possible
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads)
@@ -26,26 +28,7 @@ if(CCACHE_FOUND)
 endif()
 
 if (UNIX)
-	add_compile_options(-Wall
-		-Wextra
-		-Wpedantic
-		-fexceptions
-		-ffunction-sections
-		-fdata-sections
-		-fasynchronous-unwind-tables
-		-fno-delete-null-pointer-checks
-		-fno-common
-		-fno-omit-frame-pointer
-		-fno-strict-aliasing
-		-fno-semantic-interposition
-		-fstack-protector-strong
-		-fstack-clash-protection
-		-flto=auto
-		-fdiagnostics-color=auto
-		-grecord-gcc-switches
-		-pipe
-		-pthread
-	)
+	add_compile_options(-Wall -Wextra -g3)
 elseif (WIN32)
 	add_compile_options(/W4)
 endif()

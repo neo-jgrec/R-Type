@@ -6,7 +6,7 @@
 #include "../../../game/RequestType.hpp"
 
 
-void Systems::worldSystem(core::ecs::Registry &registry, const std::array<std::optional<core::ecs::Entity>, 4> &players, std::vector<core::ecs::Entity> enemies)
+void Systems::worldSystem(core::ecs::Registry &registry, const std::array<std::optional<core::ecs::Entity>, 4> &players)
 {
     registry.add_system<Network, World>(
         [&](const core::ecs::Entity &, const Network &network, World &world) {
@@ -29,7 +29,7 @@ void Systems::worldSystem(core::ecs::Registry &registry, const std::array<std::o
             }
 
             if (rand() % 100 < 25)
-                enemies.push_back(EntityFactory::createEnemy(registry, network.service, players));
+                EntityFactory::createEnemy(registry, network.service, players);
         });
 }
 

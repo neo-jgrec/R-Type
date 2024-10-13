@@ -10,9 +10,14 @@
 #ifndef EVENT_HPP
 #define EVENT_HPP
 
+    #include <SFML/System/Vector2.hpp>
+    #include <cstddef>
     #include <cstdint>
     #include <string>
     #include <variant>
+    #include <ostream>
+    #include "../../../game/RequestType.hpp"
+    #include "../../../core/network/NetworkService.hpp"
 
 /**
  * @struct PlayerMovement
@@ -56,7 +61,7 @@ struct ChatMessage {
  * @struct PlayerShoot
  * @brief Represents the data for a player shooting event.
  */
-struct PlayerShoot {
+struct PlayerShootEvent {
     uint32_t playerId; ///< The unique ID of the player shooting.
     uint8_t direction; ///< The direction of the shot (e.g., up, down, left, right).
     uint8_t weaponType; ///< The type of weapon used for the shot.
@@ -66,7 +71,7 @@ struct PlayerShoot {
      * @param other The other PlayerShoot object to compare with.
      * @return True if the player IDs, directions, and weapon types are equal, otherwise false.
      */
-    bool operator==(const PlayerShoot& other) const {
+    bool operator==(const PlayerShootEvent& other) const {
         return playerId == other.playerId && direction == other.direction && weaponType == other.weaponType;
     }
 };
@@ -191,13 +196,13 @@ public:
      * @brief Constructor for an event without a payload.
      * @param type The type of the event.
      */
-    Event(uint8_t type, std::variant<std::monostate, PlayerMovement, ChatMessage, PlayerShoot, PowerUpCollected, EntityUpdate, PlayerHealthUpdate, EntitySpawn, EntityDestroy, NoData, int, std::string>);
+    Event(RequestType type, const GDTPHeader& header, std::variant<std::monostate, PlayerMovement, ChatMessage, PlayerShootEvent, PowerUpCollected, EntityUpdate, PlayerHealthUpdate, EntitySpawn, EntityDestroy, NoData, int, std::string, sf::Vector2u, std::pair<std::uint8_t, sf::Vector2u>, std::uint32_t> payload = std::monostate{});
 
     /**
      * @brief Returns the type of the event.
      * @return The EventType of the event.
      */
-    uint8_t getType() const;
+    [[nodiscard]] RequestType getType() const;
 
     /**
      * @brief Returns the payload of the event.
@@ -207,7 +212,7 @@ public:
      *
      * @return A variant containing the event payload.
      */
-    const std::variant<std::monostate, PlayerMovement, ChatMessage, PlayerShoot, PowerUpCollected, EntityUpdate, PlayerHealthUpdate, EntitySpawn, EntityDestroy, NoData, int, std::string>& getPayload() const;
+    [[nodiscard]] const std::variant<std::monostate, PlayerMovement, ChatMessage, PlayerShootEvent, PowerUpCollected, EntityUpdate, PlayerHealthUpdate, EntitySpawn, EntityDestroy, NoData, int, std::string, sf::Vector2u, std::pair<std::uint8_t, sf::Vector2u>, std::uint32_t>& getPayload() const;
 
     /**
      * @brief Equality operator to compare two Event objects.
@@ -218,9 +223,59 @@ public:
         return this->type == other.type && this->payload == other.payload;
     }
 
+    friend std::ostream& operator<<(std::ostream& os, const Event& event) {
+        os << "Event{type=" << static_cast<int>(event.type) << ", payload=";
+        std::visit([&os](const auto& payload) {
+            using T = std::decay_t<decltype(payload)>;
+            if constexpr (std::is_same_v<T, std::monostate>) {
+                os << "NoData";
+            } else if constexpr (std::is_same_v<T, PlayerMovement>) {
+                os << "PlayerMovement{playerId=" << payload.playerId << ", x=" << payload.x << ", y=" << payload.y << ", z=" << payload.z << "}";
+            } else if constexpr (std::is_same_v<T, ChatMessage>) {
+                os << "ChatMessage{playerId=" << payload.playerId << ", message=" << payload.message << "}";
+            } else if constexpr (std::is_same_v<T, PlayerShootEvent>) {
+                os << "PlayerShoot{playerId=" << payload.playerId << ", direction=" << static_cast<int>(payload.direction) << ", weaponType=" << static_cast<int>(payload.weaponType) << "}";
+            } else if constexpr (std::is_same_v<T, PowerUpCollected>) {
+                os << "PowerUpCollected{playerId=" << payload.playerId << ", powerUpId=" << payload.powerUpId << "}";
+            } else if constexpr (std::is_same_v<T, EntityUpdate>) {
+                os << "EntityUpdate{entityId=" << payload.entityId << ", x=" << payload.x << ", y=" << payload.y << ", velocity=" << payload.velocity << "}";
+            } else if constexpr (std::is_same_v<T, PlayerHealthUpdate>) {
+                os << "PlayerHealthUpdate{playerId=" << payload.playerId << ", health=" << payload.health << "}";
+            } else if constexpr (std::is_same_v<T, EntitySpawn>) {
+                os << "EntitySpawn{entityId=" << payload.entityId << ", x=" << payload.x << ", y=" << payload.y << "}";
+            } else if constexpr (std::is_same_v<T, EntityDestroy>) {
+                os << "EntityDestroy{entityId=" << payload.entityId << "}";
+            } else if constexpr (std::is_same_v<T, int>) {
+                os << "int{" << payload << "}";
+            } else if constexpr (std::is_same_v<T, NoData>) {
+                os << "NoData{}";
+            } else if constexpr (std::is_same_v<T, std::string>) {
+                os << "string{" << payload << "}";
+            } else if constexpr (std::is_same_v<T, sf::Vector2u>) {
+                os << "Vector2f{x=" << payload.x << ", y=" << payload.y << "}";
+            } else if constexpr (std::is_same_v<T, std::pair<std::uint8_t, sf::Vector2u>>) {
+                os << "pair{first=" << payload.first << ", second={x=" << payload.second.x << ", y=" << payload.second.y << "}}";
+            } else if constexpr (std::is_same_v<T, std::uint32_t>) {
+                os << "uint32_t{" << payload << "}";
+            } else {
+                static_assert(always_false<T>::value, "non-exhaustive visitor!");
+            }
+        }, event.payload);
+        os << "}";
+        return os;
+    }
+
+    [[nodiscard]] const GDTPHeader& getHeader() const
+    {
+        return header;
+    }
+
 private:
-    uint8_t type; ///< The type of the event.
-    std::variant<std::monostate, PlayerMovement, ChatMessage, PlayerShoot, PowerUpCollected, EntityUpdate, PlayerHealthUpdate, EntitySpawn, EntityDestroy, NoData, int, std::string> payload; ///< The payload of the event.
+    template<typename T>
+    struct always_false : std::false_type {};
+    RequestType type; ///< The type of the event.
+    GDTPHeader header;  // Store the GDTPHeader
+    std::variant<std::monostate, PlayerMovement, ChatMessage, PlayerShootEvent, PowerUpCollected, EntityUpdate, PlayerHealthUpdate, EntitySpawn, EntityDestroy, NoData, int, std::string, sf::Vector2u, std::pair<std::uint8_t, sf::Vector2u>, std::uint32_t> payload; ///< The payload of the event.
 };
 
 #endif // EVENT_HPP
