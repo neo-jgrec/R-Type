@@ -144,9 +144,9 @@ void Game::eventSystem(core::ecs::Registry& registry)
                         auto playerEntity = registry.get_entities<Player>()[playerId];
                         registry.kill_entity(playerEntity);
                     } else if (type == RequestType::MapScroll) {
-                        auto scrollPayload = std::get<sf::Vector2u>(event.getPayload());
+                        auto scrollPayload = std::get<std::uint32_t>(event.getPayload());
                         auto viewComponent = registry.get_component<ViewComponent>(_viewEntity);
-                        viewComponent->view.move(static_cast<float>(scrollPayload.x), static_cast<float>(scrollPayload.y));
+                        viewComponent->view.move(static_cast<float>(scrollPayload), 0.0f);
                         _gameEngine.window.setView(viewComponent->view);
                     } else if (type == RequestType::TileDestroy) {
                         auto tileDestroyPayload = std::get<sf::Vector2u>(event.getPayload());
