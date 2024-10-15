@@ -17,4 +17,8 @@ struct ViewComponent {
 struct EventComponent {
 };
 
+struct TileComponent {
+    bool isDestructible = false;
+};
+
 #endif /* !CLIENTCOMPONENTS_HPP_ */
