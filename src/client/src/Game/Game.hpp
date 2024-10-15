@@ -146,6 +146,12 @@ private:
      */
     void eventSystem(core::ecs::Registry& registry);
 
+    /**
+     * @brief Updates the view based on the player's position.
+     * @param registry The entity-component system registry managing game entities.
+     */
+    void viewSystem(core::ecs::Registry& registry);
+
     NetworkingService &networkingService = NetworkingService::getInstance(); ///< Singleton instance of the networking service.
     GDTPHeader playerConnectionHeader{}; ///< Header for player connection requests.
 };
