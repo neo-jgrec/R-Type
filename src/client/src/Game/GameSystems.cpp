@@ -172,14 +172,6 @@ void Game::eventSystem(core::ecs::Registry& registry)
                         auto playerId = std::get<std::uint8_t>(event.getPayload());
                         auto playerEntity = registry.get_entities<Player>()[playerId];
                         registry.kill_entity(playerEntity);
-                    } else if (type == RequestType::MapScroll) {
-                        auto scrollPayload = std::get<std::uint32_t>(event.getPayload());
-                        auto viewComponent = registry.get_component<ViewComponent>(_viewEntity);
-                        float targetX = static_cast<float>(scrollPayload) * 75;
-                        float currentX = viewComponent->view.getCenter().x;
-                        float deltaX = (targetX - currentX) * 0.1f;
-                        viewComponent->view.move(deltaX, 0.0f);
-                        _gameEngine.window.setView(viewComponent->view);
                     } else if (type == RequestType::TileDestroy) {
                         auto tileDestroyPayload = std::get<sf::Vector2u>(event.getPayload());
                         auto tileEntities = registry.get_entities<Tile>();
@@ -226,5 +218,19 @@ void Game::eventSystem(core::ecs::Registry& registry)
                     std::cerr << "Error processing event: " << e.what() << std::endl;
                 }
             }
+        });
+}
+
+void Game::viewSystem(core::ecs::Registry& registry)
+{
+    registry.add_system<ViewComponent, core::ge::SceneComponent>(
+        [&](core::ecs::Entity, ViewComponent& view, [[maybe_unused]] core::ge::SceneComponent& scene) {
+            if (_gameEngine.currentScene != static_cast<int>(GameState::Playing))
+                return;
+
+            float scrollAmount = 20.0f * _gameEngine.delta_t;
+
+            view.view.move(scrollAmount, 0);
+            _gameEngine.window.setView(view.view);
         });
 }

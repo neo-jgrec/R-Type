@@ -44,6 +44,7 @@ void Game::init()
     inputSystem(_gameEngine.registry);
     projectileMovementSystem(_gameEngine.registry);
     enemyMovementSystem(_gameEngine.registry);
+    viewSystem(_gameEngine.registry);
 
     _viewEntity = _gameEngine.registry.spawn_entity();
     _gameEngine.registry.add_component(_viewEntity, ViewComponent{_gameEngine.window.getDefaultView()});
@@ -156,6 +157,9 @@ void Game::update()
 
     // TextInput
     _gameEngine.registry.run_system<core::ge::TextInputComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent>();
+
+    // View
+    _gameEngine.registry.run_system<ViewComponent, core::ge::SceneComponent>();
 }
 
 void Game::render()
