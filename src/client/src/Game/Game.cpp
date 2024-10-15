@@ -17,6 +17,7 @@ void Game::init()
     _gameEngine.window.setKeyRepeatEnabled(true);
 
     _gameEngine.musicManager.loadMusic("level1", "assets/music/level1.ogg");
+    _gameEngine.musicManager.setVolume(10.0f);
     // TODO: load every level music
     _gameEngine.musicManager.playMusic("level1");
 

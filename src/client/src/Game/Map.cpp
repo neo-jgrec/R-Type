@@ -21,6 +21,54 @@ std::shared_ptr<sf::Texture> loadTextureOrRed(const std::string& filePath)
     return texture;
 }
 
+void Game::initBackground(core::ecs::Registry& registry, nlohmann::json& mapData, sf::RenderWindow& window) const
+{
+    if (!mapData.contains("background")) {
+        std::cerr << "Error: Missing essential map data fields." << std::endl;
+        return;
+    }
+
+    auto backgroundData = mapData["background"];
+
+    if (!backgroundData.contains("path") || !backgroundData.contains("height")) {
+        std::cerr << "Error: Missing essential map data fields." << std::endl;
+        return;
+    }
+
+    std::string backgroundPath = backgroundData["path"];
+    float imageHeight = backgroundData["height"].get<float>() * mapData["cellSize"].get<float>();
+    float scale = static_cast<float>(window.getSize().y) / imageHeight;
+
+    auto backgroundTexture = loadTextureOrRed(backgroundPath);
+    if (!backgroundTexture) {
+        std::cerr << "Error: Failed to load background texture." << std::endl;
+        return;
+    }
+
+    float mapWidth = mapData["width"].get<float>() * mapData["cellSize"].get<float>() * gameScale.x;
+    float backgroundWidth = static_cast<float>(backgroundTexture->getSize().x) * scale;
+    int numBackgrounds = std::ceil(mapWidth / backgroundWidth);
+
+    for (int i = 0; i < numBackgrounds; ++i) {
+        core::ecs::Entity backgroundEntity = registry.spawn_entity();
+
+        sf::RectangleShape backgroundShape(sf::Vector2f(static_cast<float>(backgroundTexture->getSize().x) * scale, static_cast<float>(window.getSize().y)));
+        backgroundShape.setTexture(backgroundTexture.get());
+        backgroundShape.setPosition(static_cast<float>(i) * backgroundWidth, 0);
+        backgroundShape.setScale(scale, scale);
+
+        registry.add_component(backgroundEntity, core::ge::TransformComponent{
+            sf::Vector2f(static_cast<float>(i) * backgroundWidth, 0),
+            sf::Vector2f(static_cast<float>(backgroundTexture->getSize().x) * scale, static_cast<float>(window.getSize().y)),
+            sf::Vector2f(1.0f, 1.0f),
+            0.0f
+        });
+        registry.add_component(backgroundEntity, core::ge::DrawableComponent{backgroundShape});
+        registry.add_component(backgroundEntity, core::ge::TextureComponent{backgroundTexture});
+        registry.add_component(backgroundEntity, core::ge::SceneComponent{static_cast<int>(GameState::Playing)});
+    }
+}
+
 void Game::parseMap(core::ecs::Registry& registry, const std::string& mapFilePath, sf::RenderWindow& window)
 {
     std::ifstream mapFile(mapFilePath);
@@ -43,6 +91,8 @@ void Game::parseMap(core::ecs::Registry& registry, const std::string& mapFilePat
         std::cerr << "Error: Missing essential map data fields." << std::endl;
         return;
     }
+
+    initBackground(registry, mapData, window);
 
     std::unordered_map<int, sf::IntRect> tileRects;
     std::unordered_map<int, std::shared_ptr<sf::Texture>> tileTextures;
