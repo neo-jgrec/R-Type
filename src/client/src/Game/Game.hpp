@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SFML/System/Vector2.hpp>
+#include <nlohmann/json_fwd.hpp>
 #include "../../../core/ecs/Entity/Entity.hpp"
 #include "../../../core/ecs/GameEngine/GameEngine.hpp"
 #include "../../../core/network/NetworkService.hpp"
@@ -138,6 +139,14 @@ private:
      * @param window The SFML render window for the game.
      */
     void parseMap(core::ecs::Registry& registry, const std::string& mapFilePath, sf::RenderWindow& window);
+
+    /**
+     * @brief Initializes the background based on the map data.
+     * @param registry The entity-component system registry managing game entities.
+     * @param mapData The JSON data representing the map.
+     * @param window The SFML render window for the game.
+     */
+    void initBackground(core::ecs::Registry& registry, nlohmann::json& mapData, sf::RenderWindow& window) const;
 
     /**
      * @brief Handles game events such as player collisions, enemy attacks, and power-ups.
