@@ -20,9 +20,6 @@ void Game::init()
     // TODO: load every level music
     _gameEngine.musicManager.playMusic("level1");
 
-    // TODO: implement a way to load maps at runtimes dynamically
-    parseMap(_gameEngine.registry, "./JY_map.json", _gameEngine.window);
-
     _gameEngine.registry.register_component<VelocityComponent>();
     _gameEngine.registry.register_component<InputStateComponent>();
     _gameEngine.registry.register_component<HealthComponent>();
@@ -36,6 +33,10 @@ void Game::init()
     _gameEngine.registry.register_component<PlayerColorComponent>();
     _gameEngine.registry.register_component<ViewComponent>();
     _gameEngine.registry.register_component<EventComponent>();
+    _gameEngine.registry.register_component<TileComponent>();
+
+    // TODO: implement a way to load maps at runtimes dynamically
+    parseMap(_gameEngine.registry, "./JY_map.json", _gameEngine.window);
 
     // _enemyEntity = EntityFactory::createEnemy(_gameEngine.registry, sf::Vector2f(700.0f, 100.0f), gameScale);
 
