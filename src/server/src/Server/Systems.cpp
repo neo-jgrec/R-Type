@@ -3,7 +3,6 @@
 #include "Server.hpp"
 #include "Components.hpp"
 #include "EntityFactory.hpp"
-#include "../../../game/RequestType.hpp"
 
 void Systems::worldSystem(Server &server)
 {
@@ -18,10 +17,11 @@ void Systems::worldSystem(Server &server)
             if (world.scroll < nextScrollUpdate)
                 return;
 
-            if (rand() % 100 > 25)
-                return;
-
-            EntityFactory::createEnemy(server, static_cast<uint32_t>(world.scroll));
+            nextScrollUpdate = world.scroll + 75;
+            // if (rand() % 100 > 25)
+            //     return;
+            //
+            // EntityFactory::createEnemy(server, static_cast<uint32_t>(world.scroll));
         });
 }
 
@@ -29,27 +29,12 @@ void Systems::enemySystem(Server &server)
 {
     core::GameEngine &gameEngine = server.getGameEngine();
 
-    gameEngine.registry.add_system<Enemy>(
-        [&](const core::ecs::Entity &entity, const Enemy &enemy) {
-            const auto &transformComponent = gameEngine.registry.get_component<core::ge::TransformComponent>(entity);
-            if (transformComponent->position.x < 0.f) {
-                std::cout << "Enemy " << static_cast<int>(enemy.id) << " died" << std::endl;
-                gameEngine.registry.kill_entity(entity);
+    gameEngine.registry.add_system<core::ge::TransformComponent, Enemy>(
+        [&](const core::ecs::Entity &entity, const core::ge::TransformComponent &transformComponent, const Enemy &enemy) {
+            if (transformComponent.position.x > 0.f)
                 return;
-            }
-            
-            std::cout << "Enemy " << static_cast<int>(enemy.id) << " moved to " << transformComponent->position.x << std::endl;
-            transformComponent->position.x -= 10 * gameEngine.delta_t;
-        });
-}
 
-void Systems::projectileSystem(Server &server)
-{
-    core::GameEngine &gameEngine = server.getGameEngine();
-
-    gameEngine.registry.add_system<Projectile>(
-        [&](const core::ecs::Entity &entity, const Projectile &) {
-            const auto &transformComponent = gameEngine.registry.get_component<core::ge::TransformComponent>(entity);
-            transformComponent->position.x += 10 * gameEngine.delta_t;
+            std::cout << "Enemy " << static_cast<int>(enemy.id) << " died" << std::endl;
+            gameEngine.registry.kill_entity(entity);
         });
 }

@@ -14,7 +14,6 @@ Server::Server()
 
     Systems::worldSystem(*this);
     Systems::enemySystem(*this);
-    Systems::projectileSystem(*this);
 
     _networkingService.addEvent(PlayerConnect, [&](const GDTPHeader &header, const std::vector<uint8_t> &, const asio::ip::udp::endpoint &endpoint) {
         std::cout << "New connection from " << endpoint << std::endl;
@@ -52,8 +51,8 @@ Server::Server()
         if (!asPlayerConnected() || _asGameStarted)
             return;
 
-        std::cout << "Game started" << std::endl;
-        EntityFactory::createWorld(*this, "JY_map.json");
+        _asGameStarted = true;
+        const core::ecs::Entity world = EntityFactory::createWorld(*this, "JY_map.json");
         for (uint8_t i = 0; i < 4; i++) {
             if (!_players[i].has_value())
                 continue;
@@ -62,10 +61,17 @@ Server::Server()
                 *playerComponent->endpoint,
                 GameStart,
                 {});
+            const auto &worldComponent = _gameEngine.registry.get_component<World>(world);
+            const auto scroll = static_cast<uint32_t>(worldComponent->scroll);
             _networkingService.sendRequest(
                 *playerComponent->endpoint,
                 MapScroll,
-                {0, 0, 0, 0});
+                {
+                    static_cast<uint8_t>(scroll >> 24),
+                    static_cast<uint8_t>(scroll >> 16),
+                    static_cast<uint8_t>(scroll >> 8),
+                    static_cast<uint8_t>(scroll),
+                });
             const std::vector payload = {
                 playerComponent->id,
                 static_cast<uint8_t>(100 >> 24),
@@ -84,7 +90,6 @@ Server::Server()
             playerComponent->lastTimePacketReceived = std::time(nullptr);
             playerComponent->health = 3;
         }
-        _asGameStarted = true;
     });
     _networkingService.addEvent(PlayerDisconnect, [&](const GDTPHeader &, const std::vector<uint8_t> &payload, const asio::ip::udp::endpoint &)
     {
@@ -100,10 +105,10 @@ Server::Server()
 
 void Server::update()
 {
-    _gameEngine.registry.run_system<World>();
-    _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent>();
-    _gameEngine.registry.run_system<Enemy>();
-    _gameEngine.registry.run_system<Projectile>();
+    // _gameEngine.registry.run_system<World>();
+    // _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent>();
+    // _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent>();
+    // _gameEngine.registry.run_system<core::ge::TransformComponent, Enemy>();
 }
 
 bool Server::asPlayerConnected()
@@ -136,6 +141,7 @@ void Server::run()
         if (!asPlayerConnected())
             return;
         const uint8_t id = payload[0];
+        std::cout << "Player " << static_cast<int>(id) << " moved" << std::endl;
         if (id >= 4 || !_players[id].has_value())
             return;
 
@@ -167,6 +173,11 @@ void Server::run()
     while (asPlayerConnected()) {
         sf::Time elapsed = _gameEngine.clock.restart();
         _gameEngine.delta_t = elapsed.asSeconds();
+
+        for (auto &playerEntity : _gameEngine.registry.get_entities<Player>()) {
+            // Crash here
+            _gameEngine.registry.get_component<core::ge::TransformComponent>(playerEntity);
+        }
 
         update();
     }

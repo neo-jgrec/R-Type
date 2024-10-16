@@ -44,7 +44,7 @@ core::ecs::Entity EntityFactory::createWorld(
     }
     gameEngine.registry.add_component(world, std::move(worldComponent));
 
-    EntityFactory::createEnemy(server, 800);
+    // createEnemy(server, 1920);
 
     return world;
 }
@@ -60,7 +60,7 @@ core::ecs::Entity EntityFactory::createPlayer(
     const core::ecs::Entity player = gameEngine.registry.spawn_entity();
 
     const std::function onCollision = [&](const core::ecs::Entity& entity, const core::ecs::Entity&) {
-        std::cout << "Player " << static_cast<int>(id) << " collided with enemy" << std::endl;
+        std::cout << "Player " << static_cast<int>(id) << " collided" << std::endl;
 
         RequestType requestType = PlayerHit;
         {
@@ -121,6 +121,7 @@ core::ecs::Entity EntityFactory::createEnemy(Server &server, const uint32_t x)
     const sf::Vector2i position = {static_cast<int>(x), rand() % 880 + 100};
     gameEngine.registry.add_component(enemy, Network{networkingService});
     gameEngine.registry.add_component(enemy, core::ge::TransformComponent{sf::Vector2f(position), sf::Vector2f(32, 32), sf::Vector2f(1, 1), 0});
+    gameEngine.registry.add_component(enemy, core::ge::VelocityComponent{-100, 0});
     gameEngine.registry.add_component(enemy, core::ge::CollisionComponent{ENEMY, std::vector{sf::FloatRect(0, 0, 32, 32)},{
         { PLAYER, [&](const core::ecs::Entity& entity, const core::ecs::Entity&) {
             std::cout << "Enemy " << static_cast<int>(id) << " collided with player" << std::endl;
@@ -174,6 +175,7 @@ core::ecs::Entity EntityFactory::createProjectile(
     const auto &playerTransform = gameEngine.registry.get_component<core::ge::TransformComponent>(player);
 
     gameEngine.registry.add_component(projectile, core::ge::TransformComponent{playerTransform->position, sf::Vector2f(8, 8), sf::Vector2f(1, 1), 0});
+    gameEngine.registry.add_component(projectile, core::ge::VelocityComponent{200, 0});
     gameEngine.registry.add_component(projectile, core::ge::CollisionComponent{PLAYER_PROJECTILE, std::vector{sf::FloatRect(0, 0, 8, 8)},{
         { ENEMY, [&](const core::ecs::Entity& entity, const core::ecs::Entity&) {
             gameEngine.registry.kill_entity(entity);
