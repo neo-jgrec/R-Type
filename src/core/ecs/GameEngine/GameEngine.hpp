@@ -40,6 +40,7 @@ public:
         registry.register_component<core::ge::MusicComponent>();
         registry.register_component<core::ge::ClickableComponent>();
         registry.register_component<core::ge::ColorComponent>();
+        registry.register_component<core::ge::VelocityComponent>();
         registry.register_component<core::ge::CollisionComponent>();
         registry.register_component<core::ge::TextComponent>();
         registry.register_component<core::ge::SceneComponent>();
@@ -52,6 +53,7 @@ public:
         renderSystems();
         animationSystem();
         soundSystem();
+        velocitySystem();
         collisionSystem();
         clickableSystem();
         textSystem();
@@ -168,6 +170,19 @@ protected:
                 sound.isPlaying = true;
             }
         });
+    }
+
+    /**
+     * @brief Sets up the velocity system for handling entity movement.
+     *
+     * This system updates the position of entities based on their velocity components.
+     */
+    void velocitySystem() {
+        registry.add_system<ge::TransformComponent, ge::VelocityComponent>(
+            [&](ecs::Entity, ge::TransformComponent &transform, const ge::VelocityComponent &velocity) {
+                transform.position.x += velocity.dx * delta_t;
+                transform.position.y += velocity.dy * delta_t;
+            });
     }
 
     /**

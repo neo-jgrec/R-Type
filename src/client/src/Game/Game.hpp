@@ -125,6 +125,12 @@ private:
     void inputSystem(core::ecs::Registry& registry);
 
     /**
+     * @brief Updates player movements based on their velocity.
+     * @param registry The entity-component system registry managing game entities.
+     */
+    void playerMovementSystem(core::ecs::Registry& registry) const;
+
+    /**
      * @brief Updates projectile movements based on their velocity.
      * @param registry The entity-component system registry managing game entities.
      */

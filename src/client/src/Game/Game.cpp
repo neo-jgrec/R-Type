@@ -22,7 +22,10 @@ void Game::init()
     loadAssets();
 
     updateLoadingProgress(30);
-    _gameEngine.registry.register_component<VelocityComponent>();
+    _gameEngine.musicManager.loadMusic("level1", "assets/music/level1.ogg");
+    _gameEngine.musicManager.setVolume(10.0f);
+    _gameEngine.musicManager.playMusic("level1");
+
     _gameEngine.registry.register_component<InputStateComponent>();
     _gameEngine.registry.register_component<HealthComponent>();
     _gameEngine.registry.register_component<ScoreComponent>();
@@ -129,7 +132,7 @@ void Game::update()
     // events
     _gameEngine.registry.run_system<EventComponent>();
 
-    _gameEngine.registry.run_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, ShootCounterComponent, Player, core::ge::AnimationComponent>();
+    _gameEngine.registry.run_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, ShootCounterComponent, Player>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::TransformComponent>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::AnimationComponent>();
 

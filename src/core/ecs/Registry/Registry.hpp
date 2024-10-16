@@ -2,6 +2,7 @@
 #define REGISTRY_HPP
 
 #include <functional>
+#include <iostream>
 #include <memory>
 #include <typeindex>
 #include <unordered_map>
