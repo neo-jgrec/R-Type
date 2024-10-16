@@ -1,0 +1,65 @@
+name: Build
+on:
+  pull_request:
+    branches: ['main']
+
+jobs:
+  job:
+    name: ${{ matrix.os }}-${{ github.workflow }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: windows-latest
+            triplet: x64-windows
+          - os: ubuntu-latest
+            triplet: x64-linux
+
+    env:
+      VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - uses: lukka/get-cmake@latest
+
+      # Conditionally install packages for Ubuntu
+      - name: Install dependencies on Ubuntu
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y libx11-dev libxrandr-dev libxcursor-dev libxi-dev libudev-dev libgl1-mesa-dev
+        shell: bash
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        id: runvcpkg
+        with:
+          vcpkgJsonGlob: 'vcpkg.json'
+
+      - name: List $RUNNER_WORKSPACE before build
+        run: |
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            dir $RUNNER_WORKSPACE
+          else
+            find $RUNNER_WORKSPACE
+          fi
+        shell: bash
+
+      - name: Prints output of run-vcpkg's action.
+        run: echo "root='${{ steps.runvcpkg.outputs.RUNVCPKG_VCPKG_ROOT_OUT }}', triplet='${{ steps.runvcpkg.outputs.RUNVCPKG_VCPKG_DEFAULT_TRIPLET_OUT }}' "
+
+      - name: Run CMake
+        run: cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=${{ steps.runvcpkg.outputs.RUNVCPKG_VCPKG_ROOT_OUT }}/scripts/buildsystems/vcpkg.cmake
+        working-directory: ${{ github.workspace }}
+
+      - name: List $RUNNER_WORKSPACE after build
+        run: |
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            dir $RUNNER_WORKSPACE
+          else
+            find $RUNNER_WORKSPACE
+          fi
+        shell: bash
