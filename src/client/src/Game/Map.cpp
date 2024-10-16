@@ -175,18 +175,18 @@ void Game::parseMap(core::ecs::Registry& registry, const std::string& mapFilePat
                         if (tileOpt.has_value()) {
                             const auto& tile = tileOpt.value();
                             if (tile->isDestructible)
-                                registry.kill_entity(self);
+                                registry.remove_component<core::ge::DrawableComponent>(self);
                         } else {
                             std::cerr << "Error: TileComponent not found for entity." << std::endl;
                         }
-                        registry.kill_entity(other);
+                        registry.remove_component<core::ge::DrawableComponent>(other);
                     }},
                     {PLAYER_MISSILE, [&](const core::ecs::Entity self, [[maybe_unused]] const core::ecs::Entity other) {
                         const auto& tileOpt = registry.get_components<TileComponent>()[self];
                         if (tileOpt.has_value()) {
                             const auto& tile = tileOpt.value();
                             if (tile->isDestructible)
-                                registry.kill_entity(self);
+                                registry.remove_component<core::ge::DrawableComponent>(self);
                         } else {
                             std::cerr << "Error: TileComponent not found for entity." << std::endl;
                         }
@@ -196,14 +196,14 @@ void Game::parseMap(core::ecs::Registry& registry, const std::string& mapFilePat
                             auto& health = healthOpt.value();
                             health->health -= 10;
                             if (health->health <= 0)
-                                registry.kill_entity(other);
+                                registry.remove_component<core::ge::DrawableComponent>(other);
                         } else {
                             std::cerr << "Error: HealthComponent not found for entity." << std::endl;
                         }
                     }},
                     {PLAYER, [&](const core::ecs::Entity, const core::ecs::Entity other) {
                         if (isDestructible) {
-                            registry.kill_entity(other);
+                            registry.remove_component<core::ge::DrawableComponent>(other);
                         }
                     }},
                 }

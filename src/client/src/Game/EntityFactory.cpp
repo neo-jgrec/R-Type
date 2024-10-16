@@ -19,7 +19,8 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, con
     registry.add_component(player, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 17.0f), gameScale * 3.5f, 0.0f});
     registry.add_component(player, core::ge::CollisionComponent{PLAYER, {sf::FloatRect(0.0f, 0.0f, 33.0f, 17.0f)}, {
         { ENEMY, [&](const core::ecs::Entity self, [[maybe_unused]] const core::ecs::Entity other) {
-                registry.kill_entity(self);
+                // registry.kill_entity(self);
+                registry.remove_component<core::ge::DrawableComponent>(self);
                 game.releaseColor(color);
         }}}});
     registry.add_component(player, VelocityComponent{10.0f, 10.0f});
@@ -191,11 +192,11 @@ core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry& registry, cons
     registry.add_component(enemy, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 36.0f), gameScale * 3.5f, 0.0f});
     registry.add_component(enemy, core::ge::CollisionComponent{ENEMY, {sf::FloatRect(0.0f, 0.0f, 33.0f, 36.0f)}, {
         { PLAYER_PROJECTILE, [&](const core::ecs::Entity self, const core::ecs::Entity other) {
-                registry.kill_entity(self);
-                registry.kill_entity(other);
+                registry.remove_component<core::ge::DrawableComponent>(self);
+                registry.remove_component<core::ge::DrawableComponent>(other);
         }}, { PLAYER_MISSILE, [&](const core::ecs::Entity self, const core::ecs::Entity other) {
-                registry.kill_entity(self);
-                registry.kill_entity(other);
+                registry.remove_component<core::ge::DrawableComponent>(self);
+                registry.remove_component<core::ge::DrawableComponent>(other);
         }},
     }});
     registry.add_component(enemy, VelocityComponent{10.0f, 10.0f});

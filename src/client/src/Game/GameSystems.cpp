@@ -99,7 +99,7 @@ void Game::projectileMovementSystem(core::ecs::Registry& registry) const
             transform.position.x += velocity.dx;
 
             if (transform.position.x < getViewBounds(_gameEngine.window).x || transform.position.y < getViewBounds(_gameEngine.window).y) {
-                registry.kill_entity(proj);
+                registry.remove_component<core::ge::DrawableComponent>(proj);
             }
         });
 }
@@ -111,7 +111,7 @@ void Game::enemyMovementSystem(core::ecs::Registry& registry) const
             transform.position.x -= velocity.dx;
 
             if (transform.position.x < getViewBounds(_gameEngine.window).x || transform.position.y < getViewBounds(_gameEngine.window).y) {
-                registry.kill_entity(enemy);
+                registry.remove_component<core::ge::DrawableComponent>(enemy);
             }
         });
 }
@@ -149,7 +149,7 @@ void Game::eventSystem(core::ecs::Registry& registry)
                         for (auto playerEntity : playerEntities) {
                             auto playerComponent = registry.get_component<Player>(playerEntity);
                             if (playerComponent->id == playerId) {
-                                registry.kill_entity(playerEntity);
+                                registry.remove_component<core::ge::DrawableComponent>(playerEntity);
                             }
                         }
                     } else if (type == RequestType::PlayerHit) {
@@ -161,7 +161,7 @@ void Game::eventSystem(core::ecs::Registry& registry)
                                 auto healthComponent = registry.get_component<HealthComponent>(playerEntity);
                                 healthComponent->health -= 10;
                                 if (healthComponent->health <= 0) {
-                                    registry.kill_entity(playerEntity);
+                                    registry.remove_component<core::ge::DrawableComponent>(playerEntity);
                                 }
                             }
                         }
@@ -171,14 +171,14 @@ void Game::eventSystem(core::ecs::Registry& registry)
                     } else if (type == RequestType::PlayerDisconnect) {
                         auto playerId = std::get<std::uint8_t>(event.getPayload());
                         auto playerEntity = registry.get_entities<Player>()[playerId];
-                        registry.kill_entity(playerEntity);
+                        registry.remove_component<core::ge::DrawableComponent>(playerEntity);
                     } else if (type == RequestType::TileDestroy) {
                         auto tileDestroyPayload = std::get<sf::Vector2u>(event.getPayload());
                         auto tileEntities = registry.get_entities<Tile>();
                         for (auto tileEntity : tileEntities) {
                             auto tileComponent = registry.get_component<Tile>(tileEntity);
                             if (tileComponent->position == sf::Vector2f(tileDestroyPayload)) {
-                                registry.kill_entity(tileEntity);
+                                registry.remove_component<core::ge::DrawableComponent>(tileEntity);
                             }
                         }
                     } else if (type == RequestType::PlayerShoot) {
@@ -210,7 +210,7 @@ void Game::eventSystem(core::ecs::Registry& registry)
                         for (auto enemyEntity : enemyEntities) {
                             auto enemyComponent = registry.get_component<Enemy>(enemyEntity);
                             if (enemyComponent->id == enemyDiePayload) {
-                                registry.kill_entity(enemyEntity);
+                                registry.remove_component<core::ge::DrawableComponent>(enemyEntity);
                             }
                         }
                     }
