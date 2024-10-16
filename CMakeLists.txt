@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.23 FATAL_ERROR)
 project(R-Type)
 
-set(CMAKE_BUILD_TYPE Debug)
-
 # Use pthreads if possible
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads)
