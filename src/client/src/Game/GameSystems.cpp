@@ -39,14 +39,34 @@ static void sendPayloadMove(NetworkingService& networkingService, const sf::Vect
 
 void Game::inputSystem(core::ecs::Registry& registry)
 {
-    registry.add_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, ShootCounterComponent, Player>
-    ([&](core::ecs::Entity, core::ge::TransformComponent &transform, const VelocityComponent &vel, InputStateComponent &input, ShootCounterComponent &shootCounter, Player &player) {
+    registry.add_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, ShootCounterComponent, Player, core::ge::AnimationComponent>
+    ([&](core::ecs::Entity, core::ge::TransformComponent &transform, const VelocityComponent &vel, InputStateComponent &input, ShootCounterComponent &shootCounter, Player &player, core::ge::AnimationComponent &animation) {
             if (input.up) {
                 transform.position.y -= vel.dy;
+                if (animation.currentFrame == 3) {
+                    animation.elapsedTime += _gameEngine.delta_t;
+                    if (animation.elapsedTime >= animation.frameTime)
+                        animation.currentFrame = 4;
+                } else {
+                    if (animation.currentFrame == 4)
+                        return;
+                    animation.currentFrame = 3;
+                    animation.elapsedTime = 0;
+                }
                 sendPayloadMove(networkingService, transform.position, player.id);
             }
             if (input.down) {
                 transform.position.y += vel.dy;
+                if (animation.currentFrame == 1) {
+                    animation.elapsedTime += _gameEngine.delta_t;
+                    if (animation.elapsedTime >= animation.frameTime)
+                        animation.currentFrame = 0;
+                } else {
+                    if (animation.currentFrame == 0)
+                        return;
+                    animation.currentFrame = 1;
+                    animation.elapsedTime = 0;
+                }
                 sendPayloadMove(networkingService, transform.position, player.id);
             }
             if (input.left) {
@@ -56,6 +76,10 @@ void Game::inputSystem(core::ecs::Registry& registry)
             if (input.right) {
                 transform.position.x += vel.dx;
                 sendPayloadMove(networkingService, transform.position, player.id);
+            }
+            if (!input.up && !input.down && !input.left && !input.right) {
+                animation.currentFrame = 2;
+                animation.elapsedTime = 0;
             }
             if (input.fire) {
                 if (shootCounter.shotCount >= 6) {

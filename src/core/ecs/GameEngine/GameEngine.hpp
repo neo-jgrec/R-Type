@@ -114,14 +114,7 @@ protected:
      */
     void animationSystem() {
         registry.add_system<core::ge::DrawableComponent, core::ge::AnimationComponent>(
-            [this]([[maybe_unused]] core::ecs::Entity entity, core::ge::DrawableComponent &drawable, core::ge::AnimationComponent &anim) {
-                anim.elapsedTime += delta_t;
-
-                if (anim.elapsedTime >= anim.frameTime) {
-                    anim.currentFrame = (anim.currentFrame + 1) % anim.animations[anim.currentState].size();
-                    anim.elapsedTime -= anim.frameTime;
-                }
-
+            []([[maybe_unused]] core::ecs::Entity entity, core::ge::DrawableComponent &drawable, core::ge::AnimationComponent &anim) {
                 drawable.shape.setTextureRect(anim.animations[anim.currentState][anim.currentFrame]);
             });
     }
