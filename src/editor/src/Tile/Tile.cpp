@@ -7,6 +7,7 @@
 
 #include "Tile.hpp"
 #include <SFML/Graphics/Texture.hpp>
+#include <algorithm>
 
 using namespace Editor;
 
@@ -58,4 +59,30 @@ void Tile::update(
     _sprite.setTexture(texture);
     _sprite.setTextureRect(textureRect);
     _id = id;
+}
+
+void Tile::addTag(const std::string& tag) {
+    if (std::find(_tags.begin(), _tags.end(), tag) == _tags.end()) {
+        _tags.push_back(tag);
+    }
+}
+
+void Tile::removeTag(const std::string& tag) {
+    _tags.erase(std::remove(_tags.begin(), _tags.end(), tag), _tags.end());
+}
+
+const std::vector<std::string>& Tile::getTags() const {
+    return _tags;
+}
+
+bool Tile::hasTag(const std::string& tag) const {
+    return std::find(_tags.begin(), _tags.end(), tag) != _tags.end();
+}
+
+TileStyle Tile::getStyle() const {
+    return _style;
+}
+
+void Tile::setStyle(TileStyle style) {
+    _style = style;
 }

@@ -10,8 +10,17 @@
 
 #include <SFML/Graphics.hpp>
 #include <imgui.h>
+#include <vector>
+#include <string>
 
 namespace Editor {
+
+    enum class TileStyle {
+        DEFAULT,
+        DESTRUCTIBLE,
+        SPAWN,
+    };
+
     class Tile {
         public:
             Tile();
@@ -32,10 +41,19 @@ namespace Editor {
                 const sf::IntRect& textureRect,
                 int id
             );
+            void addTag(const std::string& tag);
+            void removeTag(const std::string& tag);
+            [[nodiscard]] const std::vector<std::string>& getTags() const;
+            [[nodiscard]] bool hasTag(const std::string& tag) const;
+
+            [[nodiscard]] TileStyle getStyle() const;
+            void setStyle(TileStyle style);
         private:
             sf::Sprite _sprite;
             int _id;
             bool _isDestructible = false;
+            std::vector<std::string> _tags;
+            TileStyle _style = TileStyle::DEFAULT;
     };
 }
 
