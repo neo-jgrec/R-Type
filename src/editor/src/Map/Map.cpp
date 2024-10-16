@@ -19,7 +19,7 @@ Map::Map() :
     _width(1),
     _height(1),
     _cellSize(24),
-    _editorVersion("2.0"),
+    _editorVersion("2.1"),
     _grid(1, 1, 24),
     _backgroundHeight(1)
 {
@@ -88,6 +88,14 @@ void Map::loadMapConfig(const std::string &mapPath) {
             if (x < 0 || x >= _width * _cellSize || y < 0 || y >= _height * _cellSize)
                 throw Editor::Exception("Invalid tile position: (" + std::to_string(x) + ", " + std::to_string(y) + ")");
             _tileMap[y][x]->setId(tileIndex);
+            if (tile.contains("tags")) {
+                for (const auto& tag : tile["tags"]) {
+                    if (tag.is_string())
+                        _tileMap[y][x]->addTag(tag);
+                }
+            }
+            if (tile.contains("style"))
+                _tileMap[y][x]->setStyle(static_cast<TileStyle>(tile["style"]));
             std::cout << "Tile at (" << x << ", " << y << "): " << tileIndex << std::endl;
         }
     }
@@ -148,14 +156,17 @@ void Map::saveMap(const std::string &fileName) {
     for (int y = 0; y < _height; ++y) {
         for (int x = 0; x < _width; ++x) {
             Tile& tileObject = const_cast<Tile&>(getTileObject(x, y));
-            if (tileObject.getId() != -1) {
-                json tile;
-                tile["x"] = x;
-                tile["y"] = y;
-                tile["tileIndex"] = tileObject.getId();
-                tile["isDestructible"] = tileObject.isDestructible();
-                tilesArray.push_back(tile);
-            }
+            if (tileObject.getId() == -1 && tileObject.getTags().empty())
+                continue;
+            json tile;
+            tile["x"] = x;
+            tile["y"] = y;
+            tile["tileIndex"] = tileObject.getId();
+            tile["isDestructible"] = tileObject.isDestructible();
+            for (const auto& tag : tileObject.getTags())
+                tile["tags"].push_back(tag);
+            tile["style"] = tileObject.getStyle();
+            tilesArray.push_back(tile);
         }
     }
     mapData["tiles"] = tilesArray;
@@ -258,13 +269,36 @@ void Map::draw(sf::RenderWindow& window, std::vector<sf::Vector2i>& selectedTile
     for (int y = 0; y < _height; ++y) {
         for (int x = 0; x < _width; ++x) {
             int tileId = _tileMap[y][x]->getId();
-            if (tileId == -1) continue;
-            const auto& tile = getTileById(tileId);
-            sf::Vector2f position(static_cast<float>(x * _cellSize), static_cast<float>(y * _cellSize));
-            tile.draw(window, position.x, position.y);
+            if (tileId != -1) {
+                const auto& tile = getTileById(tileId);
+                sf::Vector2f position(static_cast<float>(x * _cellSize), static_cast<float>(y * _cellSize));
+                tile.draw(window, position.x, position.y);
+            }
+            drawTileStyle(window, *_tileMap[y][x], sf::Vector2f(static_cast<float>(x * _cellSize), static_cast<float>(y * _cellSize)));
         }
     }
     _grid.draw(window, selectedTiles);
+}
+
+void Map::drawTileStyle(sf::RenderWindow& window, const Tile& tile, sf::Vector2f position) const {
+    auto cellSize = static_cast<float>(_cellSize);
+    sf::RectangleShape styleIndicator(sf::Vector2f(cellSize * 0.5f, cellSize * 0.5f));
+    styleIndicator.setPosition(position.x + cellSize * 0.25f, position.y + cellSize * 0.25f);
+    styleIndicator.setFillColor(sf::Color::Transparent);
+    switch (tile.getStyle()) {
+        case TileStyle::DESTRUCTIBLE:
+            styleIndicator.setOutlineColor(sf::Color::Red);
+            styleIndicator.setOutlineThickness(2.0f);
+            window.draw(styleIndicator);
+            break;
+        case TileStyle::SPAWN:
+            styleIndicator.setOutlineColor(sf::Color::Green);
+            styleIndicator.setOutlineThickness(2.0f);
+            window.draw(styleIndicator);
+            break;
+        default:
+            break;
+    }
 }
 
 Grid& Map::getGrid() {

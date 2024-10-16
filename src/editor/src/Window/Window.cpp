@@ -447,8 +447,6 @@ void Window::handleMouseButtonPressed(const sf::Event& event) {
 
     const Tile& tile = _map.getTileObject(gridX, gridY);
     if (_toolPanel.getSelectedTool() == Tool::SELECTOR) {
-        if (tile.getId() == -1)
-            return;
         auto it = std::find(_selectedTiles.begin(), _selectedTiles.end(), sf::Vector2i(gridX, gridY));
         if (it == _selectedTiles.end())
             _selectedTiles.emplace_back(gridX, gridY);

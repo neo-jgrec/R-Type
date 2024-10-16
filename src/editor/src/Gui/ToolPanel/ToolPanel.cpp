@@ -20,8 +20,8 @@ void ToolPanel::render() {
     ImGui::Begin("Tools");
 
     for (const auto& tool : _tools) {
-        if (_selectedTool == tool.second)
-            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.5f, 0.5f, 1.0f, 1.0f));
+        //if (_selectedTool == tool.second)
+        //    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.5f, 0.5f, 1.0f, 1.0f));
         if (ImGui::Button(tool.first.c_str())) {
             if (_selectedTool == tool.second)
                 _selectedTool = Tool::NONE;
@@ -30,8 +30,8 @@ void ToolPanel::render() {
             if (_onToolSelected)
                 _onToolSelected(_selectedTool);
         }
-        if (_selectedTool == tool.second)
-            ImGui::PopStyleColor();
+        //if (_selectedTool == tool.second)
+        //    ImGui::PopStyleColor();
         ImGui::SameLine();
     }
 
