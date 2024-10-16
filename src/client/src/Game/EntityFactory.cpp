@@ -19,7 +19,6 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, con
     registry.add_component(player, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 17.0f), gameScale * 3.5f, 0.0f});
     registry.add_component(player, core::ge::CollisionComponent{PLAYER, {sf::FloatRect(0.0f, 0.0f, 33.0f, 17.0f)}, {
         { ENEMY, [&](const core::ecs::Entity self, [[maybe_unused]] const core::ecs::Entity other) {
-                // registry.kill_entity(self);
                 registry.remove_component<core::ge::DrawableComponent>(self);
                 game.releaseColor(color);
         }}}});
@@ -136,7 +135,7 @@ core::ecs::Entity EntityFactory::createPlayerMissile(core::ecs::Registry &regist
 
     registry.add_component(missile, core::ge::TransformComponent{startPosition, missileSize, scale, 0.0f});
     registry.add_component(missile, core::ge::CollisionComponent{PLAYER_MISSILE, {sf::FloatRect(0.0f, 0.0f, 34.5f, 12.0f)}});
-    registry.add_component(missile, VelocityComponent{10.0f, 10.0f});
+    registry.add_component(missile, VelocityComponent{20.0f, 20.0f});
     registry.add_component(missile, DamageComponent{20});
     registry.add_component(missile, Projectile{});
     registry.add_component(missile, HealthComponent{50});
