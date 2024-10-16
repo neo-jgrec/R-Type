@@ -25,7 +25,7 @@ Here's an example of a minimal map file:
         "height": 20,
         "path": "assets/Background/image.png"
     },
-    "editorVersion": "2.0",
+    "editorVersion": "2.1",
     "name": "Example Map",
     "cellSize": 24,
     "height": 20,
@@ -42,12 +42,17 @@ Here's an example of a minimal map file:
         {
             "isDestructible": false,
             "tileIndex": 107,
+            "style": 2,
+            "tags": [
+                "spawn"
+            ],
             "x": 0,
             "y": 0
         },
         {
             "isDestructible": true,
             "tileIndex": 107,
+            "style": 0,
             "x": 1,
             "y": 0
         }
