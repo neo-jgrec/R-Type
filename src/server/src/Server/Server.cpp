@@ -12,10 +12,9 @@ Server::Server()
     _gameEngine.registry.register_component<Enemy>();
     _gameEngine.registry.register_component<Projectile>();
 
-    Systems::worldSystem(_gameEngine.registry, _players);
-    Systems::playerSystem(_gameEngine.registry, _networkingService, _players);
-    Systems::enemySystem(_gameEngine.registry, _players);
-    Systems::projectileSystem(_gameEngine.registry);
+    Systems::worldSystem(*this);
+    Systems::enemySystem(*this);
+    Systems::projectileSystem(*this);
 
     _networkingService.addEvent(PlayerConnect, [&](const GDTPHeader &header, const std::vector<uint8_t> &, const asio::ip::udp::endpoint &endpoint) {
         std::cout << "New connection from " << endpoint << std::endl;
@@ -25,7 +24,7 @@ Server::Server()
             if (_players[i].has_value()) {
                 continue;
             }
-            _players[i].emplace(EntityFactory::createPlayer(_gameEngine.registry, _networkingService, _players, endpoint, i));
+            _players[i].emplace(EntityFactory::createPlayer(*this, endpoint, i));
             _networkingService.sendRequestResponse(endpoint, header, {i});
             break;
         }
@@ -48,21 +47,13 @@ Server::Server()
                 PlayerConnect,
                 {i});
         }
-        for (const auto &playerEntity : _players) {
-            if (!playerEntity.has_value())
-                continue;
-            const auto &playerComponent = _gameEngine.registry.get_component<Player>(playerEntity.value());
-
-        }
-
     });
     _networkingService.addEvent(GameStart, [&](const GDTPHeader &, const std::vector<uint8_t> &, const asio::ip::udp::endpoint &) {
-        if (!asPlayerConnected())
+        if (!asPlayerConnected() || _asGameStarted)
             return;
-        if (_asGameStarted)
-            return;
+
         std::cout << "Game started" << std::endl;
-        _world = EntityFactory::createWorld(_gameEngine.registry, _networkingService, _players, "JY_map.json");
+        EntityFactory::createWorld(*this, "JY_map.json");
         for (uint8_t i = 0; i < 4; i++) {
             if (!_players[i].has_value())
                 continue;
@@ -109,11 +100,9 @@ Server::Server()
 
 void Server::update()
 {
-    std::cout << "↻ Updating server" << std::endl;
-    _gameEngine.registry.run_system<Network, World>();
+    _gameEngine.registry.run_system<World>();
     _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent>();
-    _gameEngine.registry.run_system<Network, Player>();
-    _gameEngine.registry.run_system<Network, Enemy>();
+    _gameEngine.registry.run_system<Enemy>();
     _gameEngine.registry.run_system<Projectile>();
 }
 
@@ -122,26 +111,27 @@ bool Server::asPlayerConnected()
     return std::ranges::any_of(_players, [](const auto &entity) { return entity.has_value(); });
 }
 
+void Server::sendRequestToPlayers(const uint8_t requestType, const std::vector<uint8_t> &payload)
+{
+    for (const auto &playerEntity : _players) {
+        if (!playerEntity.has_value())
+            continue;
+        const auto &playerComponent = _gameEngine.registry.get_component<Player>(playerEntity.value());
+        _networkingService.sendRequest(
+            *playerComponent->endpoint,
+            requestType,
+            payload);
+    }
+}
+
 void Server::run()
 {
     _networkingService.run();
 
     std::cout << "Server started" << std::endl;
-    while (!asPlayerConnected()) {
-        #ifdef _WIN32
-            _sleep(1000);
-        #else
-            sleep(1);
-        #endif
-    }
+    while (!asPlayerConnected()) {}
     std::cout << "Players connected" << std::endl;
-    while (!_asGameStarted) {
-        #ifdef _WIN32
-            _sleep(1000);
-        #else
-            sleep(1);
-        #endif
-    }
+    while (!_asGameStarted) {}
     _networkingService.addEvent(PlayerMove, [&](const GDTPHeader &, const std::vector<uint8_t> &payload, const asio::ip::udp::endpoint &) {
         if (!asPlayerConnected())
             return;
@@ -156,18 +146,8 @@ void Server::run()
             transformComponent->position = {static_cast<float>(x), static_cast<float>(y)};
         }
 
-        for (const auto &playerEntity : _players) {
-            if (!playerEntity.has_value())
-                continue;
-            const auto &playerComponent = _gameEngine.registry.get_component<Player>(playerEntity.value());
-            std::cout << "Sending player move to " << static_cast<int>(playerComponent->id) << std::endl;
-            _networkingService.sendRequest(
-                *playerComponent->endpoint,
-                PlayerMove,
-                payload);
-            if (playerComponent->id == id)
-                playerComponent->lastTimePacketReceived = std::time(nullptr);
-        }
+        _gameEngine.registry.get_component<Player>(_players[id].value())->lastTimePacketReceived = std::time(nullptr);
+        sendRequestToPlayers(PlayerMove, payload);
     });
     _networkingService.addEvent(PlayerShoot, [&](const GDTPHeader &, const std::vector<uint8_t> &payload, const asio::ip::udp::endpoint &)
     {
@@ -178,27 +158,17 @@ void Server::run()
             return;
 
         static uint8_t projectileId = 0;
-        EntityFactory::createProjectile(_gameEngine.registry, _players[id].value(), projectileId++);
+        EntityFactory::createProjectile(*this, _players[id].value(), projectileId++);
         std::cout << "Player " << static_cast<int>(id) << " shot" << std::endl;
 
-        for (const auto &playerEntity : _players) {
-            if (!playerEntity.has_value())
-                continue;
-            const auto &playerComponent = _gameEngine.registry.get_component<Player>(playerEntity.value());
-            _networkingService.sendRequest(
-                *playerComponent->endpoint,
-                PlayerShoot,
-                payload);
-        }
+        sendRequestToPlayers(PlayerShoot, payload);
     });
     std::cout << "Game started" << std::endl;
     while (asPlayerConnected()) {
+        sf::Time elapsed = _gameEngine.clock.restart();
+        _gameEngine.delta_t = elapsed.asSeconds();
+
         update();
-        #ifdef _WIN32
-            _sleep(1000);
-        #else
-            sleep(1);
-        #endif
     }
 
     std::cout << "Server stopped" << std::endl;

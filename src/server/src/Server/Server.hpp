@@ -10,9 +10,6 @@ private:
     core::GameEngine _gameEngine{false};
     NetworkingService _networkingService{1111};
 
-    core::ecs::Entity _connectionHub;
-    core::ecs::Entity _world;
-
     std::array<std::optional<core::ecs::Entity>, 4> _players;
 
     bool _asGameStarted = false;
@@ -24,7 +21,12 @@ private:
 public:
     Server();
 
+    core::GameEngine &getGameEngine() { return _gameEngine; }
+    NetworkingService &getNetworkingService() { return _networkingService; }
+
     void run();
+
+    void sendRequestToPlayers(uint8_t requestType, const std::vector<uint8_t> &payload);
 };
 
 #endif //SERVER_HPP

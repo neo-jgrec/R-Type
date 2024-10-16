@@ -1,102 +1,55 @@
 #include "Systems.hpp"
 
+#include "Server.hpp"
 #include "Components.hpp"
 #include "EntityFactory.hpp"
-#include "../../../core/ecs/GameEngine/GameEngineComponents.hpp"
 #include "../../../game/RequestType.hpp"
 
-
-void Systems::worldSystem(core::ecs::Registry &registry, const std::array<std::optional<core::ecs::Entity>, 4> &players)
+void Systems::worldSystem(Server &server)
 {
-    registry.add_system<Network, World>(
-        [&](const core::ecs::Entity &, const Network &network, World &world) {
-            world.scroll += world.speed;
+    core::GameEngine &gameEngine = server.getGameEngine();
 
-            const std::vector payload = {
-                static_cast<uint8_t>(world.scroll >> 24),
-                static_cast<uint8_t>(world.scroll >> 16),
-                static_cast<uint8_t>(world.scroll >> 8),
-                static_cast<uint8_t>(world.scroll)
-            };
+    gameEngine.registry.add_system<World>(
+        [&](const core::ecs::Entity &, World &world) {
+            static float nextScrollUpdate = 0;
 
-            for (const auto &playerEntity : registry.get_entities<Player>()) {
-                const auto &playerComponent = registry.get_component<Player>(playerEntity);
+            world.scroll += static_cast<float>(world.speed) * gameEngine.delta_t;
 
-                network.service.sendRequest(
-                    *playerComponent->endpoint,
-                    MapScroll,
-                    payload);
-            }
+            if (world.scroll < nextScrollUpdate)
+                return;
 
-            if (rand() % 100 < 25)
-                EntityFactory::createEnemy(registry, network.service, players, world.scroll * 100 + 2000);
+            if (rand() % 100 > 25)
+                return;
+
+            EntityFactory::createEnemy(server, static_cast<uint32_t>(world.scroll));
         });
 }
 
-void Systems::playerSystem(core::ecs::Registry &registry, NetworkingService &networkingService, std::array<std::optional<core::ecs::Entity>, 4> &players)
+void Systems::enemySystem(Server &server)
 {
-    registry.add_system<Network, Player>(
-        [&](const core::ecs::Entity &entity, const Network &network, Player &player) {
-            // if (player.lastTimePacketReceived + 5 < std::time(nullptr)) {
-            //     for (auto &playerEntity : players) {
-            //         if (!playerEntity.has_value())
-            //             continue;
-            //
-            //         const auto &playerComponent = registry.get_component<Player>(playerEntity.value());
-            //         network.service.sendRequest(
-            //             playerComponent->endpoint,
-            //             PlayerDisconnect,
-            //             {player.id});
-            //     }
-            //
-            //     registry.kill_entity(entity);
-            //     players[player.id].reset();
-            // }
-        });
-}
+    core::GameEngine &gameEngine = server.getGameEngine();
 
-void Systems::enemySystem(core::ecs::Registry &registry, const std::array<std::optional<core::ecs::Entity>, 4> &players)
-{
-    registry.add_system<Network, Enemy>(
-        [&](const core::ecs::Entity &entity, const Network &network, const Enemy &enemy) {
-            const auto &transformComponent = registry.get_component<core::ge::TransformComponent>(entity);
-            if (transformComponent->position.x < 75) {
-                registry.kill_entity(entity);
+    gameEngine.registry.add_system<Enemy>(
+        [&](const core::ecs::Entity &entity, const Enemy &enemy) {
+            const auto &transformComponent = gameEngine.registry.get_component<core::ge::TransformComponent>(entity);
+            if (transformComponent->position.x < 0.f) {
+                std::cout << "Enemy " << static_cast<int>(enemy.id) << " died" << std::endl;
+                gameEngine.registry.kill_entity(entity);
                 return;
             }
-            transformComponent->position.x -= 75;
-
-            const sf::Vector2i position = {static_cast<int>(transformComponent->position.x), static_cast<int>(transformComponent->position.y)};
-            const std::vector payload = {
-                enemy.id,
-                static_cast<uint8_t>(position.x >> 24),
-                static_cast<uint8_t>(position.x >> 16),
-                static_cast<uint8_t>(position.x >> 8),
-                static_cast<uint8_t>(position.x),
-                static_cast<uint8_t>(position.y >> 24),
-                static_cast<uint8_t>(position.y >> 16),
-                static_cast<uint8_t>(position.y >> 8),
-                static_cast<uint8_t>(position.y)
-            };
-
-            for (auto &playerEntity : players) {
-                if (!playerEntity.has_value())
-                    continue;
-
-                const auto &playerComponent = registry.get_component<Player>(playerEntity.value());
-                network.service.sendRequest(
-                    *playerComponent->endpoint,
-                    EnemyMove,
-                    payload);
-            }
+            
+            std::cout << "Enemy " << static_cast<int>(enemy.id) << " moved to " << transformComponent->position.x << std::endl;
+            transformComponent->position.x -= 10 * gameEngine.delta_t;
         });
 }
 
-void Systems::projectileSystem(core::ecs::Registry &registry)
+void Systems::projectileSystem(Server &server)
 {
-    registry.add_system<Projectile>(
+    core::GameEngine &gameEngine = server.getGameEngine();
+
+    gameEngine.registry.add_system<Projectile>(
         [&](const core::ecs::Entity &entity, const Projectile &) {
-            const auto &transformComponent = registry.get_component<core::ge::TransformComponent>(entity);
-            transformComponent->position.x += 10;
+            const auto &transformComponent = gameEngine.registry.get_component<core::ge::TransformComponent>(entity);
+            transformComponent->position.x += 10 * gameEngine.delta_t;
         });
 }

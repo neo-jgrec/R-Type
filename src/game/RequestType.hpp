@@ -1,12 +1,12 @@
 #pragma once
 
 enum RequestType {
-    PlayerConnect = 0,//
-    PlayerDisconnect = 1,//
-    GameStart = 2,//
-    GameOver = 3,//n
-    MapScroll = 4,//
-    TileDestroy = 5,//
+    PlayerConnect = 0,
+    PlayerDisconnect = 1,
+    GameStart = 2,
+    GameOver = 3,
+    MapScroll = 4,
+    TileDestroy = 5,
     PlayerShoot = 6,
     PlayerMove = 7,
     PlayerCollide = 8,

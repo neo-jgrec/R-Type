@@ -8,8 +8,8 @@ struct Network {
 };
 
 struct World {
-    uint8_t speed = 0;
-    uint32_t scroll = 0;
+    uint32_t speed = 0;
+    float scroll = 0;
 
     std::pair<uint32_t, uint32_t> size;
 };

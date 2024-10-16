@@ -1,14 +1,12 @@
 #ifndef SYSTEMS_HPP
 #define SYSTEMS_HPP
 
-#include "../../../core/ecs/Registry/Registry.hpp"
-#include "../../../core/network/NetworkService.hpp"
+#include "Server.hpp"
 
 namespace Systems {
-    void worldSystem(core::ecs::Registry &registry, const std::array<std::optional<core::ecs::Entity>, 4> &players);
-    void playerSystem(core::ecs::Registry &registry, NetworkingService &networkingService, std::array<std::optional<core::ecs::Entity>, 4> &players);
-    void enemySystem(core::ecs::Registry &registry, const std::array<std::optional<core::ecs::Entity>, 4> &players);
-    void projectileSystem(core::ecs::Registry &registry);
+    void worldSystem(Server &server);
+    void enemySystem(Server &server);
+    void projectileSystem(Server &server);
 };
 
 #endif //SYSTEMS_HPP
