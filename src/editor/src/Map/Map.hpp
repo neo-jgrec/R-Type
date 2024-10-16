@@ -93,6 +93,8 @@ namespace Editor {
         int _backgroundHeight;
 
         void resizeMap();
+
+        void drawTileStyle(sf::RenderWindow& window, const Tile& tile, sf::Vector2f position) const;
     };
 }
 
