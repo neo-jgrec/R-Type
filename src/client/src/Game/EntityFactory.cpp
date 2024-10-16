@@ -22,7 +22,7 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, con
                 registry.kill_entity(self);
                 game.releaseColor(color);
         }}}});
-    registry.add_component(player, VelocityComponent{10.0f, 10.0f});
+    registry.add_component(player, core::ge::VelocityComponent{0, 0});
     if (self) {
         registry.add_component(player, InputStateComponent{});
     }
@@ -87,7 +87,7 @@ core::ecs::Entity EntityFactory::createPlayerProjectile(core::ecs::Registry& reg
 
     registry.add_component(projectile, core::ge::TransformComponent{startPosition, projectileSize, gameScale * 4.0f, 0.0f});
     registry.add_component(projectile, core::ge::CollisionComponent{PLAYER_PROJECTILE, {sf::FloatRect(0.0f, 0.0f, 18.0f, 5.0f)}});
-    registry.add_component(projectile, VelocityComponent{20.0f, 20.0f});
+    registry.add_component(projectile, core::ge::VelocityComponent{100, 0});
     registry.add_component(projectile, DamageComponent{10});
     registry.add_component(projectile, Projectile{});
 
@@ -135,7 +135,7 @@ core::ecs::Entity EntityFactory::createPlayerMissile(core::ecs::Registry &regist
 
     registry.add_component(missile, core::ge::TransformComponent{startPosition, missileSize, scale, 0.0f});
     registry.add_component(missile, core::ge::CollisionComponent{PLAYER_MISSILE, {sf::FloatRect(0.0f, 0.0f, 34.5f, 12.0f)}});
-    registry.add_component(missile, VelocityComponent{10.0f, 10.0f});
+    registry.add_component(missile, core::ge::VelocityComponent{100, 0});
     registry.add_component(missile, DamageComponent{20});
     registry.add_component(missile, Projectile{});
     registry.add_component(missile, HealthComponent{50});
@@ -198,7 +198,7 @@ core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry& registry, cons
                 registry.kill_entity(other);
         }},
     }});
-    registry.add_component(enemy, VelocityComponent{10.0f, 10.0f});
+    registry.add_component(enemy, core::ge::VelocityComponent{-100, 0});
     registry.add_component(enemy, HealthComponent{10});
     registry.add_component(enemy, DamageComponent{10});
     registry.add_component(enemy, Enemy{

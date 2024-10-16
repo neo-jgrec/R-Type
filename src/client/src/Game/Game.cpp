@@ -21,7 +21,6 @@ void Game::init()
     // TODO: load every level music
     _gameEngine.musicManager.playMusic("level1");
 
-    _gameEngine.registry.register_component<VelocityComponent>();
     _gameEngine.registry.register_component<InputStateComponent>();
     _gameEngine.registry.register_component<HealthComponent>();
     _gameEngine.registry.register_component<ScoreComponent>();
@@ -44,6 +43,7 @@ void Game::init()
     initMainMenu();
 
     inputSystem(_gameEngine.registry);
+    playerMovementSystem(_gameEngine.registry);
     projectileMovementSystem(_gameEngine.registry);
     enemyMovementSystem(_gameEngine.registry);
     viewSystem(_gameEngine.registry);
@@ -137,21 +137,19 @@ void Game::update()
     // events
     _gameEngine.registry.run_system<EventComponent>();
 
-    _gameEngine.registry.run_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, ShootCounterComponent, Player>();
+    _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent, InputStateComponent, ShootCounterComponent, Player>();
+    _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent>();
+    _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent, Player>();
+
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::TransformComponent>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::AnimationComponent>();
 
     // Sound
     _gameEngine.registry.run_system<core::ge::SoundComponent>();
 
-    // Projectile movement
-    _gameEngine.registry.run_system<core::ge::TransformComponent, VelocityComponent, Projectile>();
-
-    // Enemy movement
-    if (_gameEngine.currentScene == static_cast<int>(GameState::Playing))
-        _gameEngine.registry.run_system<core::ge::TransformComponent, VelocityComponent, Enemy>();
-
     // Collision detection
+    _gameEngine.registry.run_system<core::ge::TransformComponent, Enemy>();
+    _gameEngine.registry.run_system<core::ge::TransformComponent, Projectile>();
     _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent, core::ge::SceneComponent>();
 
     // Clickable

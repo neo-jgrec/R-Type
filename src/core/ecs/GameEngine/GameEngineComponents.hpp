@@ -153,6 +153,18 @@ struct TextureComponent {
 };
 
 /**
+* @struct VelocityComponent
+* @brief Holds velocity data for an entity's movement.
+*
+* The velocity component stores the change in position (dx, dy) for an entity per update cycle.
+* This is typically used for movement systems to modify an entity's position.
+*/
+struct VelocityComponent {
+    float dx;
+    float dy;
+};
+
+/**
  * @struct CollisionComponent
  * @brief Manages collision data and responses for an entity.
  * 

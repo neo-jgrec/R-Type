@@ -39,24 +39,13 @@ static void sendPayloadMove(NetworkingService& networkingService, const sf::Vect
 
 void Game::inputSystem(core::ecs::Registry& registry)
 {
-    registry.add_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, ShootCounterComponent, Player>
-    ([&](core::ecs::Entity, core::ge::TransformComponent &transform, const VelocityComponent &vel, InputStateComponent &input, ShootCounterComponent &shootCounter, Player &player) {
-            if (input.up) {
-                transform.position.y -= vel.dy;
-                sendPayloadMove(networkingService, transform.position, player.id);
-            }
-            if (input.down) {
-                transform.position.y += vel.dy;
-                sendPayloadMove(networkingService, transform.position, player.id);
-            }
-            if (input.left) {
-                transform.position.x -= vel.dx;
-                sendPayloadMove(networkingService, transform.position, player.id);
-            }
-            if (input.right) {
-                transform.position.x += vel.dx;
-                sendPayloadMove(networkingService, transform.position, player.id);
-            }
+    registry.add_system<core::ge::TransformComponent, core::ge::VelocityComponent, InputStateComponent, ShootCounterComponent, Player>(
+        [&](core::ecs::Entity, core::ge::TransformComponent &transform, core::ge::VelocityComponent &vel, InputStateComponent &input, ShootCounterComponent &shootCounter, Player &player) {
+            vel = core::ge::VelocityComponent{
+            static_cast<float>(input.left * -200 + input.right * 200),
+            static_cast<float>(input.up * -200 + input.down * 200)
+            };
+
             if (input.fire) {
                 if (shootCounter.shotCount >= 6) {
                     EntityFactory::createPlayerMissile(registry, transform, gameScale);
@@ -72,9 +61,10 @@ void Game::inputSystem(core::ecs::Registry& registry)
                     "127.0.0.1",
                     1111,
                     PlayerShoot,
-                    std::vector<uint8_t>{static_cast<uint8_t>(player.id)}
+                    {player.id}
                 );
             }
+
             if (transform.position.x < getViewBounds(_gameEngine.window).x) {
                 transform.position.x = getViewBounds(_gameEngine.window).x;
                 sendPayloadMove(networkingService, transform.position, player.id);
@@ -92,27 +82,33 @@ void Game::inputSystem(core::ecs::Registry& registry)
     });
 }
 
+void Game::playerMovementSystem(core::ecs::Registry& registry) const
+{
+    registry.add_system<core::ge::TransformComponent, core::ge::VelocityComponent, Player>(
+        [&](core::ecs::Entity, const core::ge::TransformComponent &transform, const core::ge::VelocityComponent &vel, const Player &player) {
+            if (vel.dx == 0 || vel.dy == 0)
+                return;
+            sendPayloadMove(networkingService, transform.position, player.id);
+        });
+}
+
 void Game::projectileMovementSystem(core::ecs::Registry& registry) const
 {
-    registry.add_system<core::ge::TransformComponent, VelocityComponent, Projectile>(
-        [&](core::ecs::Entity proj, core::ge::TransformComponent &transform, VelocityComponent &velocity, Projectile&) {
-            transform.position.x += velocity.dx;
-
-            if (transform.position.x < getViewBounds(_gameEngine.window).x || transform.position.y < getViewBounds(_gameEngine.window).y) {
-                registry.kill_entity(proj);
-            }
+    registry.add_system<core::ge::TransformComponent, Projectile>(
+        [&](const core::ecs::Entity entity, const core::ge::TransformComponent &transform, Projectile&) {
+            if (transform.position.x < getViewBounds(_gameEngine.window).x || transform.position.y < getViewBounds(_gameEngine.window).y)
+                return;
+            registry.kill_entity(entity);
         });
 }
 
 void Game::enemyMovementSystem(core::ecs::Registry& registry) const
 {
-    registry.add_system<core::ge::TransformComponent, VelocityComponent, Enemy>(
-        [&](core::ecs::Entity enemy, core::ge::TransformComponent &transform, VelocityComponent &velocity, Enemy&) {
-            transform.position.x -= velocity.dx;
-
-            if (transform.position.x < getViewBounds(_gameEngine.window).x || transform.position.y < getViewBounds(_gameEngine.window).y) {
-                registry.kill_entity(enemy);
-            }
+    registry.add_system<core::ge::TransformComponent, Enemy>(
+        [&](const core::ecs::Entity entity, const core::ge::TransformComponent &transform, Enemy&) {
+            if (transform.position.x < getViewBounds(_gameEngine.window).x || transform.position.y < getViewBounds(_gameEngine.window).y)
+                return;
+            registry.kill_entity(entity);
         });
 }
 
