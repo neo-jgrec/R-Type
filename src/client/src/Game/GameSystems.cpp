@@ -172,7 +172,7 @@ void Game::eventSystem(core::ecs::Registry& registry)
                         for (auto playerEntity : playerEntities) {
                             auto playerComponent = registry.get_component<Player>(playerEntity);
                             if (playerComponent->id == playerId) {
-                                registry.remove_component<core::ge::DrawableComponent>(playerEntity);
+                                registry.kill_entity(playerEntity);
                             }
                         }
                     } else if (type == RequestType::PlayerHit) {
@@ -184,7 +184,7 @@ void Game::eventSystem(core::ecs::Registry& registry)
                                 auto healthComponent = registry.get_component<HealthComponent>(playerEntity);
                                 healthComponent->health -= 10;
                                 if (healthComponent->health <= 0) {
-                                    registry.remove_component<core::ge::DrawableComponent>(playerEntity);
+                                    registry.kill_entity(playerEntity);
                                 }
                             }
                         }
@@ -194,14 +194,14 @@ void Game::eventSystem(core::ecs::Registry& registry)
                     } else if (type == RequestType::PlayerDisconnect) {
                         auto playerId = std::get<std::uint8_t>(event.getPayload());
                         auto playerEntity = registry.get_entities<Player>()[playerId];
-                        registry.remove_component<core::ge::DrawableComponent>(playerEntity);
+                        registry.kill_entity(playerEntity);
                     } else if (type == RequestType::TileDestroy) {
                         auto tileDestroyPayload = std::get<sf::Vector2u>(event.getPayload());
                         auto tileEntities = registry.get_entities<Tile>();
                         for (auto tileEntity : tileEntities) {
                             auto tileComponent = registry.get_component<Tile>(tileEntity);
                             if (tileComponent->position == sf::Vector2f(tileDestroyPayload)) {
-                                registry.remove_component<core::ge::DrawableComponent>(tileEntity);
+                                registry.kill_entity(tileEntity);
                             }
                         }
                     } else if (type == RequestType::PlayerShoot) {
