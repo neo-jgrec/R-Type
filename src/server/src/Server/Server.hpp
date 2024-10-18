@@ -4,6 +4,7 @@
 #include "../../../core/ecs/GameEngine/GameEngine.hpp"
 #include "../../../core/network/NetworkService.hpp"
 #include "../../../core/ecs/Entity/Entity.hpp"
+#include <shared_mutex>
 
 class Server {
 private:
@@ -15,6 +16,8 @@ private:
     bool _asGameStarted = false;
     bool _isRunning = true;
 
+    mutable std::shared_mutex registry_mutex;
+
     bool asPlayerConnected();
 
     void update();
@@ -23,10 +26,12 @@ public:
 
     core::GameEngine &getGameEngine() { return _gameEngine; }
     NetworkingService &getNetworkingService() { return _networkingService; }
+    std::shared_mutex &getRegistryMutex() const { return registry_mutex; }
 
     void run();
 
     void sendRequestToPlayers(uint8_t requestType, const std::vector<uint8_t> &payload);
+    void sendRequestToPlayers(uint8_t requestType, const std::vector<uint8_t> &payload, uint8_t selfPlayer);
 };
 
 #endif //SERVER_HPP

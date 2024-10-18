@@ -54,6 +54,8 @@ core::ecs::Entity EntityFactory::createPlayer(
     const asio::ip::udp::endpoint &endpoint,
     const uint8_t id)
 {
+    std::lock_guard lock(server.getRegistryMutex());
+
     core::GameEngine &gameEngine = server.getGameEngine();
     NetworkingService &networkingService = server.getNetworkingService();
 
@@ -168,6 +170,8 @@ core::ecs::Entity EntityFactory::createProjectile(
     const core::ecs::Entity &player,
     const uint8_t id)
 {
+    std::lock_guard lock(server.getRegistryMutex());
+
     core::GameEngine &gameEngine = server.getGameEngine();
 
     const core::ecs::Entity projectile = gameEngine.registry.spawn_entity();

@@ -48,10 +48,11 @@ Server::Server()
         }
     });
     _networkingService.addEvent(GameStart, [&](const GDTPHeader &, const std::vector<uint8_t> &, const asio::ip::udp::endpoint &) {
-        if (!asPlayerConnected() || _asGameStarted)
+        static bool asGameStarted = false;
+        if (!asPlayerConnected() || asGameStarted)
             return;
 
-        _asGameStarted = true;
+        asGameStarted = true;
         const core::ecs::Entity world = EntityFactory::createWorld(*this, "JY_map.json");
         for (uint8_t i = 0; i < 4; i++) {
             if (!_players[i].has_value())
@@ -89,6 +90,7 @@ Server::Server()
                 payload);
             playerComponent->lastTimePacketReceived = std::time(nullptr);
             playerComponent->health = 3;
+            _asGameStarted = true;
         }
     });
     _networkingService.addEvent(PlayerDisconnect, [&](const GDTPHeader &, const std::vector<uint8_t> &payload, const asio::ip::udp::endpoint &)
@@ -105,10 +107,12 @@ Server::Server()
 
 void Server::update()
 {
-    // _gameEngine.registry.run_system<World>();
-    // _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent>();
-    // _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent>();
-    // _gameEngine.registry.run_system<core::ge::TransformComponent, Enemy>();
+    std::lock_guard lock(registry_mutex);
+
+    _gameEngine.registry.run_system<World>();
+    _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent>();
+    _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent>();
+    _gameEngine.registry.run_system<core::ge::TransformComponent, Enemy>();
 }
 
 bool Server::asPlayerConnected()
@@ -129,14 +133,33 @@ void Server::sendRequestToPlayers(const uint8_t requestType, const std::vector<u
     }
 }
 
+void Server::sendRequestToPlayers(const uint8_t requestType, const std::vector<uint8_t> &payload, uint8_t selfPlayer)
+{
+    for (const auto &playerEntity : _players) {
+        if (!playerEntity.has_value())
+            continue;
+        const auto &playerComponent = _gameEngine.registry.get_component<Player>(playerEntity.value());
+        if (playerComponent->id == selfPlayer)
+            continue;
+        _networkingService.sendRequest(
+            *playerComponent->endpoint,
+            requestType,
+            payload);
+    }
+}
+
 void Server::run()
 {
     _networkingService.run();
 
     std::cout << "Server started" << std::endl;
-    while (!asPlayerConnected()) {}
+    while (!asPlayerConnected()) {
+        usleep(1);
+    }
     std::cout << "Players connected" << std::endl;
-    while (!_asGameStarted) {}
+    while (!_asGameStarted) {
+        usleep(1);
+    }
     _networkingService.addEvent(PlayerMove, [&](const GDTPHeader &, const std::vector<uint8_t> &payload, const asio::ip::udp::endpoint &) {
         if (!asPlayerConnected())
             return;
@@ -174,12 +197,8 @@ void Server::run()
         sf::Time elapsed = _gameEngine.clock.restart();
         _gameEngine.delta_t = elapsed.asSeconds();
 
-        for (auto &playerEntity : _gameEngine.registry.get_entities<Player>()) {
-            // Crash here
-            _gameEngine.registry.get_component<core::ge::TransformComponent>(playerEntity);
-        }
-
         update();
+        usleep(1);
     }
 
     std::cout << "Server stopped" << std::endl;
