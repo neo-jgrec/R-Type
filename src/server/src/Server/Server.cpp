@@ -19,33 +19,32 @@ Server::Server()
         std::cout << "New connection from " << endpoint << std::endl;
 
         uint8_t i = 0;
-        for (; i < 4; i++) {
-            if (_players[i].has_value()) {
-                continue;
-            }
-            _players[i].emplace(EntityFactory::createPlayer(*this, endpoint, i));
-            _networkingService.sendRequestResponse(endpoint, header, {i});
-            break;
-        }
+        for (; i < 4; i++)
+            if (!_players[i].has_value())
+                break;
         if (i == 4)
             return;
 
+        _players[i].emplace(EntityFactory::createPlayer(*this, endpoint, i));
         for (const auto &playerEntity : _players) {
             if (!playerEntity.has_value())
                 continue;
             const auto &playerComponent = _gameEngine.registry.get_component<Player>(playerEntity.value());
+            if (playerComponent->id == i)
+                continue;
             // send all players to the new player
-            if (playerComponent->id != i)
-                _networkingService.sendRequest(
-                    endpoint,
-                    PlayerConnect,
-                    {playerComponent->id});
+            _networkingService.sendRequest(
+                endpoint,
+                PlayerConnect,
+                {playerComponent->id});
             // send the new player to all players
             _networkingService.sendRequest(
                 *playerComponent->endpoint,
                 PlayerConnect,
                 {i});
         }
+        // send the new player to himself
+        _networkingService.sendRequestResponse(endpoint, header, {i});
     });
     _networkingService.addEvent(GameStart, [&](const GDTPHeader &, const std::vector<uint8_t> &, const asio::ip::udp::endpoint &) {
         static bool asGameStarted = false;
