@@ -15,7 +15,8 @@ Server::Server()
     Systems::worldSystem(_gameEngine.registry, _players);
     Systems::playerSystem(_gameEngine.registry, _networkingService, _players);
     Systems::enemySystem(_gameEngine.registry, _players);
-    Systems::projectileSystem(_gameEngine.registry);
+    Systems::projectileSystem(_gameEngine.registry);        std::cout << "Server is processing..." << std::endl;
+
 
     _networkingService.addEvent(PlayerConnect, [&](const GDTPHeader &header, const std::vector<uint8_t> &, const asio::ip::udp::endpoint &endpoint) {
         std::cout << "New connection from " << endpoint << std::endl;
@@ -128,6 +129,7 @@ void Server::run()
 
     std::cout << "Server started" << std::endl;
     while (!asPlayerConnected()) {
+        _shell.update();
         #ifdef _WIN32
             _sleep(1000);
         #else
@@ -136,6 +138,7 @@ void Server::run()
     }
     std::cout << "Players connected" << std::endl;
     while (!_asGameStarted) {
+        _shell.update();
         #ifdef _WIN32
             _sleep(1000);
         #else
@@ -194,6 +197,7 @@ void Server::run()
     std::cout << "Game started" << std::endl;
     while (asPlayerConnected()) {
         update();
+        _shell.update();
         #ifdef _WIN32
             _sleep(1000);
         #else

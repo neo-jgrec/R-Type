@@ -12,7 +12,6 @@ The **Game Datagram Transfer Protocol (GDTP)** is a lightweight, low-latency bin
 ### Key Characteristics
 
 - **Transport Layer**: **UDP** for all in-game communications.
-- **Secondary TCP Usage**: Used for non-time-sensitive tasks such as authentication, initial connection setup, or large data transfers (e.g., downloading maps or assets). This is justified by **TCP**’s reliability, which is important for these tasks, but not needed for fast-paced gameplay.
 - **Packet-Oriented Communication**: Every message sent between a client and server is a discrete datagram with its own header and payload, designed to be small enough to fit within typical **UDP** packet limits (~1400 bytes).
 - **Error Handling and Security**: Malformed packets are discarded without crashing the server or client. Buffer overflow and memory safety are ensured by fixed-size buffers, validation checks, and error codes.
 

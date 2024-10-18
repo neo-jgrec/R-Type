@@ -4,6 +4,7 @@
 #include "../../../core/ecs/GameEngine/GameEngine.hpp"
 #include "../../../core/network/NetworkService.hpp"
 #include "../../../core/ecs/Entity/Entity.hpp"
+#include "../Shell/Shell.hpp"
 
 class Server {
 private:
@@ -17,6 +18,7 @@ private:
 
     bool _asGameStarted = false;
     bool _isRunning = true;
+    Shell _shell = Shell(_isRunning, _asGameStarted, _players, _gameEngine.registry);
 
     bool asPlayerConnected();
 
