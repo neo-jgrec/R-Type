@@ -21,14 +21,17 @@ core::ecs::Entity EntityFactory::createWorld(
     const core::ecs::Entity world = gameEngine.registry.spawn_entity();
 
     gameEngine.registry.add_component(world, Network{networkingService});
-    gameEngine.registry.add_component(world, core::ge::TransformComponent{sf::Vector2f(0, 0), sf::Vector2f(800, 600), sf::Vector2f(1, 1), 0});
+    gameEngine.registry.add_component(world, core::ge::TransformComponent{sf::Vector2f(0, 0), sf::Vector2f(1920, 1080), sf::Vector2f(1, 1), 0});
+    gameEngine.registry.add_component(world, core::ge::CollisionComponent{WORLD, {
+        {-200, -100, 100, 100},
+        {2120, -100, 100, 100}
+    }});
 
     nlohmann::json json;
     {
         std::ifstream file(filePath);
-        if (!file.is_open()) {
+        if (!file.is_open())
             throw std::runtime_error("Cannot open file: " + filePath);
-        }
         file >> json;
     }
 
@@ -124,17 +127,17 @@ core::ecs::Entity EntityFactory::createEnemy(Server &server, const uint32_t x)
     gameEngine.registry.add_component(enemy, core::ge::CollisionComponent{ENEMY, std::vector{sf::FloatRect(0, 0, 32, 32)},{
         { PLAYER, [&](const core::ecs::Entity& entity, const core::ecs::Entity&) {
             std::cout << "Enemy " << static_cast<int>(id) << " collided with player" << std::endl;
-
-            const auto &enemyComponent = gameEngine.registry.get_component<Enemy>(entity);
-            for (auto &playerEntity : gameEngine.registry.get_entities<Player>()) {
-                const auto &playerComponent = gameEngine.registry.get_component<Player>(playerEntity);
-                networkingService.sendRequest(
-                    *playerComponent->endpoint,
-                    EnemyDie,
-                    {enemyComponent->id});
-            }
-
-            std::cout << "Enemy " << static_cast<int>(id) << " died" << std::endl;
+            server.sendRequestToPlayers(EnemyDie, {id});
+            gameEngine.registry.kill_entity(entity);
+        }},
+        { TILE, [&](const core::ecs::Entity& entity, const core::ecs::Entity&) {
+            std::cout << "Enemy " << static_cast<int>(id) << " collided with tile" << std::endl;
+            server.sendRequestToPlayers(EnemyDie, {id});
+            gameEngine.registry.kill_entity(entity);
+        }},
+        { WORLD, [&](const core::ecs::Entity& entity, const core::ecs::Entity&) {
+            std::cout << "Enemy " << static_cast<int>(id) << " collided with world" << std::endl;
+            server.sendRequestToPlayers(EnemyDie, {id});
             gameEngine.registry.kill_entity(entity);
         }}}});
     gameEngine.registry.add_component(enemy, Enemy{id});
@@ -179,12 +182,15 @@ core::ecs::Entity EntityFactory::createProjectile(
     gameEngine.registry.add_component(projectile, core::ge::VelocityComponent{200, 0});
     gameEngine.registry.add_component(projectile, core::ge::CollisionComponent{PLAYER_PROJECTILE, std::vector{sf::FloatRect(0, 0, 8, 8)},{
         { ENEMY, [&](const core::ecs::Entity& entity, const core::ecs::Entity&) {
+            std::cout << "Projectile collided with enemy" << std::endl;
             gameEngine.registry.kill_entity(entity);
         }},
         { WORLD, [&](const core::ecs::Entity& entity, const core::ecs::Entity&) {
+            std::cout << "Projectile collided with world" << std::endl;
             gameEngine.registry.kill_entity(entity);
         }},
         { TILE, [&](const core::ecs::Entity& entity, const core::ecs::Entity&) {
+            std::cout << "Projectile collided with tile" << std::endl;
             gameEngine.registry.kill_entity(entity);
         }}}});
     gameEngine.registry.add_component(projectile, Projectile{id});

@@ -132,7 +132,8 @@ void Game::update()
     // events
     _gameEngine.registry.run_system<EventComponent>();
 
-    _gameEngine.registry.run_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, ShootCounterComponent, Player>();
+    _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent>();
+    _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent, InputStateComponent, ShootCounterComponent, Player>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::TransformComponent>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::AnimationComponent>();
 
@@ -140,11 +141,11 @@ void Game::update()
     _gameEngine.registry.run_system<core::ge::SoundComponent>();
 
     // Projectile movement
-    _gameEngine.registry.run_system<core::ge::TransformComponent, VelocityComponent, Projectile>();
+    _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent, Projectile>();
 
     // Enemy movement
     if (_gameEngine.currentScene == static_cast<int>(GameState::Playing))
-        _gameEngine.registry.run_system<core::ge::TransformComponent, VelocityComponent, Enemy>();
+        _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent, Enemy>();
 
     // Collision detection
     _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent, core::ge::SceneComponent>();

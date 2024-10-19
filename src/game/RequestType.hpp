@@ -1,6 +1,6 @@
 #pragma once
 
-enum RequestType {
+enum RequestType: uint8_t {
     PlayerConnect = 0,
     PlayerDisconnect = 1,
     GameStart = 2,
