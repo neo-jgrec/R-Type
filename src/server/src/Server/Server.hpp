@@ -11,6 +11,7 @@ private:
     core::GameEngine _gameEngine{false};
     NetworkingService _networkingService{1111};
 
+    core::ecs::Entity _world;
     std::array<std::optional<core::ecs::Entity>, 4> _players;
 
     bool _asGameStarted = false;

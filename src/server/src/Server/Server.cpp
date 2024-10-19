@@ -45,6 +45,49 @@ Server::Server()
         }
         // send the new player to himself
         _networkingService.sendRequestResponse(endpoint, header, {i});
+        if (!_asGameStarted)
+            return;
+
+        _networkingService.sendRequest(
+            endpoint,
+            GameStart,
+            {});
+        {
+            const auto &worldComponent = _gameEngine.registry.get_component<World>(_world);
+            const auto scroll = static_cast<uint32_t>(worldComponent->scroll);
+            _networkingService.sendRequest(
+                endpoint,
+                MapScroll,
+                {
+                    static_cast<uint8_t>(scroll >> 24),
+                    static_cast<uint8_t>(scroll >> 16),
+                    static_cast<uint8_t>(scroll >> 8),
+                    static_cast<uint8_t>(scroll)
+                });
+        }
+        for (const auto &playerEntity : _gameEngine.registry.get_entities<Player>()) {
+            const auto &playerComponent = _gameEngine.registry.get_component<Player>(playerEntity);
+            if (playerComponent->id == i)
+                continue;
+            const auto &transformComponent = _gameEngine.registry.get_component<core::ge::TransformComponent>(playerEntity);
+            const auto x = static_cast<uint32_t>(transformComponent->position.x);
+            const auto y = static_cast<uint32_t>(transformComponent->position.y);
+            const std::vector payload = {
+                playerComponent->id,
+                static_cast<uint8_t>(x >> 24),
+                static_cast<uint8_t>(x >> 16),
+                static_cast<uint8_t>(x >> 8),
+                static_cast<uint8_t>(x),
+                static_cast<uint8_t>(y >> 24),
+                static_cast<uint8_t>(y >> 16),
+                static_cast<uint8_t>(y >> 8),
+                static_cast<uint8_t>(y)
+            };
+            _networkingService.sendRequest(
+                endpoint,
+                PlayerMove,
+                payload);
+        }
     });
     _networkingService.addEvent(GameStart, [&](const GDTPHeader &, const std::vector<uint8_t> &, const asio::ip::udp::endpoint &) {
         static bool asGameStarted = false;
@@ -52,7 +95,7 @@ Server::Server()
             return;
 
         asGameStarted = true;
-        const core::ecs::Entity world = EntityFactory::createWorld(*this, "JY_map.json");
+        _world = EntityFactory::createWorld(*this, "JY_map.json");
         for (uint8_t i = 0; i < 4; i++) {
             if (!_players[i].has_value())
                 continue;
@@ -61,7 +104,7 @@ Server::Server()
                 *playerComponent->endpoint,
                 GameStart,
                 {});
-            const auto &worldComponent = _gameEngine.registry.get_component<World>(world);
+            const auto &worldComponent = _gameEngine.registry.get_component<World>(_world);
             const auto scroll = static_cast<uint32_t>(worldComponent->scroll);
             _networkingService.sendRequest(
                 *playerComponent->endpoint,
