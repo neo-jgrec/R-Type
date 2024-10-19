@@ -119,13 +119,15 @@ void Server::run()
     while (!asPlayerConnected()) {
         usleep(1);
     }
+
     std::cout << "Players connected" << std::endl;
     while (!_asGameStarted) {
         usleep(1);
     }
+    
+    std::cout << "Game started" << std::endl;
     EventFactory::playerMove(*this);
     EventFactory::playerShoot(*this);
-    std::cout << "Game started" << std::endl;
     while (asPlayerConnected()) {
         sf::Time elapsed = _gameEngine.clock.restart();
         _gameEngine.delta_t = elapsed.asSeconds();
