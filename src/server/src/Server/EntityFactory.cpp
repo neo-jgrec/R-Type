@@ -22,7 +22,6 @@ core::ecs::Entity EntityFactory::createWorld(
 
     gameEngine.registry.add_component(world, Network{networkingService});
     gameEngine.registry.add_component(world, core::ge::TransformComponent{sf::Vector2f(0, 0), sf::Vector2f(800, 600), sf::Vector2f(1, 1), 0});
-    gameEngine.registry.add_component(world, core::ge::CollisionComponent{WORLD, std::vector{sf::FloatRect(0, 0, 800, 600)}});
 
     nlohmann::json json;
     {
