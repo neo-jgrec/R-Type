@@ -18,10 +18,10 @@ void Systems::worldSystem(Server &server)
                 return;
 
             nextScrollUpdate = world.scroll + 75;
-            // if (rand() % 100 > 25)
-            //     return;
-            //
-            // EntityFactory::createEnemy(server, static_cast<uint32_t>(world.scroll));
+            if (rand() % 100 > 25)
+                return;
+
+            EntityFactory::createEnemy(server, static_cast<uint32_t>(world.scroll + 1920));
         });
 }
 

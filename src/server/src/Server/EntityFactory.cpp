@@ -44,8 +44,6 @@ core::ecs::Entity EntityFactory::createWorld(
     }
     gameEngine.registry.add_component(world, std::move(worldComponent));
 
-    // createEnemy(server, 1920);
-
     return world;
 }
 
