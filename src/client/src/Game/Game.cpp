@@ -219,6 +219,22 @@ void Game::processEvents()
             }
         }
 
+        if (event.type == sf::Event::TextEntered) {
+            auto textInputEntities = _gameEngine.registry.get_entities<core::ge::TextInputComponent>();
+            for (auto entity : textInputEntities) {
+                auto textInput = _gameEngine.registry.get_component<core::ge::TextInputComponent>(entity);
+                if (textInput->isActive) {
+                    if (event.text.unicode == '\b' && !textInput->text.empty()) {
+                        // Handle backspace (deletes the last character)
+                        textInput->text.pop_back();
+                    } else if (event.text.unicode < 128 && textInput->text.size() < textInput->maxLength) {
+                        // Append entered character to the text string
+                        textInput->text += static_cast<char>(event.text.unicode);
+                    }
+                }
+            }
+        }
+
         if (event.type == sf::Event::Resized) {
             gameScale.x = static_cast<float>(_gameEngine.window.getSize().x) / 1920.0f;
             gameScale.y = static_cast<float>(_gameEngine.window.getSize().y) / 1080.0f;

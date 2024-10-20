@@ -277,6 +277,13 @@ protected:
                         textInput.isActive = false;
                     }
                 }
+
+                if (textInput.isActive) {
+                    text.text.setString(textInput.text);
+                } else if (textInput.text.empty()) {
+                    // Display the placeholder when the text is empty
+                    text.text.setString(textInput.placeholder);
+                }
             });
     }
 
