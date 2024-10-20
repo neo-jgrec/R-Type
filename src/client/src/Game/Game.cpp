@@ -225,10 +225,8 @@ void Game::processEvents()
                 auto textInput = _gameEngine.registry.get_component<core::ge::TextInputComponent>(entity);
                 if (textInput->isActive) {
                     if (event.text.unicode == '\b' && !textInput->text.empty()) {
-                        // Handle backspace (deletes the last character)
                         textInput->text.pop_back();
                     } else if (event.text.unicode < 128 && textInput->text.size() < textInput->maxLength) {
-                        // Append entered character to the text string
                         textInput->text += static_cast<char>(event.text.unicode);
                     }
                 }
