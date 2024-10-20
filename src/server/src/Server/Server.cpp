@@ -62,7 +62,14 @@ void Server::start()
         return;
 
     asGameStarted = true;
+
     const core::ecs::Entity world = EntityFactory::createWorld(*this, "JY_map.json");
+    const auto spawnPoints = _gameEngine.registry.get_component<World>(world)->spawnPoints;
+    if (spawnPoints.empty()) {
+        std::cerr << "Error: No spawn points available." << std::endl;
+        return;
+    }
+
     for (const auto &playerEntity : _gameEngine.registry.get_entities<Player>()) {
         const auto &playerComponent = _gameEngine.registry.get_component<Player>(playerEntity);
         _networkingService.sendRequest(
@@ -80,21 +87,28 @@ void Server::start()
                 static_cast<uint8_t>(scroll >> 8),
                 static_cast<uint8_t>(scroll),
             });
-        const std::vector payload = {
-            playerComponent->id,
-            static_cast<uint8_t>(100 >> 24),
-            static_cast<uint8_t>(100 >> 16),
-            static_cast<uint8_t>(100 >> 8),
-            static_cast<uint8_t>(100),
-            static_cast<uint8_t>(100 >> 24),
-            static_cast<uint8_t>(100 >> 16),
-            static_cast<uint8_t>(100 >> 8),
-            static_cast<uint8_t>(100),
-        };
-        _networkingService.sendRequest(
-            *playerComponent->endpoint,
-            PlayerMove,
-            payload);
+
+        {
+            const auto [fst, snd] = spawnPoints[rand() % spawnPoints.size()];
+            const auto x = static_cast<uint32_t>(fst);
+            const auto y = static_cast<uint32_t>(snd);
+
+            const auto transformComponent = _gameEngine.registry.get_component<core::ge::TransformComponent>(playerEntity);
+            transformComponent->position = {static_cast<float>(x), static_cast<float>(y)};
+
+            sendRequestToPlayers(PlayerMove, {
+                playerComponent->id,
+                static_cast<uint8_t>(x >> 24),
+                static_cast<uint8_t>(x >> 16),
+                static_cast<uint8_t>(x >> 8),
+                static_cast<uint8_t>(x),
+                static_cast<uint8_t>(y >> 24),
+                static_cast<uint8_t>(y >> 16),
+                static_cast<uint8_t>(y >> 8),
+                static_cast<uint8_t>(y)
+            });
+        }
+
         playerComponent->lastTimePacketReceived = std::time(nullptr);
         playerComponent->health = 3;
         _asGameStarted = true;

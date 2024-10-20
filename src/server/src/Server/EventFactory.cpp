@@ -31,11 +31,11 @@ void EventFactory::playerConnected(Server &server)
         if (i == 4)
             return;
 
+        // const auto &worldEntity = gameEngine.registry.get_entities<World>()[0];
+
         players[i].emplace(EntityFactory::createPlayer(server, endpoint, i));
-        for (const auto &playerEntity : players) {
-            if (!playerEntity.has_value())
-                continue;
-            const auto &playerComponent = gameEngine.registry.get_component<Player>(playerEntity.value());
+        for (const auto &playerEntity : gameEngine.registry.get_entities<Player>()) {
+            const auto &playerComponent = gameEngine.registry.get_component<Player>(playerEntity);
             if (playerComponent->id == i)
                 continue;
             // send all players to the new player

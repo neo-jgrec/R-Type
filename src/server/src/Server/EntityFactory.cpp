@@ -35,14 +35,27 @@ core::ecs::Entity EntityFactory::createWorld(
         file >> json;
     }
 
-    World worldComponent = {75, 0,
-        { json["width"], json["height"] }};
+    World worldComponent = {75, 0, { json["width"], json["height"] }, {}};
+    const uint8_t tileSize = json["cellSize"];
     for (const auto& tile : json["tiles"]) {
+        if (tile.contains("tags")) {
+            if (std::vector<std::string> tags = tile["tags"]; tags.end() == std::ranges::find(tags, "spawn"))
+                continue;
+
+            const uint32_t x = tile["x"];
+            const uint32_t y = tile["y"];
+            worldComponent.spawnPoints.emplace_back(x * tileSize, y * tileSize);
+            continue;
+        }
+
         if (tile["x"] < 0 || tile["x"] >= worldComponent.size.first
             || tile["y"] < 0 || tile["y"] >= worldComponent.size.second) {
             throw std::out_of_range("Tile coordinates out of bounds");
         }
-        createTile(server, {32, 32}, tile["x"], tile["y"]);
+
+        const uint32_t x = tile["x"];
+        const uint32_t y = tile["y"];
+        createTile(server, {tileSize, tileSize}, x * tileSize, y * tileSize);
     }
     gameEngine.registry.add_component(world, std::move(worldComponent));
 
@@ -58,6 +71,7 @@ core::ecs::Entity EntityFactory::createPlayer(
 
     core::GameEngine &gameEngine = server.getGameEngine();
     NetworkingService &networkingService = server.getNetworkingService();
+    std::array<std::optional<core::ecs::Entity>, 4> &players = server.getPlayers();
 
     const core::ecs::Entity player = gameEngine.registry.spawn_entity();
 
@@ -68,34 +82,24 @@ core::ecs::Entity EntityFactory::createPlayer(
         {
             const auto &playerComponent = gameEngine.registry.get_component<Player>(entity);
             playerComponent->health -= 1;
-            if (playerComponent->health > 0)
+            if (playerComponent->health == 0)
                 requestType = PlayerDie;
         }
 
-        const auto &players = gameEngine.registry.get_entities<Player>();
-        for (auto &playerEntity : players) {
-            const auto &playerComponent = gameEngine.registry.get_component<Player>(playerEntity);
-            networkingService.sendRequest(
-                *playerComponent->endpoint,
-                requestType,
-                {playerComponent->id});
+        server.sendRequestToPlayers(requestType, {id});
+
+        if (requestType == PlayerDie) {
+            std::cout << "Player " << static_cast<int>(id) << " died" << std::endl;
+            players[id].reset();
+            gameEngine.registry.kill_entity(entity);
         }
 
-        if (requestType == PlayerDie)
-            gameEngine.registry.kill_entity(entity);
-
-        if (std::ranges::any_of(players, [&](const auto &playerEntity) {
-            if (const auto &playerComponent = gameEngine.registry.get_component<Player>(playerEntity); playerComponent->health > 0)
-                return true;
-            return false;
-        }))
-            for (auto &playerEntity : players) {
-                const auto &playerComponent = gameEngine.registry.get_component<Player>(playerEntity);
-                networkingService.sendRequest(
-                    *playerComponent->endpoint,
-                    GameOver,
-                    {});
-            }
+        if (std::ranges::none_of(gameEngine.registry.get_entities<Player>(), [&](const auto &playerEntity) {
+            const auto &playerComponent = gameEngine.registry.get_component<Player>(playerEntity);
+            return playerComponent->health > 0;
+        })) {
+            server.sendRequestToPlayers(GameOver, {});
+        }
     };
 
     gameEngine.registry.add_component(player, Network{networkingService});
