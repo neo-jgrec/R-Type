@@ -153,6 +153,8 @@ void Game::parseMap(core::ecs::Registry& registry, const std::string& mapFilePat
         try {
             core::ecs::Entity tileEntity = registry.spawn_entity();
             int tileIdx = tile["tileIndex"].get<int>() - 1;
+            if (tileIdx < 0)
+                continue;
             bool isDestructible = tile["isDestructible"].get<bool>();
             sf::Vector2f tilePos(tile["x"].get<float>() * mapData["cellSize"].get<float>() * gameScale.x,
                                  tile["y"].get<float>() * mapData["cellSize"].get<float>() * gameScale.y);
