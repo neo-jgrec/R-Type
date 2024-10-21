@@ -191,6 +191,7 @@ struct SceneComponent {
  */
 struct TextInputComponent {
     sf::Text text;
+    sf::Font font;
     bool isActive = false;
     size_t cursorPosition = 0;
     size_t maxLength = 100;

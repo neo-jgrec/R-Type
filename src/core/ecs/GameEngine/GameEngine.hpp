@@ -259,18 +259,8 @@ protected:
                         textInput.isActive = false;
                     }
                 }
-                sf::Font font;
-                
-                font.loadFromFile("assets/Fonts/Arial.ttf");
-                textInput.text.setFont(font);
-                textInput.text.setCharacterSize(24);
-                textInput.text.setFillColor(sf::Color::Black);
-                textInput.text.setPosition(drawable.shape.getPosition());
+                textInput.text.setFont(textInput.font);
                 window.draw(textInput.text);
-
-                //if (textInput.isActive) {
-                //    text.text.setString(textInput.text);
-                //}
             });
     }
 
