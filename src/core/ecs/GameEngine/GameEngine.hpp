@@ -128,6 +128,7 @@ protected:
                             anim.isPlaying = false;
                             registry.remove_component<core::ge::AnimationComponent>(entity);
                             registry.remove_component<core::ge::DrawableComponent>(entity);
+                            registry.kill_entity(entity);
                         }
                         if (anim.currentFrame == anim.animations[anim.currentState].size() - 1)
                             anim.recurrence_count++;
