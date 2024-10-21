@@ -139,7 +139,7 @@ void EventFactory::playerMove(Server &server)
             playerComponent->lastTimePacketReceived = std::time(nullptr);
         }
 
-        server.sendRequestToPlayers(PlayerMove, payload);
+        server.sendRequestToPlayers(PlayerMove, payload, id);
     });
 }
 
