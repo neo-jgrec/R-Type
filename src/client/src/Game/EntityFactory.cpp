@@ -15,13 +15,39 @@
 core::ecs::Entity EntityFactory::createPlayer(core::GameEngine& gameEngine, core::ecs::Registry& registry, const sf::Vector2f& position, int color, Game &game, sf::Vector2f gameScale, std::uint16_t playerId, bool self)
 {
     core::ecs::Entity player = registry.spawn_entity();
-    core::ecs::Entity player_anim = registry.spawn_entity();
+    if (self) {
+        core::ecs::Entity player_anim = registry.spawn_entity();
 
-    registry.add_component(player_anim, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 17.0f), gameScale * 3.5f, 0.0f});
-    registry.add_component(player_anim, core::ge::DrawableComponent{sf::RectangleShape(sf::Vector2f(33.0f, 17.0f))});
-    registry.add_component(player_anim, core::ge::SceneComponent{static_cast<int>(Game::GameState::Playing)});
-    registry.add_component(player_anim, PlayerAnim{static_cast<std::uint8_t>(playerId)});
-    registry.add_component(player_anim, core::ge::TextureComponent{nullptr});
+        auto texture = gameEngine.assetManager.getTexture("player_anim");
+
+        sf::RectangleShape animShape(sf::Vector2f(33.0f, 17.0f));
+        animShape.setTexture(texture.get());
+        animShape.setTextureRect(sf::IntRect(0, 0, 33, 17));
+
+        std::vector<sf::IntRect> moveFrames;
+        moveFrames.reserve(5);
+        for (int i = 0; i < 5; i++) {
+            moveFrames.emplace_back(i * 33, 0, 33, 17);
+        }
+
+        registry.add_component(player_anim, core::ge::AnimationComponent{
+            .animations = {
+                {core::ge::AnimationState::Moving, moveFrames}
+            },
+            .frameTime = 0.1f,
+            .elapsedTime = 0.0f,
+            .currentFrame = 0,
+            .loop = false,
+            .recurrence_max = 1,
+            .recurrence_count = 0,
+            .isPlaying = true
+        });
+
+        registry.add_component(player_anim, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 17.0f), gameScale * 3.5f, 0.0f});
+        registry.add_component(player_anim, core::ge::DrawableComponent{animShape});
+        registry.add_component(player_anim, core::ge::SceneComponent{static_cast<int>(Game::GameState::Playing)});
+        registry.add_component(player_anim, PlayerAnim{static_cast<std::uint8_t>(playerId)});
+    }
 
     registry.add_component(player, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 17.0f), gameScale * 3.5f, 0.0f});
     registry.add_component(player, core::ge::CollisionComponent{PLAYER, {sf::FloatRect(0.0f, 0.0f, 33.0f, 17.0f)}, {
