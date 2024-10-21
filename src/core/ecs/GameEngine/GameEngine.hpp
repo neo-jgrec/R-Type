@@ -259,12 +259,18 @@ protected:
                         textInput.isActive = false;
                     }
                 }
+                sf::Font font;
+                
+                font.loadFromFile("assets/Fonts/Arial.ttf");
+                textInput.text.setFont(font);
+                textInput.text.setCharacterSize(24);
+                textInput.text.setFillColor(sf::Color::Black);
+                textInput.text.setPosition(drawable.shape.getPosition());
+                window.draw(textInput.text);
 
-                if (textInput.isActive) {
-                    text.text.setString(textInput.text);
-                } else if (textInput.text.empty()) {
-                    text.text.setString(textInput.placeholder);
-                }
+                //if (textInput.isActive) {
+                //    text.text.setString(textInput.text);
+                //}
             });
     }
 

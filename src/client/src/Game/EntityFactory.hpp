@@ -85,7 +85,7 @@ public:
      * @return The created button entity.
      */
     static core::ecs::Entity createButton(core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void()>& onClick, int scene);
-    static core::ecs::Entity createTextInput(core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& placeholder, int scene);
+    static core::ecs::Entity createTextInput(core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& title, int scene);
     static core::ecs::Entity createSlider(core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void(float)>& onChange, int scene, float currentValue);
     static core::ecs::Entity createImage(core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& texturePath, int scene);
 };
