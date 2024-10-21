@@ -18,6 +18,7 @@ struct InputStateComponent {
     bool left = false; ///< Indicates if the 'left' key is pressed.
     bool right = false; ///< Indicates if the 'right' key is pressed.
     bool fire = false; ///< Indicates if the 'fire' key is pressed.
+    bool fireReleased = false; ///< Indicates if the 'fire' key was released.
 };
 
 /**
@@ -70,6 +71,9 @@ struct ScoreComponent {
  */
 struct ShootCounterComponent {
     float shotCount; ///< The current shot count or cooldown timer for shooting.
+    float chargeTime; ///< The time taken to charge the shot.
+    float notChargingTime; ///< The time taken to not charge the shot.
+    int nextShotType; ///< The type of the next shot to be fired.
 };
 
 /**

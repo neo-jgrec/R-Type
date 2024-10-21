@@ -41,57 +41,59 @@ void Game::inputSystem(core::ecs::Registry& registry)
 {
     registry.add_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, ShootCounterComponent, Player, core::ge::AnimationComponent>
     ([&](core::ecs::Entity, core::ge::TransformComponent &transform, const VelocityComponent &vel, InputStateComponent &input, ShootCounterComponent &shootCounter, Player &player, core::ge::AnimationComponent &animation) {
-            if (input.up) {
-                transform.position.y -= vel.dy;
-                if (animation.currentFrame == 3) {
-                    animation.elapsedTime += _gameEngine.delta_t;
-                    if (animation.elapsedTime >= animation.frameTime)
-                        animation.currentFrame = 4;
-                } else {
-                    if (animation.currentFrame == 4)
-                        return;
-                    animation.currentFrame = 3;
-                    animation.elapsedTime = 0;
-                }
-                sendPayloadMove(networkingService, transform.position, player.id);
-            }
-            if (input.down) {
-                transform.position.y += vel.dy;
-                if (animation.currentFrame == 1) {
-                    animation.elapsedTime += _gameEngine.delta_t;
-                    if (animation.elapsedTime >= animation.frameTime)
-                        animation.currentFrame = 0;
-                } else {
-                    if (animation.currentFrame == 0)
-                        return;
-                    animation.currentFrame = 1;
-                    animation.elapsedTime = 0;
-                }
-                sendPayloadMove(networkingService, transform.position, player.id);
-            }
-            if (input.left) {
-                transform.position.x -= vel.dx;
-                sendPayloadMove(networkingService, transform.position, player.id);
-            }
-            if (input.right) {
-                transform.position.x += vel.dx;
-                sendPayloadMove(networkingService, transform.position, player.id);
-            }
-            if (!input.up && !input.down && !input.left && !input.right) {
-                animation.currentFrame = 2;
+        if (input.up) {
+            transform.position.y -= vel.dy;
+            if (animation.currentFrame == 3) {
+                animation.elapsedTime += _gameEngine.delta_t;
+                if (animation.elapsedTime >= animation.frameTime)
+                    animation.currentFrame = 4;
+            } else {
+                if (animation.currentFrame == 4)
+                    return;
+                animation.currentFrame = 3;
                 animation.elapsedTime = 0;
             }
-            if (input.fire) {
-                if (shootCounter.shotCount >= 6) {
-                    EntityFactory::createPlayerMissile(registry, transform, gameScale);
-
-                    shootCounter.shotCount = 0;
-                } else {
-                    EntityFactory::createPlayerProjectile(registry, transform, gameScale);
-
-                    shootCounter.shotCount++;
-                }
-                input.fire = false;
+            sendPayloadMove(networkingService, transform.position, player.id);
+        }
+        if (input.down) {
+            transform.position.y += vel.dy;
+            if (animation.currentFrame == 1) {
+                animation.elapsedTime += _gameEngine.delta_t;
+                if (animation.elapsedTime >= animation.frameTime)
+                    animation.currentFrame = 0;
+            } else {
+                if (animation.currentFrame == 0)
+                    return;
+                animation.currentFrame = 1;
+                animation.elapsedTime = 0;
+            }
+            sendPayloadMove(networkingService, transform.position, player.id);
+        }
+        if (input.left) {
+            transform.position.x -= vel.dx;
+            sendPayloadMove(networkingService, transform.position, player.id);
+        }
+        if (input.right) {
+            transform.position.x += vel.dx;
+            sendPayloadMove(networkingService, transform.position, player.id);
+        }
+        if (!input.up && !input.down && !input.left && !input.right) {
+            animation.currentFrame = 2;
+            animation.elapsedTime = 0;
+        }
+        if (input.fire) {
+            shootCounter.notChargingTime = 0.0f;
+            shootCounter.chargeTime += _gameEngine.delta_t;
+            if (shootCounter.chargeTime >= 1.0f) {
+                shootCounter.nextShotType = 1;
+            } else {
+                if (shootCounter.chargeTime >= 0.1f)
+                    return;
+                shootCounter.nextShotType = 0;
+            }
+        } else {
+            if (shootCounter.nextShotType == 0) {
+                EntityFactory::createPlayerProjectile(registry, transform, gameScale);
                 networkingService.sendRequest(
                     "127.0.0.1",
                     1111,
@@ -99,20 +101,34 @@ void Game::inputSystem(core::ecs::Registry& registry)
                     std::vector<uint8_t>{static_cast<uint8_t>(player.id)}
                 );
             }
-            if (transform.position.x < getViewBounds(_gameEngine.window).x) {
-                transform.position.x = getViewBounds(_gameEngine.window).x;
-                sendPayloadMove(networkingService, transform.position, player.id);
-            } else if (transform.position.x > getViewBounds(_gameEngine.window).x + _gameEngine.window.getView().getSize().x) {
-                transform.position.x = getViewBounds(_gameEngine.window).x + _gameEngine.window.getView().getSize().x;
-                sendPayloadMove(networkingService, transform.position, player.id);
+            if (shootCounter.nextShotType == 1) {
+                EntityFactory::createPlayerMissile(registry, transform, gameScale);
+                networkingService.sendRequest(
+                    "127.0.0.1",
+                    1111,
+                    PlayerShoot,
+                    std::vector<uint8_t>{static_cast<uint8_t>(player.id)}
+                );
             }
-            if (transform.position.y < getViewBounds(_gameEngine.window).y) {
-                transform.position.y = getViewBounds(_gameEngine.window).y;
-                sendPayloadMove(networkingService, transform.position, player.id);
-            } else if (transform.position.y > getViewBounds(_gameEngine.window).y + _gameEngine.window.getView().getSize().y) {
-                transform.position.y = getViewBounds(_gameEngine.window).y + _gameEngine.window.getView().getSize().y;
-                sendPayloadMove(networkingService, transform.position, player.id);
-            }
+            shootCounter.notChargingTime += _gameEngine.delta_t;
+            if (shootCounter.notChargingTime >= 0.1f)
+                shootCounter.chargeTime = 0.0f;
+            shootCounter.nextShotType = -1;
+        }
+        if (transform.position.x < getViewBounds(_gameEngine.window).x) {
+            transform.position.x = getViewBounds(_gameEngine.window).x;
+            sendPayloadMove(networkingService, transform.position, player.id);
+        } else if (transform.position.x > getViewBounds(_gameEngine.window).x + _gameEngine.window.getView().getSize().x) {
+            transform.position.x = getViewBounds(_gameEngine.window).x + _gameEngine.window.getView().getSize().x;
+            sendPayloadMove(networkingService, transform.position, player.id);
+        }
+        if (transform.position.y < getViewBounds(_gameEngine.window).y) {
+            transform.position.y = getViewBounds(_gameEngine.window).y;
+            sendPayloadMove(networkingService, transform.position, player.id);
+        } else if (transform.position.y > getViewBounds(_gameEngine.window).y + _gameEngine.window.getView().getSize().y) {
+            transform.position.y = getViewBounds(_gameEngine.window).y + _gameEngine.window.getView().getSize().y;
+            sendPayloadMove(networkingService, transform.position, player.id);
+        }
     });
 }
 
