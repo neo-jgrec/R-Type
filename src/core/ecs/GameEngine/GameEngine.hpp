@@ -278,6 +278,11 @@ protected:
                         textInput.isActive = false;
                     }
                 }
+                if (textInput.isActive) {
+                    drawable.shape.setOutlineColor(sf::Color::Cyan);
+                } else {
+                    drawable.shape.setOutlineColor(sf::Color::Black);
+                }
                 textInput.text.setFont(textInput.font);
                 window.draw(textInput.text);
             });
