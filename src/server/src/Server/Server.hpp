@@ -12,6 +12,7 @@ private:
     NetworkingService _networkingService{1111};
 
     core::ecs::Entity _world;
+    std::array<std::optional<std::shared_ptr<asio::ip::udp::endpoint>>, 4> _playersConnection;
     std::array<std::optional<core::ecs::Entity>, 4> _players;
 
     bool _asGameStarted = false;
@@ -20,11 +21,13 @@ private:
     mutable std::shared_mutex registry_mutex;
 
     void update();
+
 public:
     Server();
 
     core::GameEngine &getGameEngine() { return _gameEngine; }
     NetworkingService &getNetworkingService() { return _networkingService; }
+    std::array<std::optional<std::shared_ptr<asio::ip::udp::endpoint>>, 4> &getPlayersConnection() { return _playersConnection; }
     std::array<std::optional<core::ecs::Entity>, 4> &getPlayers() { return _players; }
     std::shared_mutex &getRegistryMutex() const { return registry_mutex; }
     bool asGameStarted() const { return _asGameStarted; }

@@ -64,16 +64,15 @@ core::ecs::Entity EntityFactory::createWorld(
 
 core::ecs::Entity EntityFactory::createPlayer(
     Server &server,
-    const asio::ip::udp::endpoint &endpoint,
     const uint8_t id)
 {
-    std::lock_guard lock(server.getRegistryMutex());
-
     core::GameEngine &gameEngine = server.getGameEngine();
     NetworkingService &networkingService = server.getNetworkingService();
-    std::array<std::optional<core::ecs::Entity>, 4> &players = server.getPlayers();
+    const auto &playersConnection = server.getPlayersConnection();
+    auto &players = server.getPlayers();
 
-    const core::ecs::Entity player = gameEngine.registry.spawn_entity();
+    const core::ecs::Entity world = gameEngine.registry.get_entities<World>()[0];
+    const auto &worldComponent = gameEngine.registry.get_component<World>(world);
 
     const std::function onCollision = [&](const core::ecs::Entity& entity, const core::ecs::Entity&) {
         std::cout << "Player " << static_cast<int>(id) << " collided" << std::endl;
@@ -102,12 +101,52 @@ core::ecs::Entity EntityFactory::createPlayer(
         }
     };
 
+    const core::ecs::Entity player = gameEngine.registry.spawn_entity();
+    const auto [fst, snd] = worldComponent->spawnPoints[rand() % worldComponent->spawnPoints.size()];
+    const core::ge::TransformComponent transformComponent = {sf::Vector2f(static_cast<float>(fst), static_cast<float>(snd)), sf::Vector2f(32, 32), sf::Vector2f(1, 1), 0};
+    const Player playerComponent = {id, 3, std::time(nullptr)};
+
     gameEngine.registry.add_component(player, Network{networkingService});
-    gameEngine.registry.add_component(player, core::ge::TransformComponent{sf::Vector2f(0, 0), sf::Vector2f(32, 32), sf::Vector2f(1, 1), 0});
+    gameEngine.registry.add_component(player, std::move(transformComponent));
     gameEngine.registry.add_component(player, core::ge::CollisionComponent{PLAYER, std::vector{sf::FloatRect(0, 0, 32, 32)},{
-        { ENEMY, onCollision},
-        { TILE, onCollision}}});
-    gameEngine.registry.add_component(player, Player{std::make_shared<asio::ip::udp::endpoint>(endpoint), id, 3, 0});
+        {ENEMY, onCollision},
+        {TILE, onCollision}}});
+    gameEngine.registry.add_component(player, std::move(playerComponent));
+
+    std::cout << ">>" << std::endl;
+    networkingService.sendRequest(
+        *playersConnection[id].value(),
+        GameStart,
+        {});
+    std::cout << "<<" << std::endl;
+    {
+        const auto scroll = static_cast<uint32_t>(worldComponent->scroll);
+        networkingService.sendRequest(
+            *playersConnection[id].value(),
+            MapScroll,
+            {
+                static_cast<uint8_t>(scroll >> 24),
+                static_cast<uint8_t>(scroll >> 16),
+                static_cast<uint8_t>(scroll >> 8),
+                static_cast<uint8_t>(scroll),
+            });
+    }
+    {
+        const auto x = static_cast<uint32_t>(fst);
+        const auto y = static_cast<uint32_t>(snd);
+
+        server.sendRequestToPlayers(PlayerMove, {
+            id,
+            static_cast<uint8_t>(x >> 24),
+            static_cast<uint8_t>(x >> 16),
+            static_cast<uint8_t>(x >> 8),
+            static_cast<uint8_t>(x),
+            static_cast<uint8_t>(y >> 24),
+            static_cast<uint8_t>(y >> 16),
+            static_cast<uint8_t>(y >> 8),
+            static_cast<uint8_t>(y)
+        });
+    }
 
     std::cout << "Player " << static_cast<int>(id) << " created" << std::endl;
     return player;
@@ -121,6 +160,7 @@ core::ecs::Entity EntityFactory::createEnemy(Server &server, const uint32_t x)
 
     core::GameEngine &gameEngine = server.getGameEngine();
     NetworkingService &networkingService = server.getNetworkingService();
+    const auto &playersConnection = server.getPlayersConnection();
 
     const core::ecs::Entity enemy = gameEngine.registry.spawn_entity();
 
@@ -160,7 +200,7 @@ core::ecs::Entity EntityFactory::createEnemy(Server &server, const uint32_t x)
     for (auto &playerEntity : gameEngine.registry.get_entities<Player>()) {
         const auto &playerComponent = gameEngine.registry.get_component<Player>(playerEntity);
         networkingService.sendRequest(
-            *playerComponent->endpoint,
+            *playersConnection[playerComponent->id].value(),
             EnemySpawn,
             payload);
     }
@@ -174,8 +214,6 @@ core::ecs::Entity EntityFactory::createProjectile(
     const core::ecs::Entity &player,
     const uint8_t id)
 {
-    std::lock_guard lock(server.getRegistryMutex());
-
     core::GameEngine &gameEngine = server.getGameEngine();
 
     const core::ecs::Entity projectile = gameEngine.registry.spawn_entity();
@@ -211,6 +249,7 @@ core::ecs::Entity EntityFactory::createTile(
 {
     core::GameEngine &gameEngine = server.getGameEngine();
     NetworkingService &networkingService = server.getNetworkingService();
+    const auto &playersConnection = server.getPlayersConnection();
 
     const core::ecs::Entity tile = gameEngine.registry.spawn_entity();
 
@@ -222,7 +261,7 @@ core::ecs::Entity EntityFactory::createTile(
             for (auto &playerEntity : gameEngine.registry.get_entities<Player>()) {
                 const auto &playerComponent = gameEngine.registry.get_component<Player>(playerEntity);
                 networkingService.sendRequest(
-                    *playerComponent->endpoint,
+                    *playersConnection[playerComponent->id].value(),
                     TileDestroy,
                     {playerComponent->id});
             }

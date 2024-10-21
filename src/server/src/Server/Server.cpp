@@ -3,36 +3,31 @@
 #include "EntityFactory.hpp"
 #include "Systems.hpp"
 #include "EventFactory.hpp"
-#include "../../../game/RequestType.hpp"
 
 bool Server::asPlayerConnected()
 {
-    return std::ranges::any_of(_players, [](const auto &entity) { return entity.has_value(); });
+    return std::ranges::any_of(_playersConnection, [](const auto &player) { return player.has_value(); });
 }
 
 void Server::sendRequestToPlayers(const uint8_t requestType, const std::vector<uint8_t> &payload)
 {
-    for (const auto &playerEntity : _players) {
+    for (const auto &playerEntity : _playersConnection) {
         if (!playerEntity.has_value())
             continue;
-        const auto &playerComponent = _gameEngine.registry.get_component<Player>(playerEntity.value());
         _networkingService.sendRequest(
-            *playerComponent->endpoint,
+            *playerEntity.value(),
             requestType,
             payload);
     }
 }
 
-void Server::sendRequestToPlayers(const uint8_t requestType, const std::vector<uint8_t> &payload, uint8_t selfPlayer)
+void Server::sendRequestToPlayers(const uint8_t requestType, const std::vector<uint8_t> &payload, const uint8_t selfPlayer)
 {
-    for (const auto &playerEntity : _players) {
-        if (!playerEntity.has_value())
-            continue;
-        const auto &playerComponent = _gameEngine.registry.get_component<Player>(playerEntity.value());
-        if (playerComponent->id == selfPlayer)
+    for (uint8_t i = 0; i < 4; i++) {
+        if (!_playersConnection[i].has_value() || i == selfPlayer)
             continue;
         _networkingService.sendRequest(
-            *playerComponent->endpoint,
+            *_playersConnection[i].value(),
             requestType,
             payload);
     }
@@ -57,62 +52,26 @@ Server::Server()
 
 void Server::start()
 {
-    static bool asGameStarted = false;
-    if (!asPlayerConnected() || asGameStarted)
-        return;
+    std::cout << "Game starting" << std::endl;
 
+    static bool asGameStarted = false;
+    if (asGameStarted)
+        return;
     asGameStarted = true;
 
     const core::ecs::Entity world = EntityFactory::createWorld(*this, "JY_map.json");
-    const auto spawnPoints = _gameEngine.registry.get_component<World>(world)->spawnPoints;
-    if (spawnPoints.empty()) {
+    if (const auto spawnPoints = _gameEngine.registry.get_component<World>(world)->spawnPoints; spawnPoints.empty()) {
         std::cerr << "Error: No spawn points available." << std::endl;
         return;
     }
 
-    for (const auto &playerEntity : _gameEngine.registry.get_entities<Player>()) {
-        const auto &playerComponent = _gameEngine.registry.get_component<Player>(playerEntity);
-        _networkingService.sendRequest(
-            *playerComponent->endpoint,
-            GameStart,
-            {});
-        const auto &worldComponent = _gameEngine.registry.get_component<World>(world);
-        const auto scroll = static_cast<uint32_t>(worldComponent->scroll);
-        _networkingService.sendRequest(
-            *playerComponent->endpoint,
-            MapScroll,
-            {
-                static_cast<uint8_t>(scroll >> 24),
-                static_cast<uint8_t>(scroll >> 16),
-                static_cast<uint8_t>(scroll >> 8),
-                static_cast<uint8_t>(scroll),
-            });
-
-        {
-            const auto [fst, snd] = spawnPoints[rand() % spawnPoints.size()];
-            const auto x = static_cast<uint32_t>(fst);
-            const auto y = static_cast<uint32_t>(snd);
-
-            const auto transformComponent = _gameEngine.registry.get_component<core::ge::TransformComponent>(playerEntity);
-            transformComponent->position = {static_cast<float>(x), static_cast<float>(y)};
-
-            sendRequestToPlayers(PlayerMove, {
-                playerComponent->id,
-                static_cast<uint8_t>(x >> 24),
-                static_cast<uint8_t>(x >> 16),
-                static_cast<uint8_t>(x >> 8),
-                static_cast<uint8_t>(x),
-                static_cast<uint8_t>(y >> 24),
-                static_cast<uint8_t>(y >> 16),
-                static_cast<uint8_t>(y >> 8),
-                static_cast<uint8_t>(y)
-            });
-        }
-
-        playerComponent->lastTimePacketReceived = std::time(nullptr);
-        playerComponent->health = 3;
-        _asGameStarted = true;
+    for (uint8_t i = 0; i < 4; i++) {
+        if (!_playersConnection[i].has_value())
+            continue;
+        _players[i] = EntityFactory::createPlayer(*this, i);
     }
+
+    _asGameStarted = true;
 }
 
 void Server::update()
