@@ -134,9 +134,8 @@ void Game::enemyMovementSystem(core::ecs::Registry& registry) const
         [&](core::ecs::Entity enemy, core::ge::TransformComponent &transform, VelocityComponent &velocity, Enemy&) {
             transform.position.x -= velocity.dx;
 
-            if (transform.position.x < getViewBounds(_gameEngine.window).x || transform.position.y < getViewBounds(_gameEngine.window).y) {
+            if (transform.position.x < getViewBounds(_gameEngine.window).x || transform.position.y < getViewBounds(_gameEngine.window).y)
                 registry.remove_component<core::ge::DrawableComponent>(enemy);
-            }
         });
 }
 
@@ -225,6 +224,8 @@ void Game::eventSystem(core::ecs::Registry& registry)
                             auto enemyComponent = registry.get_component<Enemy>(enemyEntity);
                             if (enemyComponent->id == enemyMovePayload.first) {
                                 auto enemyTransform = registry.get_component<core::ge::TransformComponent>(enemyEntity);
+                                if (!enemyTransform)
+                                    return;
                                 enemyTransform->position = sf::Vector2f(static_cast<float>(enemyMovePayload.second.x), static_cast<float>(enemyMovePayload.second.y));
                             }
                         }
@@ -234,7 +235,16 @@ void Game::eventSystem(core::ecs::Registry& registry)
                         for (auto enemyEntity : enemyEntities) {
                             auto enemyComponent = registry.get_component<Enemy>(enemyEntity);
                             if (enemyComponent->id == enemyDiePayload) {
-                                registry.remove_component<core::ge::DrawableComponent>(enemyEntity);
+                                auto animComp = registry.get_component<core::ge::AnimationComponent>(enemyEntity);
+                                registry.remove_component<VelocityComponent>(enemyEntity);
+                                registry.remove_component<core::ge::TransformComponent>(enemyEntity);
+                                registry.remove_component<core::ge::CollisionComponent>(enemyEntity);
+                                animComp->currentState = core::ge::AnimationState::Dying;
+                                animComp->currentFrame = 0;
+                                animComp->elapsedTime = 0.0f;
+                                animComp->recurrence_max = 1;
+                                animComp->recurrence_count = 0;
+                                animComp->isPlaying = true;
                             }
                         }
                     }

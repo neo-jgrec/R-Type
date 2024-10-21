@@ -67,7 +67,7 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, con
         .frameTime = 0.1f,
         .elapsedTime = 0.0f,
         .currentFrame = 0,
-        .loop = true
+        .loop = false
     });
 
     return player;
@@ -194,27 +194,46 @@ core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry& registry, cons
                 auto enemyHealth = registry.get_component<HealthComponent>(self);
                 auto projDamage = registry.get_component<DamageComponent>(other);
                 enemyHealth->health -= projDamage->damage;
-                if (enemyHealth->health <= 0) {
-                    registry.remove_component<core::ge::DrawableComponent>(self);
-                }
                 registry.remove_component<core::ge::DrawableComponent>(other);
+                if (enemyHealth->health > 0)
+                    return;
+                auto animComp = registry.get_component<core::ge::AnimationComponent>(self);
+                registry.remove_component<VelocityComponent>(self);
+                registry.remove_component<core::ge::TransformComponent>(self);
+                registry.remove_component<core::ge::CollisionComponent>(self);
+                animComp->currentState = core::ge::AnimationState::Dying;
+                animComp->currentFrame = 0;
+                animComp->elapsedTime = 0.0f;
+                animComp->recurrence_max = 1;
+                animComp->recurrence_count = 0;
+                animComp->isPlaying = true;
         }}, { PLAYER_MISSILE, [&](const core::ecs::Entity self, const core::ecs::Entity other) {
                 auto enemyHealth = registry.get_component<HealthComponent>(self);
                 auto missileDamage = registry.get_component<DamageComponent>(other);
                 enemyHealth->health -= missileDamage->damage;
-                if (enemyHealth->health <= 0) {
-                    registry.remove_component<core::ge::DrawableComponent>(self);
-                }
+                registry.remove_component<core::ge::DrawableComponent>(other);
+                if (enemyHealth->health > 0)
+                    return;
+                auto animComp = registry.get_component<core::ge::AnimationComponent>(self);
+                registry.remove_component<VelocityComponent>(self);
+                registry.remove_component<core::ge::TransformComponent>(self);
+                registry.remove_component<core::ge::CollisionComponent>(self);
+                animComp->currentState = core::ge::AnimationState::Dying;
+                animComp->currentFrame = 0;
+                animComp->elapsedTime = 0.0f;
+                animComp->recurrence_max = 1;
+                animComp->recurrence_count = 0;
+                animComp->isPlaying = true;
         }},
     }});
-    registry.add_component(enemy, VelocityComponent{10.0f, 10.0f});
+    registry.add_component(enemy, VelocityComponent{2.0f, 2.0f});
     registry.add_component(enemy, HealthComponent{10});
     registry.add_component(enemy, DamageComponent{10});
     registry.add_component(enemy, Enemy{
         .id = enemyId
     });
 
-    std::string relativePath = "assets/basic_enemy_sprite.png";
+    std::string relativePath = "assets/Enemies/enemie1.png";
     std::string absolutePath = std::filesystem::absolute(relativePath).string();
     auto texture = std::make_shared<sf::Texture>();
 
@@ -231,12 +250,17 @@ core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry& registry, cons
     registry.add_component(enemy, core::ge::SceneComponent{static_cast<int>(Game::GameState::Playing)});
     std::vector<sf::IntRect> moveFrames;
     moveFrames.reserve(8);
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 8; i++)
         moveFrames.emplace_back(i * 33, 0, 33, 36);
-    }
+
+    std::vector<sf::IntRect> dieFrames;
+    dieFrames.reserve(8);
+    for (int i = 0; i < 5; i++)
+        dieFrames.emplace_back(i * 33, 36, 33, 35);
     registry.add_component(enemy, core::ge::AnimationComponent{
         .animations = {
-            {core::ge::AnimationState::Moving, moveFrames}
+            {core::ge::AnimationState::Moving, moveFrames},
+            {core::ge::AnimationState::Dying, dieFrames}
         },
         .frameTime = 0.1f,
         .elapsedTime = 0.0f,
