@@ -1,4 +1,5 @@
 #include "Game.hpp"
+#include <SFML/System/String.hpp>
 #include <SFML/System/Time.hpp>
 #include <iostream>
 #include "EntityFactory.hpp"
@@ -158,9 +159,6 @@ void Game::update()
     // Clickable
     _gameEngine.registry.run_system<core::ge::ClickableComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent, core::ge::TransformComponent>();
 
-    // TextInput
-    _gameEngine.registry.run_system<core::ge::TextInputComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent>();
-
     // View
     _gameEngine.registry.run_system<ViewComponent, core::ge::SceneComponent>();
 }
@@ -172,6 +170,7 @@ void Game::render()
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::SceneComponent>();
     _gameEngine.registry.run_system<core::ge::TextComponent, core::ge::SceneComponent>();
     _gameEngine.registry.run_system<core::ge::SliderComponent, core::ge::SceneComponent>();
+    _gameEngine.registry.run_system<core::ge::TextInputComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent>();
     _gameEngine.window.display();
 }
 
@@ -225,11 +224,15 @@ void Game::processEvents()
             for (auto entity : textInputEntities) {
                 auto textInput = _gameEngine.registry.get_component<core::ge::TextInputComponent>(entity);
                 if (textInput->isActive) {
-                    if (event.text.unicode == '\b' && !textInput->text.empty()) {
-                        textInput->text.pop_back();
-                    } else if (event.text.unicode < 128 && textInput->text.size() < textInput->maxLength) {
-                        textInput->text += static_cast<char>(event.text.unicode);
+                    std::string value = sf::String(textInput->text.getString()).toAnsiString();
+                    std::cout << "Text entered: " << value << std::endl;
+                    if (event.text.unicode == '\b' && !textInput->text.getString().isEmpty()) {
+                        value.pop_back();
+                    } else if (event.text.unicode < 128 && value.size() < textInput->maxLength) {
+                        value += static_cast<char>(event.text.unicode);
                     }
+                    std::cout << "Text value: " << value << std::endl;
+                    textInput->text.setString(value);
                 }
             }
         }
