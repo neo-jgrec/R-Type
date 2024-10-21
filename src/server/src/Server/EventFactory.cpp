@@ -62,17 +62,42 @@ void EventFactory::playerConnected(Server &server)
         {
             const core::ecs::Entity world = gameEngine.registry.get_entities<World>()[0];
             const auto &worldComponent = gameEngine.registry.get_component<World>(world);
-            const auto scroll = static_cast<uint32_t>(worldComponent->scroll);
-            networkingService.sendRequest(
-                endpoint,
-                MapScroll,
-                {
-                    static_cast<uint8_t>(scroll >> 24),
-                    static_cast<uint8_t>(scroll >> 16),
-                    static_cast<uint8_t>(scroll >> 8),
-                    static_cast<uint8_t>(scroll)
+
+            {
+                const auto scroll = static_cast<uint32_t>(worldComponent->scroll);
+                networkingService.sendRequest(
+                    endpoint,
+                    MapScroll,
+                    {
+                        static_cast<uint8_t>(scroll >> 24),
+                        static_cast<uint8_t>(scroll >> 16),
+                        static_cast<uint8_t>(scroll >> 8),
+                        static_cast<uint8_t>(scroll)
+                    });
+            }
+            {
+                const auto [fst, snd] = worldComponent->spawnPoints[rand() % worldComponent->spawnPoints.size()];
+                const auto x = static_cast<uint32_t>(fst);
+                const auto y = static_cast<uint32_t>(snd);
+
+                const auto playerComponent = gameEngine.registry.get_component<Player>(players[i].value());
+                const auto transformComponent = gameEngine.registry.get_component<core::ge::TransformComponent>(players[i].value());
+                transformComponent->position = {static_cast<float>(x), static_cast<float>(y)};
+
+                server.sendRequestToPlayers(PlayerMove, {
+                    playerComponent->id,
+                    static_cast<uint8_t>(x >> 24),
+                    static_cast<uint8_t>(x >> 16),
+                    static_cast<uint8_t>(x >> 8),
+                    static_cast<uint8_t>(x),
+                    static_cast<uint8_t>(y >> 24),
+                    static_cast<uint8_t>(y >> 16),
+                    static_cast<uint8_t>(y >> 8),
+                    static_cast<uint8_t>(y)
                 });
+            }
         }
+
         for (const auto &playerEntity : gameEngine.registry.get_entities<Player>()) {
             const auto &playerComponent = gameEngine.registry.get_component<Player>(playerEntity);
             if (playerComponent->id == i)
