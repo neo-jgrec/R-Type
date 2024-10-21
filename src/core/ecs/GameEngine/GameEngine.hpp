@@ -4,6 +4,7 @@
 #include "../Registry/Registry.hpp"
 #include "./GameEngineComponents.hpp"
 #include "MusicManager.hpp"
+#include "AssetManager.hpp"
 #include <SFML/Graphics.hpp>
 #include <SFML/System/Clock.hpp>
 #include <SFML/Window/WindowStyle.hpp>
@@ -73,6 +74,7 @@ public:
     float delta_t = 0.0f;               ///< Time delta between frames, used for animations and movement.
     core::ecs::Registry registry;       ///< The entity-component system (ECS) registry managing all entities and components.
     MusicManager musicManager;          ///< Manager for background music in the game.
+    AssetManager assetManager;         ///< Manager for loading and managing assets.
     sf::RenderWindow window;            ///< The SFML render window where the game is drawn.
     int currentScene = 0;               ///< The currently active scene, represented by an integer.
     sf::Clock clock;                    ///< SFML clock for tracking time in the game loop.

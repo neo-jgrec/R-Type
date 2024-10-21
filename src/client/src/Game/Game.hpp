@@ -149,6 +149,11 @@ private:
     void initBackground(core::ecs::Registry& registry, nlohmann::json& mapData, sf::RenderWindow& window) const;
 
     /**
+     * @brief Loads all assets used in the game.
+     */
+    void loadAssets();
+
+    /**
      * @brief Handles game events such as player collisions, enemy attacks, and power-ups.
      *
      * @param registry
