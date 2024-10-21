@@ -29,6 +29,7 @@ void Game::init()
     _gameEngine.registry.register_component<HealthComponent>();
     _gameEngine.registry.register_component<ScoreComponent>();
     _gameEngine.registry.register_component<Player>();
+    _gameEngine.registry.register_component<PlayerAnim>();
     _gameEngine.registry.register_component<Enemy>();
     _gameEngine.registry.register_component<Projectile>();
     _gameEngine.registry.register_component<Missile>();
@@ -77,6 +78,7 @@ void Game::loadAssets()
         _gameEngine.assetManager.loadFont("arial", "assets/Fonts/Arial.ttf");
         _gameEngine.assetManager.loadTexture("background", "assets/background.png");
         _gameEngine.assetManager.loadTexture("logo", "assets/logo.png");
+        _gameEngine.assetManager.loadTexture("player_anim", "assets/Player/missile_charging.png");
     } catch (const std::runtime_error &e) {
         std::cerr << "Error loading assets: " << e.what() << std::endl;
     }

@@ -21,7 +21,8 @@ enum class AnimationState {
     Moving,
     MovingUp,
     MovingDown,
-    Dying
+    Dying,
+    Charging,
 };
 
 /**
