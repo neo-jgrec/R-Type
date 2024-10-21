@@ -225,13 +225,11 @@ void Game::processEvents()
                 auto textInput = _gameEngine.registry.get_component<core::ge::TextInputComponent>(entity);
                 if (textInput->isActive) {
                     std::string value = sf::String(textInput->text.getString()).toAnsiString();
-                    std::cout << "Text entered: " << value << std::endl;
                     if (event.text.unicode == '\b' && !textInput->text.getString().isEmpty()) {
                         value.pop_back();
                     } else if (event.text.unicode < 128 && value.size() < textInput->maxLength) {
                         value += static_cast<char>(event.text.unicode);
                     }
-                    std::cout << "Text value: " << value << std::endl;
                     textInput->text.setString(value);
                 }
             }
