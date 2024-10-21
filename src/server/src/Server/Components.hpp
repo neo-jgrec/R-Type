@@ -12,6 +12,7 @@ struct World {
     float scroll = 0;
 
     std::pair<uint32_t, uint32_t> size;
+    uint8_t tileSize;
     std::vector<std::pair<uint32_t, uint32_t>> spawnPoints;
 };
 
