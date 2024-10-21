@@ -12,7 +12,7 @@
 #include "../../../core/ecs/GameEngine/GameEngineComponents.hpp"
 #include "Game.hpp"
 
-core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, const sf::Vector2f& position, int color, Game &game, sf::Vector2f gameScale, std::uint16_t playerId, bool self)
+core::ecs::Entity EntityFactory::createPlayer(core::GameEngine& gameEngine, core::ecs::Registry& registry, const sf::Vector2f& position, int color, Game &game, sf::Vector2f gameScale, std::uint16_t playerId, bool self)
 {
     core::ecs::Entity player = registry.spawn_entity();
     core::ecs::Entity player_anim = registry.spawn_entity();
@@ -43,14 +43,7 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, con
     registry.add_component(player, ShootCounterComponent{0, 0, 0, -1});
     registry.add_component(player, PlayerColorComponent{color});
 
-    std::string relativePath = "assets/player_sprite.png";
-    std::string absolutePath = std::filesystem::absolute(relativePath).string();
-    auto texture = std::make_shared<sf::Texture>();
-
-    if (!texture->loadFromFile(absolutePath)) {
-        std::cerr << "Failed to load texture: " << absolutePath << std::endl;
-        return player;
-    }
+    auto texture = gameEngine.assetManager.getTexture("player");
 
     sf::RectangleShape playerShape(sf::Vector2f(33.0f, 17.0f));
     playerShape.setTexture(texture.get());
@@ -80,7 +73,7 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, con
     return player;
 }
 
-core::ecs::Entity EntityFactory::createPlayerProjectile(core::ecs::Registry& registry, core::ge::TransformComponent& playerTransform, sf::Vector2f gameScale)
+core::ecs::Entity EntityFactory::createPlayerProjectile(core::GameEngine& gameEngine, core::ecs::Registry& registry, core::ge::TransformComponent& playerTransform, sf::Vector2f gameScale)
 {
     core::ecs::Entity projectile = registry.spawn_entity();
 
@@ -98,24 +91,13 @@ core::ecs::Entity EntityFactory::createPlayerProjectile(core::ecs::Registry& reg
     registry.add_component(projectile, DamageComponent{10});
     registry.add_component(projectile, Projectile{});
 
-    auto buffer = std::make_shared<sf::SoundBuffer>();
-    std::string soundPath = "assets/shooting_sound.ogg";
-    if (!buffer->loadFromFile(soundPath)) {
-        std::cerr << "Failed to load sound: " << soundPath << std::endl;
-        return projectile;
-    }
+    auto buffer = gameEngine.assetManager.getSound("shooting");
 
     sf::Sound sound;
     sound.setBuffer(*buffer);
     registry.add_component(projectile, core::ge::SoundComponent{sound, buffer, true, false});
 
-    std::string relativePath = "assets/player_projectile.png";
-    std::string absolutePath = std::filesystem::absolute(relativePath).string();
-    auto texture = std::make_shared<sf::Texture>();
-    if (!texture->loadFromFile(absolutePath)) {
-        std::cerr << "Failed to load texture: " << absolutePath << std::endl;
-        return projectile;
-    }
+    auto texture = gameEngine.assetManager.getTexture("player_projectile");
 
     sf::RectangleShape projectileShape(sf::Vector2f(18.0f, 5.0f));
     projectileShape.setTexture(texture.get());
@@ -127,7 +109,7 @@ core::ecs::Entity EntityFactory::createPlayerProjectile(core::ecs::Registry& reg
     return projectile;
 }
 
-core::ecs::Entity EntityFactory::createPlayerMissile(core::ecs::Registry &registry, core::ge::TransformComponent &playerTransform, sf::Vector2f gameScale)
+core::ecs::Entity EntityFactory::createPlayerMissile(core::GameEngine& gameEngine, core::ecs::Registry &registry, core::ge::TransformComponent &playerTransform, sf::Vector2f gameScale)
 {
     core::ecs::Entity missile = registry.spawn_entity();
 
@@ -147,24 +129,13 @@ core::ecs::Entity EntityFactory::createPlayerMissile(core::ecs::Registry &regist
     registry.add_component(missile, Projectile{});
     registry.add_component(missile, HealthComponent{50});
 
-    auto buffer = std::make_shared<sf::SoundBuffer>();
-    std::string soundPath = "assets/missile_sound.ogg";
-    if (!buffer->loadFromFile(soundPath)) {
-        std::cerr << "Failed to load sound: " << soundPath << std::endl;
-        return missile;
-    }
+    auto buffer = gameEngine.assetManager.getSound("missile_sound");
 
     sf::Sound sound;
     sound.setBuffer(*buffer);
     registry.add_component(missile, core::ge::SoundComponent{sound, buffer, true, false});
 
-    std::string relativePath = "assets/player_missile.png";
-    std::string absolutePath = std::filesystem::absolute(relativePath).string();
-    auto texture = std::make_shared<sf::Texture>();
-    if (!texture->loadFromFile(absolutePath)) {
-        std::cerr << "Failed to load texture: " << absolutePath << std::endl;
-        return missile;
-    }
+    auto texture = gameEngine.assetManager.getTexture("player_missile");
 
     sf::RectangleShape missileShape(sf::Vector2f(34.5f, 12.0f));
     missileShape.setTexture(texture.get());
@@ -191,7 +162,7 @@ core::ecs::Entity EntityFactory::createPlayerMissile(core::ecs::Registry &regist
     return missile;
 }
 
-core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry& registry, const sf::Vector2f& position, sf::Vector2f gameScale, std::uint8_t enemyId)
+core::ecs::Entity EntityFactory::createEnemy(core::GameEngine& gameEngine, core::ecs::Registry& registry, const sf::Vector2f& position, sf::Vector2f gameScale, std::uint8_t enemyId)
 {
     core::ecs::Entity enemy = registry.spawn_entity();
 
@@ -210,6 +181,7 @@ core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry& registry, cons
                 registry.remove_component<core::ge::CollisionComponent>(self);
                 animComp->currentState = core::ge::AnimationState::Dying;
                 animComp->currentFrame = 0;
+                animComp->frameTime = 0.2f;
                 animComp->elapsedTime = 0.0f;
                 animComp->recurrence_max = 1;
                 animComp->recurrence_count = 0;
@@ -227,6 +199,7 @@ core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry& registry, cons
                 registry.remove_component<core::ge::CollisionComponent>(self);
                 animComp->currentState = core::ge::AnimationState::Dying;
                 animComp->currentFrame = 0;
+                animComp->frameTime = 0.2f;
                 animComp->elapsedTime = 0.0f;
                 animComp->recurrence_max = 1;
                 animComp->recurrence_count = 0;
@@ -240,14 +213,7 @@ core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry& registry, cons
         .id = enemyId
     });
 
-    std::string relativePath = "assets/Enemies/enemie1.png";
-    std::string absolutePath = std::filesystem::absolute(relativePath).string();
-    auto texture = std::make_shared<sf::Texture>();
-
-    if (!texture->loadFromFile(absolutePath)) {
-        std::cerr << "Failed to load texture: " << absolutePath << std::endl;
-        return enemy;
-    }
+    auto texture = gameEngine.assetManager.getTexture("enemie1");
 
     sf::RectangleShape enemyShape(sf::Vector2f(33.0f, 36.0f));
     enemyShape.setTexture(texture.get());
@@ -278,7 +244,7 @@ core::ecs::Entity EntityFactory::createEnemy(core::ecs::Registry& registry, cons
     return enemy;
 }
 
-core::ecs::Entity EntityFactory::createButton(core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void()>& onClick, int scene)
+core::ecs::Entity EntityFactory::createButton(core::GameEngine& gameEngine, core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void()>& onClick, int scene)
 {
     core::ecs::Entity button = registry.spawn_entity();
 
@@ -288,11 +254,7 @@ core::ecs::Entity EntityFactory::createButton(core::ecs::Registry& registry, con
     shape.setOutlineThickness(2);
     shape.setOutlineColor(sf::Color::Black);
 
-    sf::Font font;
-    if (!font.loadFromFile("assets/Fonts/Arial.ttf")) {
-        std::cerr << "Failed to load font: " << "assets/Fonts/Arial.ttf" << std::endl;
-        return button;
-    }
+    auto font = gameEngine.assetManager.getFont("arial");
 
     sf::Text text;
     text.setFont(font);
@@ -312,7 +274,7 @@ core::ecs::Entity EntityFactory::createButton(core::ecs::Registry& registry, con
     return button;
 }
 
-core::ecs::Entity EntityFactory::createTextInput(core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& title, int scene)
+core::ecs::Entity EntityFactory::createTextInput(core::GameEngine& gameEngine, core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& title, int scene)
 {
     core::ecs::Entity textInput = registry.spawn_entity();
 
@@ -322,11 +284,7 @@ core::ecs::Entity EntityFactory::createTextInput(core::ecs::Registry& registry, 
     shape.setOutlineThickness(2);
     shape.setOutlineColor(sf::Color::Black);
 
-    sf::Font font;
-    if (!font.loadFromFile("assets/Fonts/Arial.ttf")) {
-        std::cerr << "Failed to load font: " << "assets/Fonts/Arial.ttf" << std::endl;
-        return textInput;
-    }
+    auto font = gameEngine.assetManager.getFont("arial");
 
     sf::Text titleText;
     titleText.setFont(font);
@@ -351,7 +309,7 @@ core::ecs::Entity EntityFactory::createTextInput(core::ecs::Registry& registry, 
     return textInput;
 }
 
-core::ecs::Entity EntityFactory::createSlider(core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void(float)>& onChange, int scene, float currentValue)
+core::ecs::Entity EntityFactory::createSlider(core::GameEngine& gameEngine, core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void(float)>& onChange, int scene, float currentValue)
 {
     core::ecs::Entity slider = registry.spawn_entity();
 
@@ -365,11 +323,7 @@ core::ecs::Entity EntityFactory::createSlider(core::ecs::Registry& registry, con
     handle.setPosition(position.x + size.x, position.y + size.y / 2);
     handle.setFillColor(sf::Color::Red);
 
-    sf::Font font;
-    if (!font.loadFromFile("assets/Fonts/Arial.ttf")) {
-        std::cerr << "Failed to load font: " << "assets/Fonts/Arial.ttf" << std::endl;
-        return slider;
-    }
+    auto font = gameEngine.assetManager.getFont("arial");
 
     sf::Text text;
     text.setFont(font);
@@ -385,19 +339,14 @@ core::ecs::Entity EntityFactory::createSlider(core::ecs::Registry& registry, con
     return slider;
 }
 
-core::ecs::Entity EntityFactory::createImage(core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& texturePath, int scene)
+core::ecs::Entity EntityFactory::createImage(core::GameEngine& gameEngine, core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& textureName, int scene)
 {
     core::ecs::Entity img = registry.spawn_entity();
 
     sf::RectangleShape shape(size);
     shape.setPosition(position);
 
-    std::string absolutePath = std::filesystem::absolute(texturePath).string();
-    auto texture = std::make_shared<sf::Texture>();
-    if (!texture->loadFromFile(absolutePath)) {
-        std::cerr << "Failed to load texture: " << absolutePath << std::endl;
-        return img;
-    }
+    auto texture = gameEngine.assetManager.getTexture(textureName);
 
     shape.setTexture(texture.get());
 

@@ -99,7 +99,7 @@ void Game::inputSystem(core::ecs::Registry& registry)
             }
         } else {
             if (shootCounter.nextShotType == 0) {
-                EntityFactory::createPlayerProjectile(registry, transform, gameScale);
+                EntityFactory::createPlayerProjectile(_gameEngine, registry, transform, gameScale);
                 networkingService.sendRequest(
                     "127.0.0.1",
                     1111,
@@ -108,7 +108,7 @@ void Game::inputSystem(core::ecs::Registry& registry)
                 );
             }
             if (shootCounter.nextShotType == 1) {
-                EntityFactory::createPlayerMissile(registry, transform, gameScale);
+                EntityFactory::createPlayerMissile(_gameEngine, registry, transform, gameScale);
                 networkingService.sendRequest(
                     "127.0.0.1",
                     1111,
@@ -173,10 +173,10 @@ void Game::eventSystem(core::ecs::Registry& registry)
                     if (type == RequestType::PlayerConnect) {
                         if (event.getHeader().packetId == playerConnectionHeader.packetId) {
                             auto playerId = std::get<std::uint8_t>(event.getPayload());
-                            EntityFactory::createPlayer(registry, sf::Vector2f(_gameEngine.window.getView().getSize().x / 2.0f, _gameEngine.window.getView().getSize().y / 2.0f), playerId, *this, gameScale, playerId, true);
+                            EntityFactory::createPlayer(_gameEngine, registry, sf::Vector2f(_gameEngine.window.getView().getSize().x / 2.0f, _gameEngine.window.getView().getSize().y / 2.0f), playerId, *this, gameScale, playerId, true);
                         } else {
                             auto playerId = std::get<std::uint8_t>(event.getPayload());
-                            EntityFactory::createPlayer(registry, sf::Vector2f(_gameEngine.window.getView().getSize().x / 2.0f, _gameEngine.window.getView().getSize().y / 2.0f), playerId, *this, gameScale, playerId, false);
+                            EntityFactory::createPlayer(_gameEngine, registry, sf::Vector2f(_gameEngine.window.getView().getSize().x / 2.0f, _gameEngine.window.getView().getSize().y / 2.0f), playerId, *this, gameScale, playerId, false);
                         }
                     } else if (type == RequestType::PlayerMove) {
                         auto playerMovePayload = std::get<std::pair<std::uint8_t, sf::Vector2u>>(event.getPayload());
@@ -233,12 +233,12 @@ void Game::eventSystem(core::ecs::Registry& registry)
                             auto playerComponent = registry.get_component<Player>(playerEntity);
                             if (playerComponent->id == playerShootPayload) {
                                 auto playerTransform = registry.get_component<core::ge::TransformComponent>(playerEntity);
-                                EntityFactory::createPlayerProjectile(registry, *playerTransform, gameScale);
+                                EntityFactory::createPlayerProjectile(_gameEngine, registry, *playerTransform, gameScale);
                             }
                         }
                     } else if (type == RequestType::EnemySpawn) {
                         auto enemySpawnPayload = std::get<std::pair<std::uint8_t, sf::Vector2u>>(event.getPayload());
-                        EntityFactory::createEnemy(registry, sf::Vector2f(enemySpawnPayload.second), gameScale, enemySpawnPayload.first);
+                        EntityFactory::createEnemy(_gameEngine, registry, sf::Vector2f(enemySpawnPayload.second), gameScale, enemySpawnPayload.first);
                     } else if (type == RequestType::EnemyMove) {
                         auto enemyMovePayload = std::get<std::pair<std::uint8_t, sf::Vector2u>>(event.getPayload());
                         auto enemyEntities = registry.get_entities<Enemy>();
@@ -263,6 +263,7 @@ void Game::eventSystem(core::ecs::Registry& registry)
                                 registry.remove_component<core::ge::CollisionComponent>(enemyEntity);
                                 animComp->currentState = core::ge::AnimationState::Dying;
                                 animComp->currentFrame = 0;
+                                animComp->frameTime = 0.2f;
                                 animComp->elapsedTime = 0.0f;
                                 animComp->recurrence_max = 1;
                                 animComp->recurrence_count = 0;
