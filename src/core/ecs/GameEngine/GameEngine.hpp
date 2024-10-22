@@ -280,12 +280,13 @@ protected:
                         textInput.isActive = false;
                     }
                 }
-
                 if (textInput.isActive) {
-                    text.text.setString(textInput.text);
-                } else if (textInput.text.empty()) {
-                    text.text.setString(textInput.placeholder);
+                    drawable.shape.setOutlineColor(sf::Color::Cyan);
+                } else {
+                    drawable.shape.setOutlineColor(sf::Color::Black);
                 }
+                textInput.text.setFont(textInput.font);
+                window.draw(textInput.text);
             });
     }
 

@@ -193,11 +193,11 @@ struct SceneComponent {
  * @brief Component for text input fields.
  */
 struct TextInputComponent {
-    std::string text;
-    std::string placeholder;
+    sf::Text text;
+    sf::Font font;
     bool isActive = false;
     size_t cursorPosition = 0;
-    size_t maxLength = 100;
+    size_t maxLength = 20;
 };
 
 /**

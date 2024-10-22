@@ -267,7 +267,7 @@ core::ecs::Entity EntityFactory::createButton(core::GameEngine& gameEngine, core
     return button;
 }
 
-core::ecs::Entity EntityFactory::createTextInput(core::GameEngine& gameEngine, core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& placeholder, int scene)
+core::ecs::Entity EntityFactory::createTextInput(core::GameEngine& gameEngine, core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& title, int scene)
 {
     core::ecs::Entity textInput = registry.spawn_entity();
 
@@ -279,19 +279,24 @@ core::ecs::Entity EntityFactory::createTextInput(core::GameEngine& gameEngine, c
 
     auto font = gameEngine.assetManager.getFont("arial");
 
+    sf::Text titleText;
+    titleText.setFont(font);
+    titleText.setString(title);
+    titleText.setCharacterSize(24);
+    titleText.setFillColor(sf::Color::White);
+    titleText.setPosition(position.x, position.y - 40.0f);
+
     sf::Text text;
     text.setFont(font);
-    text.setString(placeholder);
+    text.setString("");
     text.setCharacterSize(24);
     text.setFillColor(sf::Color::Black);
+    text.setPosition(position.x + 10.0f, position.y + 10.0f);
 
-    sf::FloatRect textBounds = text.getLocalBounds();
-    text.setOrigin(textBounds.left + textBounds.width / 2.0f, textBounds.top + textBounds.height / 2.0f);
-    text.setPosition(position.x + size.x / 2.0f, position.y + size.y / 2.0f);
 
+    registry.add_component(textInput, core::ge::TextComponent{titleText, font});
     registry.add_component(textInput, core::ge::DrawableComponent{shape});
-    registry.add_component(textInput, core::ge::TextComponent{text, font});
-    registry.add_component(textInput, core::ge::TextInputComponent{placeholder, placeholder, false, 0, 100});
+    registry.add_component(textInput, core::ge::TextInputComponent{text, font, false, 0, 20});
     registry.add_component(textInput, core::ge::SceneComponent{scene});
 
     return textInput;
