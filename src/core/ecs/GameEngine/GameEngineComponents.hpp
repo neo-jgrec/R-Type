@@ -108,7 +108,10 @@ struct AnimationComponent {
     float frameTime;
     float elapsedTime;
     unsigned int currentFrame = 0;
-    bool loop = true;
+    bool loop = false;
+    unsigned int recurrence_max = 0;
+    unsigned int recurrence_count = 0;
+    bool isPlaying = true;
 };
 
 /**

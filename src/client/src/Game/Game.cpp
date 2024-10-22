@@ -17,6 +17,8 @@ void Game::init()
     _gameEngine.window.setFramerateLimit(60);
     _gameEngine.window.setKeyRepeatEnabled(true);
 
+    loadAssets();
+
     _gameEngine.musicManager.loadMusic("level1", "assets/music/level1.ogg");
     _gameEngine.musicManager.setVolume(10.0f);
     // TODO: load every level music
@@ -62,6 +64,24 @@ void Game::init()
     eventSystem(_gameEngine.registry);
 }
 
+void Game::loadAssets()
+{
+    try {
+        _gameEngine.assetManager.loadTexture("enemie1", "assets/Enemies/enemie1.png");
+        _gameEngine.assetManager.loadTexture("player", "assets/player_sprite.png");
+        _gameEngine.assetManager.loadSound("shooting", "assets/shooting_sound.ogg");
+        _gameEngine.assetManager.loadTexture("player_projectile", "assets/player_projectile.png");
+        _gameEngine.assetManager.loadSound("missile_sound", "assets/missile_sound.ogg");
+        _gameEngine.assetManager.loadTexture("player_missile", "assets/player_missile.png");
+        _gameEngine.assetManager.loadTexture("enemie1", "assets/Enemies/enemie1.png");
+        _gameEngine.assetManager.loadFont("arial", "assets/Fonts/Arial.ttf");
+        _gameEngine.assetManager.loadTexture("background", "assets/background.png");
+        _gameEngine.assetManager.loadTexture("logo", "assets/logo.png");
+    } catch (const std::runtime_error &e) {
+        std::cerr << "Error loading assets: " << e.what() << std::endl;
+    }
+}
+
 void Game::initMainMenu()
 {
     sf::Vector2u windowSize = _gameEngine.window.getSize();
@@ -71,21 +91,27 @@ void Game::initMainMenu()
     sf::Vector2f buttonSize(200.0f, 50.0f);
     float buttonSpacing = 20.0f;
 
-    EntityFactory::createImage(_gameEngine.registry,
+    EntityFactory::createImage(
+        _gameEngine,
+        _gameEngine.registry,
         sf::Vector2f(0.0f, 0.0f),
         sf::Vector2f(static_cast<float>(_gameEngine.window.getSize().x), static_cast<float>(windowSize.y)),
-        "assets/background.png",
+        "background",
         static_cast<int>(GameState::MainMenu)
     );
 
-    EntityFactory::createImage(_gameEngine.registry,
+    EntityFactory::createImage(
+        _gameEngine,
+        _gameEngine.registry,
         sf::Vector2f(centerX - 500.0f, centerY - 400.0f),
         sf::Vector2f(1000.0f, 300.0f),
-        "assets/logo.png",
+        "logo",
         static_cast<int>(GameState::MainMenu)
     );
 
-    EntityFactory::createButton(_gameEngine.registry,
+    EntityFactory::createButton(
+        _gameEngine,
+        _gameEngine.registry,
         sf::Vector2f(centerX - buttonSize.x / 2, centerY - buttonSize.y - buttonSpacing),
         buttonSize,
         "Start Game",
@@ -97,7 +123,9 @@ void Game::initMainMenu()
         static_cast<int>(GameState::MainMenu)
     );
 
-    EntityFactory::createButton(_gameEngine.registry,
+    EntityFactory::createButton(
+        _gameEngine,
+        _gameEngine.registry,
         sf::Vector2f(centerX - buttonSize.x / 2, centerY),
         buttonSize,
         "Options",
@@ -105,7 +133,9 @@ void Game::initMainMenu()
         static_cast<int>(GameState::MainMenu)
     );
 
-    EntityFactory::createButton(_gameEngine.registry,
+    EntityFactory::createButton(
+        _gameEngine,
+        _gameEngine.registry,
         sf::Vector2f(centerX - buttonSize.x / 2, centerY + buttonSize.y + buttonSpacing),
         buttonSize,
         "Quit",
@@ -116,7 +146,9 @@ void Game::initMainMenu()
         static_cast<int>(GameState::MainMenu)
     );
 
-    EntityFactory::createSlider(_gameEngine.registry,
+    EntityFactory::createSlider(
+        _gameEngine,
+        _gameEngine.registry,
         sf::Vector2f(centerX - buttonSize.x / 2, centerY + 3 * (buttonSize.y + (buttonSpacing += 10.0f))),
         sf::Vector2f(200.0f, 10.0f),
         "Volume",

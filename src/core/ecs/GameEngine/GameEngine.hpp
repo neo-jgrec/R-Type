@@ -4,6 +4,7 @@
 #include "../Registry/Registry.hpp"
 #include "./GameEngineComponents.hpp"
 #include "MusicManager.hpp"
+#include "AssetManager.hpp"
 #include <SFML/Graphics.hpp>
 #include <SFML/System/Clock.hpp>
 #include <SFML/Window/WindowStyle.hpp>
@@ -73,6 +74,7 @@ public:
     float delta_t = 0.0f;               ///< Time delta between frames, used for animations and movement.
     core::ecs::Registry registry;       ///< The entity-component system (ECS) registry managing all entities and components.
     MusicManager musicManager;          ///< Manager for background music in the game.
+    AssetManager assetManager;         ///< Manager for loading and managing assets.
     sf::RenderWindow window;            ///< The SFML render window where the game is drawn.
     int currentScene = 0;               ///< The currently active scene, represented by an integer.
     sf::Clock clock;                    ///< SFML clock for tracking time in the game loop.
@@ -114,7 +116,26 @@ protected:
      */
     void animationSystem() {
         registry.add_system<core::ge::DrawableComponent, core::ge::AnimationComponent>(
-            []([[maybe_unused]] core::ecs::Entity entity, core::ge::DrawableComponent &drawable, core::ge::AnimationComponent &anim) {
+            [this]([[maybe_unused]] core::ecs::Entity entity, core::ge::DrawableComponent &drawable, core::ge::AnimationComponent &anim) {
+                if (!anim.isPlaying)
+                    return;
+                if (anim.loop) {
+                    anim.elapsedTime += delta_t;
+                    if (anim.elapsedTime >= anim.frameTime) {
+                        anim.currentFrame = (anim.currentFrame + 1) % anim.animations[anim.currentState].size();
+                        anim.elapsedTime -= anim.frameTime;
+                    }
+                    if (anim.recurrence_max > 0) {
+                        if (anim.recurrence_count >= anim.recurrence_max) {
+                            anim.isPlaying = false;
+                            registry.remove_component<core::ge::AnimationComponent>(entity);
+                            registry.remove_component<core::ge::DrawableComponent>(entity);
+                            registry.kill_entity(entity);
+                        }
+                        if (anim.currentFrame == anim.animations[anim.currentState].size() - 1)
+                            anim.recurrence_count++;
+                    }
+                }
                 drawable.shape.setTextureRect(anim.animations[anim.currentState][anim.currentFrame]);
             });
     }
