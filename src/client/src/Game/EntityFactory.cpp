@@ -33,7 +33,7 @@ core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, con
         .id = static_cast<uint8_t>(playerId),
         .self = self
     });
-    registry.add_component(player, ShootCounterComponent{0});
+    registry.add_component(player, ShootCounterComponent{0, 0, 0, -1});
     registry.add_component(player, PlayerColorComponent{color});
 
     std::string relativePath = "assets/player_sprite.png";

@@ -87,7 +87,7 @@ void Game::inputSystem(core::ecs::Registry& registry)
             if (shootCounter.chargeTime >= 1.0f) {
                 shootCounter.nextShotType = 1;
             } else {
-                if (shootCounter.chargeTime >= 0.1f)
+                if (shootCounter.chargeTime >= 0.05f)
                     return;
                 shootCounter.nextShotType = 0;
             }
@@ -111,7 +111,7 @@ void Game::inputSystem(core::ecs::Registry& registry)
                 );
             }
             shootCounter.notChargingTime += _gameEngine.delta_t;
-            if (shootCounter.notChargingTime >= 0.1f)
+            if (shootCounter.notChargingTime >= 0.05f)
                 shootCounter.chargeTime = 0.0f;
             shootCounter.nextShotType = -1;
         }
