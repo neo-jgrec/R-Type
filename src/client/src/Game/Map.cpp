@@ -204,9 +204,8 @@ void Game::parseMap(core::ecs::Registry& registry, const std::string& mapFilePat
                         }
                     }},
                     {PLAYER, [&](const core::ecs::Entity, const core::ecs::Entity other) {
-                        if (isDestructible) {
-                            registry.remove_component<core::ge::DrawableComponent>(other);
-                        }
+                        auto disabled = registry.get_component<core::ge::DisabledComponent>(other);
+                        disabled->disabled = true;
                     }},
                 }
             });

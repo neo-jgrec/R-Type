@@ -161,7 +161,10 @@ void Game::eventSystem(core::ecs::Registry& registry)
                         auto playerEntities = registry.get_entities<Player>();
                         for (auto playerEntity : playerEntities) {
                             auto playerComponent = registry.get_component<Player>(playerEntity);
+                            auto disabledComponent = registry.get_component<core::ge::DisabledComponent>(playerEntity);
                             if (playerComponent->id == playerMovePayload.first) {
+                                if (disabledComponent)
+                                    disabledComponent->disabled = false;
                                 auto playerTransform = registry.get_component<core::ge::TransformComponent>(playerEntity);
                                 playerTransform->position = sf::Vector2f(static_cast<float>(playerMovePayload.second.x), static_cast<float>(playerMovePayload.second.y));
                             }

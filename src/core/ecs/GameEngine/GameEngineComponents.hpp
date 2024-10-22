@@ -213,6 +213,15 @@ struct SliderComponent {
     std::function<void(float)> onChange;
 };
 
+
+/**
+ * @struct DisabledComponent
+ * @brief Component to disable an entity.
+ */
+struct DisabledComponent {
+    bool disabled = false;
+};
+
 } // namespace core::ge
 
 #endif /* !GAMEENGINECOMPONENTS_HPP_ */

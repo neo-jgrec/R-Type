@@ -45,6 +45,7 @@ public:
         registry.register_component<core::ge::SceneComponent>();
         registry.register_component<core::ge::TextInputComponent>();
         registry.register_component<core::ge::SliderComponent>();
+        registry.register_component<core::ge::DisabledComponent>();
 
         // Initialize systems
         positionSystem();
@@ -86,6 +87,13 @@ protected:
      * This system renders entities' `DrawableComponent` if they belong to the active scene.
      */
     void renderSystems() {
+        registry.add_system<core::ge::DrawableComponent, core::ge::SceneComponent, core::ge::DisabledComponent>(
+            [&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::DrawableComponent &drawable, core::ge::SceneComponent &scene, core::ge::DisabledComponent &disabled) {
+                if (scene.sceneName != currentScene || disabled.disabled)
+                    return;
+                window.draw(drawable.shape);
+            });
+
         registry.add_system<core::ge::DrawableComponent, core::ge::SceneComponent>(
             [&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::DrawableComponent &drawable, core::ge::SceneComponent &scene) {
                 if (scene.sceneName != currentScene)

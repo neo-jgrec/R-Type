@@ -203,6 +203,7 @@ void Game::render()
     _gameEngine.window.clear();
     _gameEngine.registry.run_system<ViewComponent, core::ge::SceneComponent>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::SceneComponent>();
+    _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::SceneComponent, core::ge::DisabledComponent>();
     _gameEngine.registry.run_system<core::ge::TextComponent, core::ge::SceneComponent>();
     _gameEngine.registry.run_system<core::ge::SliderComponent, core::ge::SceneComponent>();
     _gameEngine.window.display();
