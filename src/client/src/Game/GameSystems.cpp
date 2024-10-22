@@ -41,6 +41,12 @@ void Game::inputSystem(core::ecs::Registry& registry)
 {
     registry.add_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, ShootCounterComponent, Player, core::ge::AnimationComponent>
     ([&](core::ecs::Entity, core::ge::TransformComponent &transform, const VelocityComponent &vel, InputStateComponent &input, ShootCounterComponent &shootCounter, Player &player, core::ge::AnimationComponent &animation) {
+        auto playerAnimEntities = registry.get_entities<PlayerAnim>();
+        if (!playerAnimEntities.empty()) {
+            auto playerAnimEntity = playerAnimEntities[0];
+            auto playerAnimTransform = registry.get_component<core::ge::TransformComponent>(playerAnimEntity);
+            playerAnimTransform->position = transform.position;
+        }
         if (input.up) {
             transform.position.y -= vel.dy;
             if (animation.currentFrame == 3) {

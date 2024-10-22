@@ -100,6 +100,16 @@ struct Player {
 };
 
 /**
+ * @struct PlayerAnim
+ * @brief Tag component used to identify an entity as a player animation.
+ * 
+ * This tag is applied to player animation entities to distinguish them in systems or logic that targets player animations.
+ */
+struct PlayerAnim {
+    std::uint8_t id = 0;
+};
+
+/**
  * @struct Enemy
  * @brief Tag component used to identify an entity as an enemy.
  * 

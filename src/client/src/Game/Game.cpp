@@ -26,6 +26,7 @@ void Game::init()
     _gameEngine.registry.register_component<HealthComponent>();
     _gameEngine.registry.register_component<ScoreComponent>();
     _gameEngine.registry.register_component<Player>();
+    _gameEngine.registry.register_component<PlayerAnim>();
     _gameEngine.registry.register_component<Enemy>();
     _gameEngine.registry.register_component<Projectile>();
     _gameEngine.registry.register_component<Missile>();

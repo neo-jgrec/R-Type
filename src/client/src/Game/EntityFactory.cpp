@@ -15,6 +15,13 @@
 core::ecs::Entity EntityFactory::createPlayer(core::ecs::Registry& registry, const sf::Vector2f& position, int color, Game &game, sf::Vector2f gameScale, std::uint16_t playerId, bool self)
 {
     core::ecs::Entity player = registry.spawn_entity();
+    core::ecs::Entity player_anim = registry.spawn_entity();
+
+    registry.add_component(player_anim, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 17.0f), gameScale * 3.5f, 0.0f});
+    registry.add_component(player_anim, core::ge::DrawableComponent{sf::RectangleShape(sf::Vector2f(33.0f, 17.0f))});
+    registry.add_component(player_anim, core::ge::SceneComponent{static_cast<int>(Game::GameState::Playing)});
+    registry.add_component(player_anim, PlayerAnim{static_cast<std::uint8_t>(playerId)});
+    registry.add_component(player_anim, core::ge::TextureComponent{nullptr});
 
     registry.add_component(player, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 17.0f), gameScale * 3.5f, 0.0f});
     registry.add_component(player, core::ge::CollisionComponent{PLAYER, {sf::FloatRect(0.0f, 0.0f, 33.0f, 17.0f)}, {
@@ -395,3 +402,4 @@ core::ecs::Entity EntityFactory::createImage(core::ecs::Registry& registry, cons
 
     return img;
 }
+
