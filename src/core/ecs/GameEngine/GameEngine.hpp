@@ -117,6 +117,7 @@ protected:
     void animationSystem() {
         registry.add_system<core::ge::DrawableComponent, core::ge::AnimationComponent>(
             [this]([[maybe_unused]] core::ecs::Entity entity, core::ge::DrawableComponent &drawable, core::ge::AnimationComponent &anim) {
+                drawable.shape.setTextureRect(anim.animations[anim.currentState][anim.currentFrame]);
                 if (!anim.isPlaying)
                     return;
                 if (anim.loop) {
@@ -136,7 +137,6 @@ protected:
                             anim.recurrence_count++;
                     }
                 }
-                drawable.shape.setTextureRect(anim.animations[anim.currentState][anim.currentFrame]);
             });
     }
 

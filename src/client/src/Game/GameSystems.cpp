@@ -37,61 +37,98 @@ static void sendPayloadMove(NetworkingService& networkingService, const sf::Vect
     }
 }
 
+std::pair<std::shared_ptr<core::ge::TransformComponent>, std::shared_ptr<core::ge::AnimationComponent>> getPlayerAnimComponents(core::ecs::Registry& registry)
+{
+    auto playerAnimEntities = registry.get_entities<PlayerAnim>();
+    if (!playerAnimEntities.empty()) {
+        auto playerAnimEntity = playerAnimEntities[0];
+        return {
+            registry.get_component<core::ge::TransformComponent>(playerAnimEntity),
+            registry.get_component<core::ge::AnimationComponent>(playerAnimEntity)
+        };
+    }
+    return {nullptr, nullptr};
+}
+
 void Game::inputSystem(core::ecs::Registry& registry)
 {
     registry.add_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, ShootCounterComponent, Player, core::ge::AnimationComponent>
     ([&](core::ecs::Entity, core::ge::TransformComponent &transform, const VelocityComponent &vel, InputStateComponent &input, ShootCounterComponent &shootCounter, Player &player, core::ge::AnimationComponent &animation) {
-            if (input.up) {
-                transform.position.y -= vel.dy;
-                if (animation.currentFrame == 3) {
-                    animation.elapsedTime += _gameEngine.delta_t;
-                    if (animation.elapsedTime >= animation.frameTime)
-                        animation.currentFrame = 4;
-                } else {
-                    if (animation.currentFrame == 4)
-                        return;
-                    animation.currentFrame = 3;
-                    animation.elapsedTime = 0;
-                }
-                sendPayloadMove(networkingService, transform.position, player.id);
-            }
-            if (input.down) {
-                transform.position.y += vel.dy;
-                if (animation.currentFrame == 1) {
-                    animation.elapsedTime += _gameEngine.delta_t;
-                    if (animation.elapsedTime >= animation.frameTime)
-                        animation.currentFrame = 0;
-                } else {
-                    if (animation.currentFrame == 0)
-                        return;
-                    animation.currentFrame = 1;
-                    animation.elapsedTime = 0;
-                }
-                sendPayloadMove(networkingService, transform.position, player.id);
-            }
-            if (input.left) {
-                transform.position.x -= vel.dx;
-                sendPayloadMove(networkingService, transform.position, player.id);
-            }
-            if (input.right) {
-                transform.position.x += vel.dx;
-                sendPayloadMove(networkingService, transform.position, player.id);
-            }
-            if (!input.up && !input.down && !input.left && !input.right) {
-                animation.currentFrame = 2;
+        auto playerAnimTransform = getPlayerAnimComponents(registry).first;
+        auto playerAnim = getPlayerAnimComponents(registry).second;
+        if (!playerAnimTransform || !playerAnim)
+            return;
+        playerAnimTransform->position = transform.position + sf::Vector2f(115.0f, 10.0f);
+        if (input.up) {
+            transform.position.y -= vel.dy;
+            if (animation.currentFrame == 3) {
+                animation.elapsedTime += _gameEngine.delta_t;
+                if (animation.elapsedTime >= animation.frameTime)
+                    animation.currentFrame = 4;
+            } else {
+                if (animation.currentFrame == 4)
+                    return;
+                animation.currentFrame = 3;
                 animation.elapsedTime = 0;
             }
-            if (input.fire) {
-                if (shootCounter.shotCount >= 6) {
-                    EntityFactory::createPlayerMissile(_gameEngine, registry, transform, gameScale);
-
-                    shootCounter.shotCount = 0;
-                } else {
-                    EntityFactory::createPlayerProjectile(_gameEngine, registry, transform, gameScale);
-
-                    shootCounter.shotCount++;
+            sendPayloadMove(networkingService, transform.position, player.id);
+        }
+        if (input.down) {
+            transform.position.y += vel.dy;
+            if (animation.currentFrame == 1) {
+                animation.elapsedTime += _gameEngine.delta_t;
+                if (animation.elapsedTime >= animation.frameTime)
+                    animation.currentFrame = 0;
+            } else {
+                if (animation.currentFrame == 0)
+                    return;
+                animation.currentFrame = 1;
+                animation.elapsedTime = 0;
+            }
+            sendPayloadMove(networkingService, transform.position, player.id);
+        }
+        if (input.left) {
+            transform.position.x -= vel.dx;
+            sendPayloadMove(networkingService, transform.position, player.id);
+        }
+        if (input.right) {
+            transform.position.x += vel.dx;
+            sendPayloadMove(networkingService, transform.position, player.id);
+        }
+        if (!input.up && !input.down && !input.left && !input.right) {
+            animation.currentFrame = 2;
+            animation.elapsedTime = 0;
+        }
+        if (input.fire) {
+            shootCounter.notChargingTime = 0.0f;
+            shootCounter.chargeTime += _gameEngine.delta_t;
+            if (shootCounter.chargeTime >= 1.0f) {
+                shootCounter.nextShotType = 1;
+            } else {
+                if (shootCounter.chargeTime >= 0.05f) {
+                    playerAnim->currentFrame = 0;
+                    if (shootCounter.chargeTime >= 0.1f)
+                        playerAnim->currentFrame = 1;
+                    if (shootCounter.chargeTime >= 0.2f)
+                        playerAnim->currentFrame = 2;
+                    if (shootCounter.chargeTime >= 0.35f)
+                        playerAnim->currentFrame = 3;
+                    if (shootCounter.chargeTime >= 0.5f)
+                        playerAnim->currentFrame = 4;
+                    if (shootCounter.chargeTime >= 0.65f)
+                        playerAnim->currentFrame = 5;
+                    if (shootCounter.chargeTime >= 0.7f)
+                        playerAnim->currentFrame = 6;
+                    if (shootCounter.chargeTime >= 0.8f)
+                        playerAnim->currentFrame = 7;
+                    if (shootCounter.chargeTime >= 1.0f)
+                        playerAnim->currentFrame = 8;
                 }
-                input.fire = false;
+                shootCounter.nextShotType = 0;
+            }
+        } else {
+            if (shootCounter.nextShotType == 0) {
+                EntityFactory::createPlayerProjectile(_gameEngine, registry, transform, gameScale);
                 networkingService.sendRequest(
                     "127.0.0.1",
                     1111,
@@ -99,20 +136,35 @@ void Game::inputSystem(core::ecs::Registry& registry)
                     std::vector<uint8_t>{static_cast<uint8_t>(player.id)}
                 );
             }
-            if (transform.position.x < getViewBounds(_gameEngine.window).x) {
-                transform.position.x = getViewBounds(_gameEngine.window).x;
-                sendPayloadMove(networkingService, transform.position, player.id);
-            } else if (transform.position.x > getViewBounds(_gameEngine.window).x + _gameEngine.window.getView().getSize().x) {
-                transform.position.x = getViewBounds(_gameEngine.window).x + _gameEngine.window.getView().getSize().x;
-                sendPayloadMove(networkingService, transform.position, player.id);
+            if (shootCounter.nextShotType == 1) {
+                EntityFactory::createPlayerMissile(_gameEngine, registry, transform, gameScale);
+                networkingService.sendRequest(
+                    "127.0.0.1",
+                    1111,
+                    PlayerShoot,
+                    std::vector<uint8_t>{static_cast<uint8_t>(player.id)}
+                );
             }
-            if (transform.position.y < getViewBounds(_gameEngine.window).y) {
-                transform.position.y = getViewBounds(_gameEngine.window).y;
-                sendPayloadMove(networkingService, transform.position, player.id);
-            } else if (transform.position.y > getViewBounds(_gameEngine.window).y + _gameEngine.window.getView().getSize().y) {
-                transform.position.y = getViewBounds(_gameEngine.window).y + _gameEngine.window.getView().getSize().y;
-                sendPayloadMove(networkingService, transform.position, player.id);
-            }
+            shootCounter.notChargingTime += _gameEngine.delta_t;
+            if (shootCounter.notChargingTime > 0.05f)
+                shootCounter.chargeTime = 0.0f;
+            playerAnim->currentFrame = 0;
+            shootCounter.nextShotType = -1;
+        }
+        if (transform.position.x < getViewBounds(_gameEngine.window).x) {
+            transform.position.x = getViewBounds(_gameEngine.window).x;
+            sendPayloadMove(networkingService, transform.position, player.id);
+        } else if (transform.position.x > getViewBounds(_gameEngine.window).x + _gameEngine.window.getView().getSize().x) {
+            transform.position.x = getViewBounds(_gameEngine.window).x + _gameEngine.window.getView().getSize().x;
+            sendPayloadMove(networkingService, transform.position, player.id);
+        }
+        if (transform.position.y < getViewBounds(_gameEngine.window).y) {
+            transform.position.y = getViewBounds(_gameEngine.window).y;
+            sendPayloadMove(networkingService, transform.position, player.id);
+        } else if (transform.position.y > getViewBounds(_gameEngine.window).y + _gameEngine.window.getView().getSize().y) {
+            transform.position.y = getViewBounds(_gameEngine.window).y + _gameEngine.window.getView().getSize().y;
+            sendPayloadMove(networkingService, transform.position, player.id);
+        }
     });
 }
 
