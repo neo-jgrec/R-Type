@@ -52,8 +52,8 @@ core::ecs::Entity EntityFactory::createPlayer(core::GameEngine& gameEngine, core
     registry.add_component(player, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 17.0f), gameScale * 3.5f, 0.0f});
     registry.add_component(player, core::ge::CollisionComponent{PLAYER, {sf::FloatRect(0.0f, 0.0f, 33.0f, 17.0f)}, {
         { ENEMY, [&](const core::ecs::Entity self, [[maybe_unused]] const core::ecs::Entity other) {
-                registry.remove_component<core::ge::DrawableComponent>(self);
-                game.releaseColor(color);
+                auto disabled = registry.get_component<core::ge::DisabledComponent>(self);
+                disabled->disabled = true;
         }}}});
     registry.add_component(player, VelocityComponent{10.0f, 10.0f});
     if (self) {
@@ -80,6 +80,7 @@ core::ecs::Entity EntityFactory::createPlayer(core::GameEngine& gameEngine, core
     registry.add_component(player, core::ge::DrawableComponent{playerShape});
     registry.add_component(player, core::ge::SceneComponent{static_cast<int>(Game::GameState::Playing)});
     registry.add_component(player, core::ge::TextureComponent{texture});
+    registry.add_component(player, core::ge::DisabledComponent{false});
 
     std::vector<sf::IntRect> moveFrames;
     moveFrames.reserve(5);
