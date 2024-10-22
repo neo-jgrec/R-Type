@@ -116,13 +116,6 @@ void Game::initMainMenu()
         static_cast<int>(GameState::MainMenu)
     );
 
-    EntityFactory::createTextInput(_gameEngine.registry,
-        sf::Vector2f(centerX - buttonSize.x / 2, centerY + 2 * (buttonSize.y + (buttonSpacing += 10.0f))),
-        buttonSize,
-        "Enter your name",
-        static_cast<int>(GameState::MainMenu)
-    );
-
     EntityFactory::createSlider(_gameEngine.registry,
         sf::Vector2f(centerX - buttonSize.x / 2, centerY + 3 * (buttonSize.y + (buttonSpacing += 10.0f))),
         sf::Vector2f(200.0f, 10.0f),

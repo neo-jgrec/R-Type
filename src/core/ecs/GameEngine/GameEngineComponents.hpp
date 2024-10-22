@@ -194,7 +194,7 @@ struct TextInputComponent {
     sf::Font font;
     bool isActive = false;
     size_t cursorPosition = 0;
-    size_t maxLength = 100;
+    size_t maxLength = 20;
 };
 
 /**

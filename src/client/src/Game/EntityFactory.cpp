@@ -314,7 +314,7 @@ core::ecs::Entity EntityFactory::createTextInput(core::ecs::Registry& registry, 
 
     registry.add_component(textInput, core::ge::TextComponent{titleText, font});
     registry.add_component(textInput, core::ge::DrawableComponent{shape});
-    registry.add_component(textInput, core::ge::TextInputComponent{text, font, false, 0, 100});
+    registry.add_component(textInput, core::ge::TextInputComponent{text, font, false, 0, 20});
     registry.add_component(textInput, core::ge::SceneComponent{scene});
 
     return textInput;
