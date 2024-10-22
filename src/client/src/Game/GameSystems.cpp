@@ -37,16 +37,28 @@ static void sendPayloadMove(NetworkingService& networkingService, const sf::Vect
     }
 }
 
+std::pair<std::shared_ptr<core::ge::TransformComponent>, std::shared_ptr<core::ge::AnimationComponent>> getPlayerAnimComponents(core::ecs::Registry& registry)
+{
+    auto playerAnimEntities = registry.get_entities<PlayerAnim>();
+    if (!playerAnimEntities.empty()) {
+        auto playerAnimEntity = playerAnimEntities[0];
+        return {
+            registry.get_component<core::ge::TransformComponent>(playerAnimEntity),
+            registry.get_component<core::ge::AnimationComponent>(playerAnimEntity)
+        };
+    }
+    return {nullptr, nullptr};
+}
+
 void Game::inputSystem(core::ecs::Registry& registry)
 {
     registry.add_system<core::ge::TransformComponent, VelocityComponent, InputStateComponent, ShootCounterComponent, Player, core::ge::AnimationComponent>
     ([&](core::ecs::Entity, core::ge::TransformComponent &transform, const VelocityComponent &vel, InputStateComponent &input, ShootCounterComponent &shootCounter, Player &player, core::ge::AnimationComponent &animation) {
-        auto playerAnimEntities = registry.get_entities<PlayerAnim>();
-        if (!playerAnimEntities.empty()) {
-            auto playerAnimEntity = playerAnimEntities[0];
-            auto playerAnimTransform = registry.get_component<core::ge::TransformComponent>(playerAnimEntity);
-            playerAnimTransform->position = transform.position;
-        }
+        auto playerAnimTransform = getPlayerAnimComponents(registry).first;
+        auto playerAnim = getPlayerAnimComponents(registry).second;
+        if (!playerAnimTransform || !playerAnim)
+            return;
+        playerAnimTransform->position = transform.position + sf::Vector2f(115.0f, 10.0f);
         if (input.up) {
             transform.position.y -= vel.dy;
             if (animation.currentFrame == 3) {
@@ -93,8 +105,25 @@ void Game::inputSystem(core::ecs::Registry& registry)
             if (shootCounter.chargeTime >= 1.0f) {
                 shootCounter.nextShotType = 1;
             } else {
-                if (shootCounter.chargeTime >= 0.05f)
-                    return;
+                if (shootCounter.chargeTime >= 0.05f) {
+                    playerAnim->currentFrame = 0;
+                    if (shootCounter.chargeTime >= 0.1f)
+                        playerAnim->currentFrame = 1;
+                    if (shootCounter.chargeTime >= 0.2f)
+                        playerAnim->currentFrame = 2;
+                    if (shootCounter.chargeTime >= 0.35f)
+                        playerAnim->currentFrame = 3;
+                    if (shootCounter.chargeTime >= 0.5f)
+                        playerAnim->currentFrame = 4;
+                    if (shootCounter.chargeTime >= 0.65f)
+                        playerAnim->currentFrame = 5;
+                    if (shootCounter.chargeTime >= 0.7f)
+                        playerAnim->currentFrame = 6;
+                    if (shootCounter.chargeTime >= 0.8f)
+                        playerAnim->currentFrame = 7;
+                    if (shootCounter.chargeTime >= 1.0f)
+                        playerAnim->currentFrame = 8;
+                }
                 shootCounter.nextShotType = 0;
             }
         } else {
@@ -117,8 +146,9 @@ void Game::inputSystem(core::ecs::Registry& registry)
                 );
             }
             shootCounter.notChargingTime += _gameEngine.delta_t;
-            if (shootCounter.notChargingTime >= 0.05f)
+            if (shootCounter.notChargingTime > 0.05f)
                 shootCounter.chargeTime = 0.0f;
+            playerAnim->currentFrame = 0;
             shootCounter.nextShotType = -1;
         }
         if (transform.position.x < getViewBounds(_gameEngine.window).x) {
