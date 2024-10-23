@@ -45,6 +45,7 @@ void Game::init()
     // _enemyEntity = EntityFactory::createEnemy(_gameEngine.registry, sf::Vector2f(700.0f, 100.0f), gameScale);
 
     initMainMenu();
+    initRoomMenu();
 
     inputSystem(_gameEngine.registry);
     projectileMovementSystem(_gameEngine.registry);
@@ -116,9 +117,7 @@ void Game::initMainMenu()
         buttonSize,
         "Start Game",
         [this]() {
-            _gameEngine.currentScene = static_cast<int>(GameState::Playing);
-            playerConnectionHeader = networkingService.sendRequest("127.0.0.1", 1111, PlayerConnect, {});
-            networkingService.sendRequest("127.0.0.1", 1111, GameStart, {});
+            _gameEngine.currentScene = static_cast<int>(GameState::RoomMenu);
         },
         static_cast<int>(GameState::MainMenu)
     );
@@ -155,6 +154,50 @@ void Game::initMainMenu()
         [this](float value) { _gameEngine.musicManager.setVolume(value); },
         static_cast<int>(GameState::MainMenu),
         _gameEngine.musicManager.getVolume()
+    );
+}
+
+void Game::initRoomMenu()
+{
+    sf::Vector2u windowSize = _gameEngine.window.getSize();
+
+    sf::Vector2f buttonSize(200.0f, 50.0f);
+    float buttonSpacing = 20.0f;
+
+    EntityFactory::createImage(
+        _gameEngine,
+        _gameEngine.registry,
+        sf::Vector2f(0.0f, 0.0f),
+        sf::Vector2f(static_cast<float>(_gameEngine.window.getSize().x), static_cast<float>(windowSize.y)),
+        "background",
+        static_cast<int>(GameState::RoomMenu)
+    );
+
+    EntityFactory::createButton(
+        _gameEngine,
+        _gameEngine.registry,
+        sf::Vector2f(buttonSize.y, buttonSize.y - buttonSpacing),
+        sf::Vector2f(50.0f, 50.0f),
+        "<",
+        [this]() {
+            _gameEngine.currentScene = static_cast<int>(GameState::MainMenu);
+        },
+        static_cast<int>(GameState::RoomMenu)
+    );
+
+    EntityFactory::createButton(
+        _gameEngine,
+        _gameEngine.registry,
+        sf::Vector2f(buttonSize.x, (buttonSize.y * 2) + buttonSpacing),
+        buttonSize,
+        "Create Room",
+        [this]() {
+            std::cout << "Create Room" << std::endl;
+            _gameEngine.currentScene = static_cast<int>(GameState::Playing);
+            playerConnectionHeader = networkingService.sendRequest("127.0.0.1", 1111, PlayerConnect, {});
+            networkingService.sendRequest("127.0.0.1", 1111, GameStart, {});
+        },
+        static_cast<int>(GameState::RoomMenu)
     );
 }
 
