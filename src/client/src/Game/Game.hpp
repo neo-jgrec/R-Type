@@ -63,8 +63,9 @@ public:
     enum class GameState {
         MainMenu = 0,
         RoomMenu = 1,
-        Playing = 2,
-        GameOver = 3
+        Settings = 2,
+        Playing = 3,
+        GameOver = 4
     };
 
     Menus menus = Menus(*this); ///< Manages the initialization of different menus in the game.

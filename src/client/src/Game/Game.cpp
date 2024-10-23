@@ -46,6 +46,7 @@ void Game::init()
 
     menus.initMainMenu();
     menus.initRoomMenu();
+    menus.initSettingsMenu();
 
     inputSystem(_gameEngine.registry);
     projectileMovementSystem(_gameEngine.registry);

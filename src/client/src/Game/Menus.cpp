@@ -66,7 +66,8 @@ void Menus::initMainMenu()
         sf::Vector2f(centerX - buttonSize.x / 2, centerY + buttonSize.y + buttonSpacing),
         buttonSize,
         "Settings",
-        []() {
+        [this]() {
+            _game._gameEngine.currentScene = static_cast<int>(Game::GameState::Settings);
         },
         static_cast<int>(Game::GameState::MainMenu)
     );
@@ -84,16 +85,16 @@ void Menus::initMainMenu()
         static_cast<int>(Game::GameState::MainMenu)
     );
 
-    EntityFactory::createSlider(
-        _game._gameEngine,
-        _game._gameEngine.registry,
-        sf::Vector2f(centerX - buttonSize.x / 2, centerY + 3 * (buttonSize.y + (buttonSpacing += 10.0f))),
-        sf::Vector2f(200.0f, 10.0f),
-        "Volume",
-        [this](float value) { _game._gameEngine.musicManager.setVolume(value); },
-        static_cast<int>(Game::GameState::MainMenu),
-        _game._gameEngine.musicManager.getVolume()
-    );
+    // EntityFactory::createSlider(
+    //     _game._gameEngine,
+    //     _game._gameEngine.registry,
+    //     sf::Vector2f(centerX - buttonSize.x / 2, centerY + 3 * (buttonSize.y + (buttonSpacing += 10.0f))),
+    //     sf::Vector2f(200.0f, 10.0f),
+    //     "Volume",
+    //     [this](float value) { _game._gameEngine.musicManager.setVolume(value); },
+    //     static_cast<int>(Game::GameState::MainMenu),
+    //     _game._gameEngine.musicManager.getVolume()
+    // );
 }
 
 void Menus::initRoomMenu()
@@ -232,3 +233,63 @@ void Menus::initRoomMenu()
         static_cast<int>(Game::GameState::RoomMenu)
     );
 }
+
+void Menus::initSettingsMenu()
+{
+    sf::Vector2u windowSize = _game._gameEngine.window.getSize();
+    float centerX = static_cast<float>(windowSize.x) / 2.0f;
+    float centerY = static_cast<float>(windowSize.y) / 2.0f;
+
+    sf::Vector2f buttonSize(200.0f, 50.0f);
+    float buttonSpacing = 20.0f;
+
+    sf::Text titleText;
+    auto font = _game._gameEngine.assetManager.getFont("arial");
+    titleText.setFont(font);
+    titleText.setString("Settings");
+    titleText.setCharacterSize(52);
+    titleText.setStyle(sf::Text::Bold);
+    titleText.setOutlineThickness(2.0f);
+    titleText.setOutlineColor(sf::Color::Black);
+    titleText.setFillColor(sf::Color::White);
+    titleText.setPosition(centerX - titleText.getGlobalBounds().width / 2, buttonSize.y - buttonSpacing);
+
+    core::ecs::Entity title = _game._gameEngine.registry.spawn_entity();
+    _game._gameEngine.registry.add_component(title, core::ge::TextComponent{titleText, font});
+    _game._gameEngine.registry.add_component(title, core::ge::SceneComponent{static_cast<int>(Game::GameState::Settings)});
+
+    EntityFactory::createImage(
+        _game._gameEngine,
+        _game._gameEngine.registry,
+        sf::Vector2f(0.0f, 0.0f),
+        sf::Vector2f(static_cast<float>(_game._gameEngine.window.getSize().x), static_cast<float>(windowSize.y)),
+        "background",
+        static_cast<int>(Game::GameState::Settings)
+    );
+
+    EntityFactory::createButton(
+        _game._gameEngine,
+        _game._gameEngine.registry,
+        sf::Vector2f(buttonSize.y, buttonSize.y - buttonSpacing),
+        buttonSize,
+        "< Go back",
+        [this]() {
+            _game._gameEngine.currentScene = static_cast<int>(Game::GameState::MainMenu);
+        },
+        static_cast<int>(Game::GameState::Settings)
+    );
+
+    EntityFactory::createSlider(
+        _game._gameEngine,
+        _game._gameEngine.registry,
+        sf::Vector2f(buttonSize.y, buttonSize.y * 3 + buttonSpacing),
+        sf::Vector2f(200.0f, 10.0f),
+        "Volume",
+        [this](float value) { _game._gameEngine.musicManager.setVolume(value); },
+        static_cast<int>(Game::GameState::Settings),
+        _game._gameEngine.musicManager.getVolume()
+    );
+
+}
+
+
