@@ -47,6 +47,8 @@ Server::Server()
     EventFactory::gameStarted(*this);
     EventFactory::playerConnected(*this);
     EventFactory::playerDisconnected(*this);
+    EventFactory::playerMove(*this);
+    EventFactory::playerShoot(*this);
 }
 
 void Server::start()
@@ -70,7 +72,7 @@ void Server::start()
         _players[i] = EntityFactory::createPlayer(*this, i);
     }
 
-    _asGameStarted = true;
+    _gameState = GAME;
 }
 
 void Server::update()
@@ -84,29 +86,32 @@ void Server::update()
 
 void Server::run()
 {
-    _networkingService.run();
+    sf::Time elapsed;
 
-    std::cout << "Server started" << std::endl;
-    while (!asPlayerConnected()) {
+    while (true) {
+        switch (_gameState) {
+            case STARTING:
+                std::cout << "Server started" << std::endl;
+                _networkingService.run();
+                _gameState = WAITING_CONNECTION;
+                continue;
+
+            case WAITING_CONNECTION:
+            case LOBBY:
+                break;
+
+            case GAME:
+                elapsed = _gameEngine.clock.restart();
+                _gameEngine.delta_t = elapsed.asSeconds();
+
+                update();
+                break;
+
+            case STOPPING:
+                std::cout << "Server stopped" << std::endl;
+                _networkingService.stop();
+                return;
+        }
         usleep(1);
     }
-
-    std::cout << "Players connected" << std::endl;
-    while (!_asGameStarted) {
-        usleep(1);
-    }
-    
-    std::cout << "Game started" << std::endl;
-    EventFactory::playerMove(*this);
-    EventFactory::playerShoot(*this);
-    while (asPlayerConnected()) {
-        sf::Time elapsed = _gameEngine.clock.restart();
-        _gameEngine.delta_t = elapsed.asSeconds();
-
-        update();
-        usleep(1);
-    }
-
-    std::cout << "Server stopped" << std::endl;
-    _networkingService.stop();
 }

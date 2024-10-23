@@ -6,6 +6,14 @@
 #include "../../../core/ecs/Entity/Entity.hpp"
 #include <shared_mutex>
 
+enum GameState: uint8_t {
+    STARTING,
+    WAITING_CONNECTION,
+    LOBBY,
+    GAME,
+    STOPPING,
+};
+
 class Server {
 private:
     core::GameEngine _gameEngine{false};
@@ -15,8 +23,7 @@ private:
     std::array<std::optional<std::shared_ptr<asio::ip::udp::endpoint>>, 4> _playersConnection;
     std::array<std::optional<core::ecs::Entity>, 4> _players;
 
-    bool _asGameStarted = false;
-    bool _isRunning = true;
+    GameState _gameState = STARTING;
 
     mutable std::shared_mutex registry_mutex;
 
@@ -30,7 +37,8 @@ public:
     std::array<std::optional<std::shared_ptr<asio::ip::udp::endpoint>>, 4> &getPlayersConnection() { return _playersConnection; }
     std::array<std::optional<core::ecs::Entity>, 4> &getPlayers() { return _players; }
     std::shared_mutex &getRegistryMutex() const { return registry_mutex; }
-    bool asGameStarted() const { return _asGameStarted; }
+
+    void setGameState(const GameState gameState) { _gameState = gameState; }
 
     void start();
     void run();

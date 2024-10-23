@@ -78,10 +78,15 @@ void EventFactory::playerDisconnected(Server &server)
 
         std::cout << "Player " << static_cast<int>(id) << " disconnected" << std::endl;
         playersConnection[id].reset();
+
         if (!players[id].has_value())
             return;
         gameEngine.registry.kill_entity(players[id].value());
         players[id].reset();
+
+        if (server.asPlayerConnected())
+            return;
+        server.setGameState(STOPPING);
     });
 }
 
