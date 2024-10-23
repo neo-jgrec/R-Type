@@ -100,9 +100,11 @@ void Menus::initRoomMenu()
 {
     sf::Vector2u windowSize = _game._gameEngine.window.getSize();
     float centerX = static_cast<float>(windowSize.x) / 2.0f;
+    float centerY = static_cast<float>(windowSize.y) / 2.0f;
 
     sf::Vector2f buttonSize(200.0f, 50.0f);
     float buttonSpacing = 20.0f;
+    float padding = 20.0f;
 
     sf::Text titleText;
     auto font = _game._gameEngine.assetManager.getFont("arial");
@@ -140,10 +142,42 @@ void Menus::initRoomMenu()
         static_cast<int>(Game::GameState::RoomMenu)
     );
 
+    float availableHeight = static_cast<float>(windowSize.y) - (3 * padding) - titleText.getGlobalBounds().height - 50.0f;
+    float availableWidth = static_cast<float>(windowSize.x) - (3 * padding);
+
+    float rectWidth = availableWidth / 2;
+    sf::Vector2f rectSize(rectWidth, availableHeight);
+
+    sf::RectangleShape leftRect(rectSize);
+    leftRect.setPosition(padding, 2 * padding + titleText.getGlobalBounds().height + 50.0f);
+    leftRect.setFillColor(sf::Color::Black);
+    leftRect.setOutlineThickness(2.0f);
+    leftRect.setOutlineColor(sf::Color::White);
+
+    core::ecs::Entity leftEntity = _game._gameEngine.registry.spawn_entity();
+    _game._gameEngine.registry.add_component(leftEntity, core::ge::DrawableComponent{leftRect});
+    _game._gameEngine.registry.add_component(leftEntity, core::ge::SceneComponent{static_cast<int>(Game::GameState::RoomMenu)});
+
+    sf::RectangleShape rightRect(rectSize);
+    rightRect.setPosition(2 * padding + rectWidth, 2 * padding + titleText.getGlobalBounds().height + 50.0f);
+    rightRect.setFillColor(sf::Color::Black);
+    rightRect.setOutlineThickness(2.0f);
+    rightRect.setOutlineColor(sf::Color::White);
+
+    core::ecs::Entity rightEntity = _game._gameEngine.registry.spawn_entity();
+    _game._gameEngine.registry.add_component(rightEntity, core::ge::DrawableComponent{rightRect});
+    _game._gameEngine.registry.add_component(rightEntity, core::ge::SceneComponent{static_cast<int>(Game::GameState::RoomMenu)});
+
+
+    sf::Vector2f startButtonPosition(
+        leftRect.getPosition().x + padding,
+        leftRect.getPosition().y + padding
+    );
+
     EntityFactory::createButton(
         _game._gameEngine,
         _game._gameEngine.registry,
-        sf::Vector2f(buttonSize.x, (buttonSize.y * 2) + buttonSpacing),
+        startButtonPosition,
         buttonSize,
         "Start game",
         [this]() {
