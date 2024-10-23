@@ -7,6 +7,7 @@
 #include "src/Game/Utils/ClientComponents.hpp"
 #include "src/event/EventPool.hpp"
 #include <iostream>
+#include <ostream>
 #include <vector>
 #include "../../../game/RequestType.hpp"
 
@@ -21,7 +22,6 @@ void Game::init()
 
     _gameEngine.musicManager.loadMusic("level1", "assets/music/level1.ogg");
     _gameEngine.musicManager.setVolume(10.0f);
-    // TODO: load every level music
     _gameEngine.musicManager.playMusic("level1");
 
     _gameEngine.registry.register_component<VelocityComponent>();
@@ -45,7 +45,9 @@ void Game::init()
 
     // _enemyEntity = EntityFactory::createEnemy(_gameEngine.registry, sf::Vector2f(700.0f, 100.0f), gameScale);
 
-    initMainMenu();
+    menus.initMainMenu();
+    menus.initRoomMenu();
+    menus.initSettingsMenu();
 
     inputSystem(_gameEngine.registry);
     projectileMovementSystem(_gameEngine.registry);
@@ -82,82 +84,6 @@ void Game::loadAssets()
     } catch (const std::runtime_error &e) {
         std::cerr << "Error loading assets: " << e.what() << std::endl;
     }
-}
-
-void Game::initMainMenu()
-{
-    sf::Vector2u windowSize = _gameEngine.window.getSize();
-    float centerX = static_cast<float>(windowSize.x) / 2.0f;
-    float centerY = static_cast<float>(windowSize.y) / 2.0f;
-
-    sf::Vector2f buttonSize(200.0f, 50.0f);
-    float buttonSpacing = 20.0f;
-
-    EntityFactory::createImage(
-        _gameEngine,
-        _gameEngine.registry,
-        sf::Vector2f(0.0f, 0.0f),
-        sf::Vector2f(static_cast<float>(_gameEngine.window.getSize().x), static_cast<float>(windowSize.y)),
-        "background",
-        static_cast<int>(GameState::MainMenu)
-    );
-
-    EntityFactory::createImage(
-        _gameEngine,
-        _gameEngine.registry,
-        sf::Vector2f(centerX - 500.0f, centerY - 400.0f),
-        sf::Vector2f(1000.0f, 300.0f),
-        "logo",
-        static_cast<int>(GameState::MainMenu)
-    );
-
-    EntityFactory::createButton(
-        _gameEngine,
-        _gameEngine.registry,
-        sf::Vector2f(centerX - buttonSize.x / 2, centerY - buttonSize.y - buttonSpacing),
-        buttonSize,
-        "Start Game",
-        [this]() {
-            _gameEngine.currentScene = static_cast<int>(GameState::Playing);
-            playerConnectionHeader = networkingService.sendRequest("127.0.0.1", 1111, PlayerConnect, {});
-            networkingService.sendRequest("127.0.0.1", 1111, GameStart, {});
-        },
-        static_cast<int>(GameState::MainMenu)
-    );
-
-    EntityFactory::createButton(
-        _gameEngine,
-        _gameEngine.registry,
-        sf::Vector2f(centerX - buttonSize.x / 2, centerY),
-        buttonSize,
-        "Options",
-        []() { },
-        static_cast<int>(GameState::MainMenu)
-    );
-
-    EntityFactory::createButton(
-        _gameEngine,
-        _gameEngine.registry,
-        sf::Vector2f(centerX - buttonSize.x / 2, centerY + buttonSize.y + buttonSpacing),
-        buttonSize,
-        "Quit",
-        [this]() {
-            _windowOpen = false;
-            networkingService.stop();
-        },
-        static_cast<int>(GameState::MainMenu)
-    );
-
-    EntityFactory::createSlider(
-        _gameEngine,
-        _gameEngine.registry,
-        sf::Vector2f(centerX - buttonSize.x / 2, centerY + 3 * (buttonSize.y + (buttonSpacing += 10.0f))),
-        sf::Vector2f(200.0f, 10.0f),
-        "Volume",
-        [this](float value) { _gameEngine.musicManager.setVolume(value); },
-        static_cast<int>(GameState::MainMenu),
-        _gameEngine.musicManager.getVolume()
-    );
 }
 
 void Game::update()

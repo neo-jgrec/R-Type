@@ -5,6 +5,7 @@
 #include "../../../core/ecs/Entity/Entity.hpp"
 #include "../../../core/ecs/GameEngine/GameEngine.hpp"
 #include "../../../core/network/NetworkService.hpp"
+#include "Menus.hpp"
 
 /**
  * @struct Tile
@@ -61,9 +62,18 @@ public:
      */
     enum class GameState {
         MainMenu = 0,
-        Playing = 1,
-        GameOver = 2
+        RoomMenu = 1,
+        Settings = 2,
+        Playing = 3,
+        GameOver = 4
     };
+
+    Menus menus = Menus(*this); ///< Manages the initialization of different menus in the game.
+    core::GameEngine _gameEngine; ///< Game engine responsible for managing entities, components, and systems.
+    NetworkingService &networkingService = NetworkingService::getInstance(); ///< Singleton instance of the networking service.
+    GDTPHeader playerConnectionHeader{}; ///< Header for player connection requests.
+    bool _windowOpen = true;           ///< Flag to track if the game window is open.
+    sf::Vector2f gameScale = {1.0f, 1.0f}; ///< Scaling factor for the game view, adjusted during window resizing.
 
 private:
     /**
@@ -96,17 +106,7 @@ private:
      */
     int assignColor();
 
-    /**
-     * @brief Initializes the main menu scene.
-     */
-    void initMainMenu();
-
     core::ecs::Entity _viewEntity = core::ecs::Entity();
-
-    core::GameEngine _gameEngine; ///< Game engine responsible for managing entities, components, and systems.
-
-    bool _windowOpen = true;           ///< Flag to track if the game window is open.
-    sf::Vector2f gameScale = {1.0f, 1.0f}; ///< Scaling factor for the game view, adjusted during window resizing.
 
     GameState _currentState = GameState::MainMenu; ///< The current state of the game.
 
@@ -165,7 +165,4 @@ private:
      * @param registry The entity-component system registry managing game entities.
      */
     void viewSystem(core::ecs::Registry& registry);
-
-    NetworkingService &networkingService = NetworkingService::getInstance(); ///< Singleton instance of the networking service.
-    GDTPHeader playerConnectionHeader{}; ///< Header for player connection requests.
 };
