@@ -18,7 +18,7 @@ void Game::init()
     _gameEngine.window.setKeyRepeatEnabled(true);
 
     loadAssets();
-    _configManager.parse("config.json");
+    _configManager.parse("assets/Data/config.json");
     initWindow();
 
     _gameEngine.musicManager.loadMusic("level1", "assets/music/level1.ogg");

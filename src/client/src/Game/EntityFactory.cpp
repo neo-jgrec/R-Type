@@ -118,7 +118,6 @@ core::ecs::Entity EntityFactory::createPlayerProjectile(core::GameEngine& gameEn
         config.getValue<float>("/player/weapons/0/size/y")
     );
 
-    // ICIIIIIIIIIIII
     sf::Vector2f startPosition = playerTransform.position;
 
     float playerWidth = playerTransform.size.x * playerTransform.scale.x;

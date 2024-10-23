@@ -6,7 +6,7 @@
 #include <SFML/System/Vector2.hpp>
 #include "../../../core/ecs/GameEngine/GameEngineComponents.hpp"
 #include "Game.hpp"
-#include "src/Game/Configuration/ConfigManager.hpp"
+#include "../../../core/config/ConfigManager.hpp"
 
 /**
  * @class EntityFactory

@@ -5,7 +5,7 @@
 #include "../../../core/ecs/Entity/Entity.hpp"
 #include "../../../core/ecs/GameEngine/GameEngine.hpp"
 #include "../../../core/network/NetworkService.hpp"
-#include "src/Game/Configuration/ConfigManager.hpp"
+#include "../../../core/config/ConfigManager.hpp"
 
 /**
  * @struct Tile
