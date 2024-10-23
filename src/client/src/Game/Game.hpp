@@ -5,6 +5,7 @@
 #include "../../../core/ecs/Entity/Entity.hpp"
 #include "../../../core/ecs/GameEngine/GameEngine.hpp"
 #include "../../../core/network/NetworkService.hpp"
+#include "src/Game/Configuration/ConfigManager.hpp"
 
 /**
  * @struct Tile
@@ -103,7 +104,9 @@ private:
 
     core::ecs::Entity _viewEntity = core::ecs::Entity();
 
-    core::GameEngine _gameEngine; ///< Game engine responsible for managing entities, components, and systems.
+    core::GameEngine _gameEngine{false}; ///< Game engine responsible for managing entities, components, and systems.
+
+    ConfigManager _configManager; ///< Configuration manager for loading and managing game configurations.
 
     bool _windowOpen = true;           ///< Flag to track if the game window is open.
     sf::Vector2f gameScale = {1.0f, 1.0f}; ///< Scaling factor for the game view, adjusted during window resizing.
@@ -147,6 +150,11 @@ private:
      * @param window The SFML render window for the game.
      */
     void initBackground(core::ecs::Registry& registry, nlohmann::json& mapData, sf::RenderWindow& window) const;
+
+    /**
+     * @brief Initializes the window based on the configuration.
+     */
+    void initWindow();
 
     /**
      * @brief Loads all assets used in the game.

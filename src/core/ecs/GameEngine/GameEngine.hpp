@@ -80,6 +80,13 @@ public:
     int currentScene = 0;               ///< The currently active scene, represented by an integer.
     sf::Clock clock;                    ///< SFML clock for tracking time in the game loop.
 
+    void initWindow(sf::VideoMode size, int framerateLimit, const std::string& title , sf::Uint32 style = sf::Style::Default)
+    {
+        window.create(size, title, style);
+        window.setFramerateLimit(framerateLimit);
+        window.setKeyRepeatEnabled(true);
+    }
+
 protected:
     /**
      * @brief Sets up the system for rendering drawable components.

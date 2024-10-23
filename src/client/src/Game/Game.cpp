@@ -18,6 +18,8 @@ void Game::init()
     _gameEngine.window.setKeyRepeatEnabled(true);
 
     loadAssets();
+    _configManager.parse("config.json");
+    initWindow();
 
     _gameEngine.musicManager.loadMusic("level1", "assets/music/level1.ogg");
     _gameEngine.musicManager.setVolume(10.0f);
@@ -65,6 +67,15 @@ void Game::init()
     eventSystem(_gameEngine.registry);
 }
 
+void Game::initWindow()
+{
+    sf::VideoMode videoMode(
+        _configManager.getValue<int>("/view/size/x"),
+        _configManager.getValue<int>("/view/size/y")
+    );
+    _gameEngine.initWindow(videoMode, 60, "R-Type");
+}
+
 void Game::loadAssets()
 {
     try {
@@ -95,7 +106,7 @@ void Game::initMainMenu()
 
     EntityFactory::createImage(
         _gameEngine,
-        _gameEngine.registry,
+        _configManager,
         sf::Vector2f(0.0f, 0.0f),
         sf::Vector2f(static_cast<float>(_gameEngine.window.getSize().x), static_cast<float>(windowSize.y)),
         "background",
@@ -104,7 +115,7 @@ void Game::initMainMenu()
 
     EntityFactory::createImage(
         _gameEngine,
-        _gameEngine.registry,
+        _configManager,
         sf::Vector2f(centerX - 500.0f, centerY - 400.0f),
         sf::Vector2f(1000.0f, 300.0f),
         "logo",
@@ -113,7 +124,7 @@ void Game::initMainMenu()
 
     EntityFactory::createButton(
         _gameEngine,
-        _gameEngine.registry,
+        _configManager,
         sf::Vector2f(centerX - buttonSize.x / 2, centerY - buttonSize.y - buttonSpacing),
         buttonSize,
         "Start Game",
@@ -127,7 +138,7 @@ void Game::initMainMenu()
 
     EntityFactory::createButton(
         _gameEngine,
-        _gameEngine.registry,
+        _configManager,
         sf::Vector2f(centerX - buttonSize.x / 2, centerY),
         buttonSize,
         "Options",
@@ -137,7 +148,7 @@ void Game::initMainMenu()
 
     EntityFactory::createButton(
         _gameEngine,
-        _gameEngine.registry,
+        _configManager,
         sf::Vector2f(centerX - buttonSize.x / 2, centerY + buttonSize.y + buttonSpacing),
         buttonSize,
         "Quit",
@@ -150,7 +161,7 @@ void Game::initMainMenu()
 
     EntityFactory::createSlider(
         _gameEngine,
-        _gameEngine.registry,
+        _configManager,
         sf::Vector2f(centerX - buttonSize.x / 2, centerY + 3 * (buttonSize.y + (buttonSpacing += 10.0f))),
         sf::Vector2f(200.0f, 10.0f),
         "Volume",
