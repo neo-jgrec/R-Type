@@ -28,6 +28,11 @@ public:
      */
     void initRoomMenu();
 
+    /**
+     * @brief Initializes the settings menu scene.
+     */
+    void initSettingsMenu();
+
 private:
     Game& _game; ///< Reference to the Game instance to access its components.
 };
