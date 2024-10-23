@@ -7,6 +7,7 @@
 #include "src/Game/Utils/ClientComponents.hpp"
 #include "src/event/EventPool.hpp"
 #include <iostream>
+#include <ostream>
 #include <vector>
 #include "../../../game/RequestType.hpp"
 
@@ -23,7 +24,6 @@ void Game::init()
 
     _gameEngine.musicManager.loadMusic("level1", "assets/music/level1.ogg");
     _gameEngine.musicManager.setVolume(10.0f);
-    // TODO: load every level music
     _gameEngine.musicManager.playMusic("level1");
 
     _gameEngine.registry.register_component<VelocityComponent>();
@@ -47,7 +47,9 @@ void Game::init()
 
     // _enemyEntity = EntityFactory::createEnemy(_gameEngine.registry, sf::Vector2f(700.0f, 100.0f), gameScale);
 
+    std::cout << "before initMainMenu" << std::endl;
     initMainMenu();
+    std::cout << "after initMainMenu" << std::endl;
     initRoomMenu();
 
     inputSystem(_gameEngine.registry);
@@ -128,9 +130,11 @@ void Game::initMainMenu()
         _configManager,
         sf::Vector2f(centerX - buttonSize.x / 2, centerY - buttonSize.y - buttonSpacing),
         buttonSize,
-        "Start Game",
+        "Solo",
         [this]() {
-            _gameEngine.currentScene = static_cast<int>(GameState::RoomMenu);
+            _gameEngine.currentScene = static_cast<int>(GameState::Playing);
+            playerConnectionHeader = networkingService.sendRequest("127.0.0.1", 1111, PlayerConnect, {});
+            networkingService.sendRequest("127.0.0.1", 1111, GameStart, {});
         },
         static_cast<int>(GameState::MainMenu)
     );
@@ -140,8 +144,10 @@ void Game::initMainMenu()
         _configManager,
         sf::Vector2f(centerX - buttonSize.x / 2, centerY),
         buttonSize,
-        "Options",
-        []() { },
+        "Multiplayer",
+        [this]() {
+            _gameEngine.currentScene = static_cast<int>(GameState::RoomMenu);
+        },
         static_cast<int>(GameState::MainMenu)
     );
 
@@ -149,6 +155,17 @@ void Game::initMainMenu()
         _gameEngine,
         _configManager,
         sf::Vector2f(centerX - buttonSize.x / 2, centerY + buttonSize.y + buttonSpacing),
+        buttonSize,
+        "Settings",
+        []() {
+        },
+        static_cast<int>(GameState::MainMenu)
+    );
+
+    EntityFactory::createButton(
+        _gameEngine,
+        _gameEngine.registry,
+        sf::Vector2f(centerX - buttonSize.x / 2, centerY + 2 * (buttonSize.y + buttonSpacing)),
         buttonSize,
         "Quit",
         [this]() {
@@ -177,6 +194,21 @@ void Game::initRoomMenu()
     sf::Vector2f buttonSize(200.0f, 50.0f);
     float buttonSpacing = 20.0f;
 
+    sf::Text titleText;
+    auto font = _gameEngine.assetManager.getFont("arial");
+    titleText.setFont(font);
+    titleText.setString("Pick a room or create one");
+    titleText.setCharacterSize(36);
+    titleText.setFillColor(sf::Color::White);
+
+    sf::FloatRect textBounds = titleText.getLocalBounds();
+    titleText.setOrigin(textBounds.left + textBounds.width / 2.0f, textBounds.top + textBounds.height / 2.0f);
+    titleText.setPosition(static_cast<float>(windowSize.x) / 2.0f, static_cast<float>(windowSize.y) / 4.0f);
+
+    core::ecs::Entity title = _gameEngine.registry.spawn_entity();
+    _gameEngine.registry.add_component(title, core::ge::TextComponent{titleText, font});
+    _gameEngine.registry.add_component(title, core::ge::SceneComponent{static_cast<int>(GameState::RoomMenu)});
+
     EntityFactory::createImage(
         _gameEngine,
         _gameEngine.registry,
@@ -203,7 +235,7 @@ void Game::initRoomMenu()
         _gameEngine.registry,
         sf::Vector2f(buttonSize.x, (buttonSize.y * 2) + buttonSpacing),
         buttonSize,
-        "Create Room",
+        "Start game",
         [this]() {
             std::cout << "Create Room" << std::endl;
             _gameEngine.currentScene = static_cast<int>(GameState::Playing);

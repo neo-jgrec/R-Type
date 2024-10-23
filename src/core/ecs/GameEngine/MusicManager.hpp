@@ -1,6 +1,7 @@
 #pragma once
 #include <SFML/Audio.hpp>
 #include <filesystem>
+#include <iostream>
 #include <unordered_map>
 #include <memory>
 #include <string>
@@ -36,6 +37,8 @@ public:
         std::string absolutePath = std::filesystem::absolute(filePath).string();
         if (music->openFromFile(absolutePath)) {
             _musicMap[state] = std::move(music);
+        } else {
+            std::cerr << "Failed to load music file: " << absolutePath << std::endl;
         }
     }
 
@@ -51,12 +54,22 @@ public:
      * If the music for the given state is not loaded, the function will not change the music.
      */
     void playMusic(const std::string& state) {
+        // if (_currentState != state) {
+        //     if (_musicMap.find(state) != _musicMap.end()) {
+        //         stopMusic();  // Stop current music
+        //         _currentState = state;
+        //         _musicMap[state]->play();
+        //     }
+        // }
+        if (_musicMap.find(state) == _musicMap.end()) {
+            std::cerr << "Music for state '" << state << "' is not loaded!" << std::endl;
+            return;
+        }
+
         if (_currentState != state) {
-            if (_musicMap.find(state) != _musicMap.end()) {
-                stopMusic();  // Stop current music
-                _currentState = state;
-                _musicMap[state]->play();
-            }
+            stopMusic();  
+            _currentState = state;
+            _musicMap[state]->play();
         }
     }
 
@@ -92,6 +105,8 @@ public:
     float getVolume() {
         return _musicMap[_currentState]->getVolume();
     }
+
+    
 
 private:
     std::unordered_map<std::string, std::unique_ptr<sf::Music>> _musicMap; ///< A map of game state identifiers to music tracks.
