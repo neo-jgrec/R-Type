@@ -100,7 +100,6 @@ void Menus::initRoomMenu()
 {
     sf::Vector2u windowSize = _game._gameEngine.window.getSize();
     float centerX = static_cast<float>(windowSize.x) / 2.0f;
-    float centerY = static_cast<float>(windowSize.y) / 2.0f;
 
     sf::Vector2f buttonSize(200.0f, 50.0f);
     float buttonSpacing = 20.0f;
@@ -170,8 +169,53 @@ void Menus::initRoomMenu()
 
 
     sf::Vector2f startButtonPosition(
-        leftRect.getPosition().x + padding,
-        leftRect.getPosition().y + padding
+        rightRect.getPosition().x + padding,
+        rightRect.getPosition().y + padding
+    );
+
+    sf::Vector2f ipInputPosition(
+        leftRect.getPosition().x + buttonSize.x / 2 + padding,
+        leftRect.getPosition().y + padding * 3
+    );
+
+    sf::Vector2f portInputPosition(
+        leftRect.getPosition().x + buttonSize.x * 2 + buttonSize.x / 2 + padding * 2,
+        leftRect.getPosition().y + padding * 3
+    );
+
+    sf::Vector2f createRoomPosition(
+        (ipInputPosition.x + portInputPosition.x) / 2,
+        ipInputPosition.y + buttonSize.y  * 2 + padding
+    );
+
+    EntityFactory::createTextInput(
+        _game._gameEngine,
+        _game._gameEngine.registry,
+        ipInputPosition,
+        buttonSize,
+        "Enter IP Address",
+        static_cast<int>(Game::GameState::RoomMenu)
+    );
+
+    EntityFactory::createTextInput(
+        _game._gameEngine,
+        _game._gameEngine.registry,
+        portInputPosition,
+        buttonSize,
+        "Enter Port",
+        static_cast<int>(Game::GameState::RoomMenu)
+    );
+
+    EntityFactory::createButton(
+        _game._gameEngine,
+        _game._gameEngine.registry,
+        createRoomPosition,
+        buttonSize,
+        "Create Room",
+        [this]() {
+            std::cout << "Creating room" << std::endl;
+        },
+        static_cast<int>(Game::GameState::RoomMenu)
     );
 
     EntityFactory::createButton(
@@ -179,9 +223,8 @@ void Menus::initRoomMenu()
         _game._gameEngine.registry,
         startButtonPosition,
         buttonSize,
-        "Start game",
+        "Room 1",
         [this]() {
-            std::cout << "Create Room" << std::endl;
             _game._gameEngine.currentScene = static_cast<int>(Game::GameState::Playing);
             _game.playerConnectionHeader = _game.networkingService.sendRequest("127.0.0.1", 1111, PlayerConnect, {});
             _game.networkingService.sendRequest("127.0.0.1", 1111, GameStart, {});
