@@ -74,6 +74,17 @@ public:
      */
     ~GameEngine() = default;
 
+    void run_collision(const uint8_t wantedMask, const ecs::Entity entity)
+    {
+        for (const auto &collisionComponent = registry.get_component<ge::CollisionComponent>(entity);
+            const auto &[mask, onCollision] : collisionComponent->onCollision) {
+            if (wantedMask != mask)
+                continue;
+            onCollision(entity, entity);
+            return;
+        }
+    }
+
     float delta_t = 0.0f;               ///< Time delta between frames, used for animations and movement.
     core::ecs::Registry registry;       ///< The entity-component system (ECS) registry managing all entities and components.
     MusicManager musicManager;          ///< Manager for background music in the game.

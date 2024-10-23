@@ -43,7 +43,6 @@ Server::Server()
     _gameEngine.registry.register_component<Projectile>();
 
     Systems::worldSystem(*this);
-    Systems::enemySystem(*this);
 
     EventFactory::gameStarted(*this);
     EventFactory::playerConnected(*this);
@@ -78,10 +77,9 @@ void Server::update()
 {
     std::lock_guard lock(registry_mutex);
 
-    _gameEngine.registry.run_system<World>();
+    _gameEngine.registry.run_system<core::ge::TransformComponent, World>();
     _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent>();
     _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent>();
-    _gameEngine.registry.run_system<core::ge::TransformComponent, Enemy>();
 }
 
 void Server::run()

@@ -21,10 +21,11 @@ core::ecs::Entity EntityFactory::createWorld(
     const core::ecs::Entity world = gameEngine.registry.spawn_entity();
 
     gameEngine.registry.add_component(world, Network{networkingService});
+    gameEngine.registry.add_component(world, core::ge::VelocityComponent{75, 0});
     gameEngine.registry.add_component(world, core::ge::TransformComponent{sf::Vector2f(0, 0), sf::Vector2f(1920, 1080), sf::Vector2f(1, 1), 0});
     gameEngine.registry.add_component(world, core::ge::CollisionComponent{WORLD, {
-        {-200, -100, 100, 100},
-        {2120, -100, 100, 100}
+        {-1000, 0, 1000, 1080},
+        {2250, 0, 1000, 1080}
     }});
 
     nlohmann::json json;
@@ -35,7 +36,9 @@ core::ecs::Entity EntityFactory::createWorld(
         file >> json;
     }
 
-    World worldComponent = {75, 0, { json["width"], json["height"] }, json["cellSize"], {}};
+    World worldComponent = {
+        std::time(nullptr), 1,
+        { 1920, 1080 }, json["cellSize"], {}};
     for (const auto& tile : json["tiles"]) {
         if (tile.contains("tags")) {
             if (std::vector<std::string> tags = tile["tags"]; tags.end() == std::ranges::find(tags, "spawn"))
@@ -73,7 +76,7 @@ core::ecs::Entity EntityFactory::createPlayer(
     const core::ecs::Entity world = gameEngine.registry.get_entities<World>()[0];
     const auto &worldComponent = gameEngine.registry.get_component<World>(world);
 
-    const std::function onCollision = [&](const core::ecs::Entity& entity, const core::ecs::Entity&) {
+    const std::function onCollision = [&, id](const core::ecs::Entity& entity, const core::ecs::Entity& otherEntity) {
         std::cout << "Player " << static_cast<int>(id) << " collided" << std::endl;
 
         RequestType requestType = PlayerHit;
@@ -88,6 +91,9 @@ core::ecs::Entity EntityFactory::createPlayer(
 
         if (requestType == PlayerDie) {
             std::cout << "Player " << static_cast<int>(id) << " died" << std::endl;
+
+            gameEngine.run_collision(PLAYER, otherEntity);
+
             players[id].reset();
             gameEngine.registry.kill_entity(entity);
         }
@@ -109,7 +115,35 @@ core::ecs::Entity EntityFactory::createPlayer(
     gameEngine.registry.add_component(player, std::move(transformComponent));
     gameEngine.registry.add_component(player, core::ge::CollisionComponent{PLAYER, std::vector{sf::FloatRect(0, 0, worldComponent->tileSize, worldComponent->tileSize)},{
         {ENEMY, onCollision},
-        {TILE, onCollision}}});
+        {TILE, onCollision},
+        {WORLD, [&, id](const core::ecs::Entity &entity, const core::ecs::Entity &otherEntity) {
+            const auto &playerTransformComponent = gameEngine.registry.get_component<core::ge::TransformComponent>(entity);
+
+            if (const auto &worldTransformComponent = gameEngine.registry.get_component<core::ge::TransformComponent>(otherEntity);
+                playerTransformComponent->position.x < worldTransformComponent->position.x)
+                playerTransformComponent->position.x = worldTransformComponent->position.x;
+            else if (playerTransformComponent->position.x + playerTransformComponent->size.x > worldTransformComponent->position.x + worldTransformComponent->size.x)
+                playerTransformComponent->position.x = worldTransformComponent->position.x + worldTransformComponent->size.x - playerTransformComponent->size.x;
+
+            {
+                const auto x = static_cast<uint32_t>(playerTransformComponent->position.x);
+                const auto y = static_cast<uint32_t>(playerTransformComponent->position.y);
+
+                server.sendRequestToPlayers(
+                    PlayerMove,
+                    {
+                        static_cast<uint8_t>(id),
+                        static_cast<uint8_t>(x >> 24),
+                        static_cast<uint8_t>(x >> 16),
+                        static_cast<uint8_t>(x >> 8),
+                        static_cast<uint8_t>(x),
+                        static_cast<uint8_t>(y >> 24),
+                        static_cast<uint8_t>(y >> 16),
+                        static_cast<uint8_t>(y >> 8),
+                        static_cast<uint8_t>(y)
+                    });
+            }
+        }}}});
     gameEngine.registry.add_component(player, std::move(playerComponent));
 
     networkingService.sendRequest(
@@ -117,7 +151,8 @@ core::ecs::Entity EntityFactory::createPlayer(
         GameStart,
         {});
     {
-        const auto scroll = static_cast<uint32_t>(worldComponent->scroll);
+        const auto scroll = static_cast<uint32_t>(transformComponent.position.x);
+
         networkingService.sendRequest(
             *playersConnection[id].value(),
             MapScroll,
@@ -162,28 +197,27 @@ core::ecs::Entity EntityFactory::createEnemy(Server &server, const uint32_t x)
     const core::ecs::Entity world = gameEngine.registry.get_entities<World>()[0];
     const auto &worldComponent = gameEngine.registry.get_component<World>(world);
 
+    const auto currentId = id;
+    const std::function onCollision = [&, currentId](const core::ecs::Entity& entity, const core::ecs::Entity& otherEntity) {
+        std::cout << "Enemy " << static_cast<int>(currentId) << " collided" << std::endl;
+
+        gameEngine.run_collision(ENEMY, otherEntity);
+
+        server.sendRequestToPlayers(EnemyDie, {currentId});
+        gameEngine.registry.kill_entity(entity);
+    };
+
     const core::ecs::Entity enemy = gameEngine.registry.spawn_entity();
 
     const sf::Vector2i position = {static_cast<int>(x), rand() % 880 + 100};
     gameEngine.registry.add_component(enemy, Network{networkingService});
-    gameEngine.registry.add_component(enemy, core::ge::TransformComponent{sf::Vector2f(position), sf::Vector2f(worldComponent->tileSize, worldComponent->tileSize), sf::Vector2f(1, 1), 0});
     gameEngine.registry.add_component(enemy, core::ge::VelocityComponent{-100, 0});
+    gameEngine.registry.add_component(enemy, core::ge::TransformComponent{sf::Vector2f(position), sf::Vector2f(worldComponent->tileSize, worldComponent->tileSize), sf::Vector2f(1, 1), 0});
     gameEngine.registry.add_component(enemy, core::ge::CollisionComponent{ENEMY, std::vector{sf::FloatRect(0, 0, worldComponent->tileSize, worldComponent->tileSize)},{
-        { PLAYER, [&](const core::ecs::Entity& entity, const core::ecs::Entity&) {
-            std::cout << "Enemy " << static_cast<int>(id) << " collided with player" << std::endl;
-            server.sendRequestToPlayers(EnemyDie, {id});
-            gameEngine.registry.kill_entity(entity);
-        }},
-        { TILE, [&](const core::ecs::Entity& entity, const core::ecs::Entity&) {
-            std::cout << "Enemy " << static_cast<int>(id) << " collided with tile" << std::endl;
-            server.sendRequestToPlayers(EnemyDie, {id});
-            gameEngine.registry.kill_entity(entity);
-        }},
-        { WORLD, [&](const core::ecs::Entity& entity, const core::ecs::Entity&) {
-            std::cout << "Enemy " << static_cast<int>(id) << " collided with world" << std::endl;
-            server.sendRequestToPlayers(EnemyDie, {id});
-            gameEngine.registry.kill_entity(entity);
-        }}}});
+        {PLAYER, onCollision},
+        {PLAYER_PROJECTILE, onCollision},
+        {TILE, onCollision},
+        {WORLD, onCollision}}});
     gameEngine.registry.add_component(enemy, Enemy{id});
 
     const std::vector payload = {
@@ -216,28 +250,26 @@ core::ecs::Entity EntityFactory::createProjectile(
 {
     core::GameEngine &gameEngine = server.getGameEngine();
 
+    const auto onCollision = [&, id](const core::ecs::Entity& entity, const core::ecs::Entity& otherEntity) {
+        std::cout << "Projectile " << static_cast<int>(id) << " died" << std::endl;
+
+        gameEngine.run_collision(PLAYER_PROJECTILE, otherEntity);
+        gameEngine.registry.kill_entity(entity);
+    };
+
     const core::ecs::Entity projectile = gameEngine.registry.spawn_entity();
 
     const auto &playerTransform = gameEngine.registry.get_component<core::ge::TransformComponent>(player);
 
+    gameEngine.registry.add_component(projectile, core::ge::VelocityComponent{1843, 0});
     gameEngine.registry.add_component(projectile, core::ge::TransformComponent{playerTransform->position, sf::Vector2f(8, 8), sf::Vector2f(1, 1), 0});
-    gameEngine.registry.add_component(projectile, core::ge::VelocityComponent{200, 0});
     gameEngine.registry.add_component(projectile, core::ge::CollisionComponent{PLAYER_PROJECTILE, std::vector{sf::FloatRect(0, 0, 8, 8)},{
-        { ENEMY, [&](const core::ecs::Entity& entity, const core::ecs::Entity&) {
-            std::cout << "Projectile collided with enemy" << std::endl;
-            gameEngine.registry.kill_entity(entity);
-        }},
-        { WORLD, [&](const core::ecs::Entity& entity, const core::ecs::Entity&) {
-            std::cout << "Projectile collided with world" << std::endl;
-            gameEngine.registry.kill_entity(entity);
-        }},
-        { TILE, [&](const core::ecs::Entity& entity, const core::ecs::Entity&) {
-            std::cout << "Projectile collided with tile" << std::endl;
-            gameEngine.registry.kill_entity(entity);
-        }}}});
+        {ENEMY, onCollision},
+        {WORLD, onCollision},
+        {TILE, onCollision}}});
     gameEngine.registry.add_component(projectile, Projectile{id});
 
-    std::cout << "Projectile created" << std::endl;
+    std::cout << "Projectile " << static_cast<int>(id) << " created" << std::endl;
     return projectile;
 }
 
@@ -248,26 +280,31 @@ core::ecs::Entity EntityFactory::createTile(
     const uint32_t y)
 {
     core::GameEngine &gameEngine = server.getGameEngine();
-    NetworkingService &networkingService = server.getNetworkingService();
-    const auto &playersConnection = server.getPlayersConnection();
+
+    const auto onCollision = [&](const core::ecs::Entity& entity, const core::ecs::Entity& otherEntity) {
+        std::cout << "Tile collided" << std::endl;
+
+        gameEngine.run_collision(TILE, otherEntity);
+        server.sendRequestToPlayers(TileDestroy, {
+            static_cast<uint8_t>(x >> 24),
+            static_cast<uint8_t>(x >> 16),
+            static_cast<uint8_t>(x >> 8),
+            static_cast<uint8_t>(x),
+            static_cast<uint8_t>(y >> 24),
+            static_cast<uint8_t>(y >> 16),
+            static_cast<uint8_t>(y >> 8),
+            static_cast<uint8_t>(y)
+        });
+        gameEngine.registry.kill_entity(entity);
+    };
 
     const core::ecs::Entity tile = gameEngine.registry.spawn_entity();
 
     gameEngine.registry.add_component(tile, core::ge::TransformComponent{sf::Vector2f(static_cast<float>(x * size.first), static_cast<float>(y * size.second)), sf::Vector2f(static_cast<float>(size.first), static_cast<float>(size.second)), sf::Vector2f(1, 1), 0});
     gameEngine.registry.add_component(tile, core::ge::CollisionComponent{TILE, std::vector{sf::FloatRect(0, 0, static_cast<float>(size.first), static_cast<float>(size.second))}, {
-        { PLAYER_PROJECTILE, [&](const core::ecs::Entity& entity, const core::ecs::Entity&) {
-            std::cout << "Tile collided with projectile" << std::endl;
-
-            for (auto &playerEntity : gameEngine.registry.get_entities<Player>()) {
-                const auto &playerComponent = gameEngine.registry.get_component<Player>(playerEntity);
-                networkingService.sendRequest(
-                    *playersConnection[playerComponent->id].value(),
-                    TileDestroy,
-                    {playerComponent->id});
-            }
-
-            gameEngine.registry.kill_entity(entity);
-        }}}});
+        {PLAYER_PROJECTILE, onCollision},
+        {ENEMY, onCollision},
+        {PLAYER, onCollision}}});
 
     return tile;
 }

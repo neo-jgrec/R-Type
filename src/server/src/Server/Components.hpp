@@ -8,8 +8,8 @@ struct Network {
 };
 
 struct World {
-    uint32_t speed = 0;
-    float scroll = 0;
+    time_t lastTimeEnemySpawned;
+    time_t enemySpawnRate;
 
     std::pair<uint32_t, uint32_t> size;
     uint8_t tileSize;
