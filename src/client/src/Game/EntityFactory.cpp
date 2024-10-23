@@ -119,6 +119,13 @@ core::ecs::Entity EntityFactory::createPlayerProjectile(core::GameEngine& gameEn
         config.getValue<float>("/player/weapons/0/size/y")
     );
 
+    sf::Vector2f projectileSpeed = sf::Vector2f(
+        config.getValue<float>("/player/weapons/0/speed/x"),
+        config.getValue<float>("/player/weapons/0/speed/y")
+    );
+
+    int damage = config.getValue<int>("/player/weapons/0/damage");
+
     sf::Vector2f startPosition = playerTransform.position;
 
     float playerWidth = playerTransform.size.x * playerTransform.scale.x;
@@ -126,10 +133,10 @@ core::ecs::Entity EntityFactory::createPlayerProjectile(core::GameEngine& gameEn
     startPosition.x += playerWidth;
     startPosition.y += (playerHeight / 2.0f) - (projectileSize.y / 2.0f);
 
-    gameEngine.registry.add_component(projectile, core::ge::TransformComponent{startPosition, projectileSize, gameScale * 4.0f, 0.0f});
-    gameEngine.registry.add_component(projectile, core::ge::CollisionComponent{PLAYER_PROJECTILE, {sf::FloatRect(0.0f, 0.0f, 18.0f, 5.0f)}});
-    gameEngine.registry.add_component(projectile, VelocityComponent{20.0f, 20.0f});
-    gameEngine.registry.add_component(projectile, DamageComponent{10});
+    gameEngine.registry.add_component(projectile, core::ge::TransformComponent{startPosition, projectileSize, gameScale, 0.0f});
+    gameEngine.registry.add_component(projectile, core::ge::CollisionComponent{PLAYER_PROJECTILE, {sf::FloatRect(0.0f, 0.0f, projectileSize.x, projectileSize.y)}});
+    gameEngine.registry.add_component(projectile, VelocityComponent{projectileSpeed.x, projectileSpeed.y});
+    gameEngine.registry.add_component(projectile, DamageComponent{damage});
     gameEngine.registry.add_component(projectile, Projectile{});
 
     auto buffer = gameEngine.assetManager.getSound("shooting");
@@ -154,21 +161,33 @@ core::ecs::Entity EntityFactory::createPlayerMissile(core::GameEngine& gameEngin
 {
     core::ecs::Entity missile = gameEngine.registry.spawn_entity();
 
-    sf::Vector2f missileSize(34.5f, 12.0f);
-    sf::Vector2f scale = gameScale * 5.0f;
+    sf::Vector2f missileSize = sf::Vector2f(
+        config.getValue<float>("/player/weapons/1/size/x"),
+        config.getValue<float>("/player/weapons/1/size/y")
+    );
+
+    sf::Vector2f missileSpeed = sf::Vector2f(
+        config.getValue<float>("/player/weapons/1/speed/x"),
+        config.getValue<float>("/player/weapons/1/speed/y")
+    );
+
+    int damage = config.getValue<int>("/player/weapons/1/damage");
+
+    int health = config.getValue<int>("/player/weapons/1/health");
+
     sf::Vector2f startPosition = playerTransform.position;
     float playerWidth = playerTransform.size.x * playerTransform.scale.x;
     float playerHeight = playerTransform.size.y * playerTransform.scale.y;
     startPosition.x += playerWidth;
-    startPosition.y += (playerHeight / 2.0f) - ((missileSize.y / 2.0f) * scale.y);
+    startPosition.y += (playerHeight / 2.0f) - ((missileSize.y / 2.0f) * gameScale.y);
 
 
-    gameEngine.registry.add_component(missile, core::ge::TransformComponent{startPosition, missileSize, scale, 0.0f});
-    gameEngine.registry.add_component(missile, core::ge::CollisionComponent{PLAYER_MISSILE, {sf::FloatRect(0.0f, 0.0f, 34.5f, 12.0f)}});
-    gameEngine.registry.add_component(missile, VelocityComponent{20.0f, 20.0f});
-    gameEngine.registry.add_component(missile, DamageComponent{20});
+    gameEngine.registry.add_component(missile, core::ge::TransformComponent{startPosition, missileSize, gameScale, 0.0f});
+    gameEngine.registry.add_component(missile, core::ge::CollisionComponent{PLAYER_MISSILE, {sf::FloatRect(0.0f, 0.0f, missileSize.x, missileSize.y)}});
+    gameEngine.registry.add_component(missile, VelocityComponent{missileSpeed.x, missileSpeed.y});
+    gameEngine.registry.add_component(missile, DamageComponent{damage});
     gameEngine.registry.add_component(missile, Projectile{});
-    gameEngine.registry.add_component(missile, HealthComponent{50});
+    gameEngine.registry.add_component(missile, HealthComponent{health});
 
     auto buffer = gameEngine.assetManager.getSound("missile_sound");
 

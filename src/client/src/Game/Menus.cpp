@@ -18,7 +18,7 @@ void Menus::initMainMenu()
 
     EntityFactory::createImage(
         _game._gameEngine,
-        _game._gameEngine.registry,
+        _game._configManager,
         sf::Vector2f(0.0f, 0.0f),
         sf::Vector2f(static_cast<float>(_game._gameEngine.window.getSize().x), static_cast<float>(windowSize.y)),
         "background",
@@ -27,7 +27,7 @@ void Menus::initMainMenu()
 
     EntityFactory::createImage(
         _game._gameEngine,
-        _game._gameEngine.registry,
+        _game._configManager,
         sf::Vector2f(centerX - 500.0f, centerY - 400.0f),
         sf::Vector2f(1000.0f, 300.0f),
         "logo",
@@ -36,7 +36,7 @@ void Menus::initMainMenu()
 
     EntityFactory::createButton(
         _game._gameEngine,
-        _game._gameEngine.registry,
+        _game._configManager,
         sf::Vector2f(centerX - buttonSize.x / 2, centerY - buttonSize.y - buttonSpacing),
         buttonSize,
         "Solo",
@@ -50,7 +50,7 @@ void Menus::initMainMenu()
 
     EntityFactory::createButton(
         _game._gameEngine,
-        _game._gameEngine.registry,
+        _game._configManager,
         sf::Vector2f(centerX - buttonSize.x / 2, centerY),
         buttonSize,
         "Multiplayer",
@@ -62,7 +62,7 @@ void Menus::initMainMenu()
 
     EntityFactory::createButton(
         _game._gameEngine,
-        _game._gameEngine.registry,
+        _game._configManager,
         sf::Vector2f(centerX - buttonSize.x / 2, centerY + buttonSize.y + buttonSpacing),
         buttonSize,
         "Settings",
@@ -74,7 +74,7 @@ void Menus::initMainMenu()
 
     EntityFactory::createButton(
         _game._gameEngine,
-        _game._gameEngine.registry,
+        _game._configManager,
         sf::Vector2f(centerX - buttonSize.x / 2, centerY + 2 * (buttonSize.y + buttonSpacing)),
         buttonSize,
         "Quit",
@@ -87,7 +87,7 @@ void Menus::initMainMenu()
 
     // EntityFactory::createSlider(
     //     _game._gameEngine,
-    //     _game._gameEngine.registry,
+    //     _game._configManager,
     //     sf::Vector2f(centerX - buttonSize.x / 2, centerY + 3 * (buttonSize.y + (buttonSpacing += 10.0f))),
     //     sf::Vector2f(200.0f, 10.0f),
     //     "Volume",
@@ -123,7 +123,7 @@ void Menus::initRoomMenu()
 
     EntityFactory::createImage(
         _game._gameEngine,
-        _game._gameEngine.registry,
+        _game._configManager,
         sf::Vector2f(0.0f, 0.0f),
         sf::Vector2f(static_cast<float>(_game._gameEngine.window.getSize().x), static_cast<float>(windowSize.y)),
         "background",
@@ -132,7 +132,7 @@ void Menus::initRoomMenu()
 
     EntityFactory::createButton(
         _game._gameEngine,
-        _game._gameEngine.registry,
+        _game._configManager,
         sf::Vector2f(buttonSize.y, buttonSize.y - buttonSpacing),
         buttonSize,
         "< Go back",
@@ -191,7 +191,7 @@ void Menus::initRoomMenu()
 
     EntityFactory::createTextInput(
         _game._gameEngine,
-        _game._gameEngine.registry,
+        _game._configManager,
         ipInputPosition,
         buttonSize,
         "Enter IP Address",
@@ -200,7 +200,7 @@ void Menus::initRoomMenu()
 
     EntityFactory::createTextInput(
         _game._gameEngine,
-        _game._gameEngine.registry,
+        _game._configManager,
         portInputPosition,
         buttonSize,
         "Enter Port",
@@ -209,7 +209,7 @@ void Menus::initRoomMenu()
 
     EntityFactory::createButton(
         _game._gameEngine,
-        _game._gameEngine.registry,
+        _game._configManager,
         createRoomPosition,
         buttonSize,
         "Create Room",
@@ -221,7 +221,7 @@ void Menus::initRoomMenu()
 
     EntityFactory::createButton(
         _game._gameEngine,
-        _game._gameEngine.registry,
+        _game._configManager,
         startButtonPosition,
         buttonSize,
         "Room 1",
@@ -260,7 +260,7 @@ void Menus::initSettingsMenu()
 
     EntityFactory::createImage(
         _game._gameEngine,
-        _game._gameEngine.registry,
+        _game._configManager,
         sf::Vector2f(0.0f, 0.0f),
         sf::Vector2f(static_cast<float>(_game._gameEngine.window.getSize().x), static_cast<float>(windowSize.y)),
         "background",
@@ -269,7 +269,7 @@ void Menus::initSettingsMenu()
 
     EntityFactory::createButton(
         _game._gameEngine,
-        _game._gameEngine.registry,
+        _game._configManager,
         sf::Vector2f(buttonSize.y, buttonSize.y - buttonSpacing),
         buttonSize,
         "< Go back",
@@ -281,7 +281,7 @@ void Menus::initSettingsMenu()
 
     EntityFactory::createSlider(
         _game._gameEngine,
-        _game._gameEngine.registry,
+        _game._configManager,
         sf::Vector2f(buttonSize.y, buttonSize.y * 3 + buttonSpacing),
         sf::Vector2f(200.0f, 10.0f),
         "Volume",
