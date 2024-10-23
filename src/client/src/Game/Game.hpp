@@ -5,7 +5,6 @@
 #include "../../../core/ecs/Entity/Entity.hpp"
 #include "../../../core/ecs/GameEngine/GameEngine.hpp"
 #include "../../../core/network/NetworkService.hpp"
-#include "../../../core/config/ConfigManager.hpp"
 
 /**
  * @struct Tile
@@ -67,6 +66,13 @@ public:
         GameOver = 3
     };
 
+    Menus menus = Menus(*this); ///< Manages the initialization of different menus in the game.
+    core::GameEngine _gameEngine; ///< Game engine responsible for managing entities, components, and systems.
+    NetworkingService &networkingService = NetworkingService::getInstance(); ///< Singleton instance of the networking service.
+    GDTPHeader playerConnectionHeader{}; ///< Header for player connection requests.
+    bool _windowOpen = true;           ///< Flag to track if the game window is open.
+    sf::Vector2f gameScale = {1.0f, 1.0f}; ///< Scaling factor for the game view, adjusted during window resizing.
+
 private:
     /**
      * @brief Processes SFML events like keyboard inputs, window resizing, and window closing.
@@ -98,16 +104,9 @@ private:
      */
     int assignColor();
 
-    /**
-     * @brief Initializes the main menu scene.
-     */
-    void initMainMenu();
-
     core::ecs::Entity _viewEntity = core::ecs::Entity();
 
-    core::GameEngine _gameEngine{false}; ///< Game engine responsible for managing entities, components, and systems.
-
-    ConfigManager _configManager; ///< Configuration manager for loading and managing game configurations.
+    core::GameEngine _gameEngine; ///< Game engine responsible for managing entities, components, and systems.
 
     bool _windowOpen = true;           ///< Flag to track if the game window is open.
     sf::Vector2f gameScale = {1.0f, 1.0f}; ///< Scaling factor for the game view, adjusted during window resizing.
@@ -174,12 +173,4 @@ private:
      * @param registry The entity-component system registry managing game entities.
      */
     void viewSystem(core::ecs::Registry& registry);
-
-    /**
-     * @brief Initializes the room menu scene.
-     */
-    void initRoomMenu();
-
-    NetworkingService &networkingService = NetworkingService::getInstance(); ///< Singleton instance of the networking service.
-    GDTPHeader playerConnectionHeader{}; ///< Header for player connection requests.
 };
