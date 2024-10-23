@@ -1,0 +1,67 @@
+{
+    "network": {
+        "port": 4242,
+        "ip": "127.0.0.1",
+        "maxPlayers": 4
+    },
+    "view": {
+        "size": {
+            "x": 1920,
+            "y": 1080
+        },
+        "speed": {
+            "x": 100,
+            "y": 100
+        }
+    },
+    "player": {
+        "speed": {
+            "x": 100,
+            "y": 100
+        },
+        "size": {
+            "x": 33,
+            "y": 17
+        },
+        "life": 3,
+        "weapons": [
+            {
+                "type": "projectile",
+                "damage": 10,
+                "health": 10,
+                "size": {
+                    "x": 18,
+                    "y": 5
+                }
+            },
+            {
+                "type": "missile",
+                "damage": 50,
+                "health": 100,
+                "size": {
+                    "x": 34.5,
+                    "y": 12
+                }
+            }
+        ]
+    },
+    "enemies": [
+        {
+            "type": "basic",
+            "speed": {
+                "x": 100,
+                "y": 100
+            },
+            "health": 10,
+            "size": {
+                "x": 33,
+                "y": 36
+            }
+        }
+    ],
+    "map": {
+        "tiles": {
+            "health": 10
+        }
+    }
+}
