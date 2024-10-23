@@ -62,8 +62,9 @@ public:
      */
     enum class GameState {
         MainMenu = 0,
-        Playing = 1,
-        GameOver = 2
+        RoomMenu = 1,
+        Playing = 2,
+        GameOver = 3
     };
 
 private:
@@ -173,6 +174,11 @@ private:
      * @param registry The entity-component system registry managing game entities.
      */
     void viewSystem(core::ecs::Registry& registry);
+
+    /**
+     * @brief Initializes the room menu scene.
+     */
+    void initRoomMenu();
 
     NetworkingService &networkingService = NetworkingService::getInstance(); ///< Singleton instance of the networking service.
     GDTPHeader playerConnectionHeader{}; ///< Header for player connection requests.
