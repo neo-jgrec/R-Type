@@ -43,7 +43,6 @@ public:
         registry.register_component<core::ge::VelocityComponent>();
         registry.register_component<core::ge::CollisionComponent>();
         registry.register_component<core::ge::TextComponent>();
-        registry.register_component<core::ge::SceneComponent>();
         registry.register_component<core::ge::TextInputComponent>();
         registry.register_component<core::ge::SliderComponent>();
         registry.register_component<core::ge::DisabledComponent>();
@@ -108,12 +107,14 @@ protected:
      * This system renders entities' `DrawableComponent` if they belong to the active scene.
      */
     void renderSystems() {
-        registry.add_system<core::ge::DrawableComponent, core::ge::SceneComponent, core::ge::DisabledComponent>(
+        registry.add_system<core::ge::DrawableComponent, core::ge::DisabledComponent>(
             [&window = window](core::ecs::Entity, core::ge::DrawableComponent &drawable, core::ge::DisabledComponent &disabled) {
+                if (disabled.disabled)
+                    return;
                 window.draw(drawable.shape);
             });
 
-        registry.add_system<core::ge::DrawableComponent, core::ge::SceneComponent>(
+        registry.add_system<core::ge::DrawableComponent>(
             [&window = window](core::ecs::Entity, core::ge::DrawableComponent &drawable) {
                 window.draw(drawable.shape);
             });

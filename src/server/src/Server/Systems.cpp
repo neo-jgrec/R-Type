@@ -15,6 +15,7 @@ void Systems::worldSystem(Server &server)
                 return;
 
             world.lastTimeEnemySpawned = currentTime;
+            std::cout << "Enemy spawned at " << static_cast<int>(transformComponent.position.x) + world.size.first + 100 << std::endl;
             EntityFactory::createEnemy(server, static_cast<uint32_t>(transformComponent.position.x) + world.size.first + 100);
         });
 }

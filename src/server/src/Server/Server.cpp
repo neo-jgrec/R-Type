@@ -53,12 +53,12 @@ Server::Server()
 
 void Server::start()
 {
-    std::cout << "Game starting" << std::endl;
-
     static bool asGameStarted = false;
     if (asGameStarted)
         return;
     asGameStarted = true;
+
+    std::cout << "Game starting" << std::endl;
 
     const core::ecs::Entity world = EntityFactory::createWorld(*this, "JY_map.json");
     if (const auto spawnPoints = _gameEngine.registry.get_component<World>(world)->spawnPoints; spawnPoints.empty()) {

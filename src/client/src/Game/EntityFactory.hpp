@@ -18,10 +18,10 @@ class EntityFactory {
 public:
     /**
      * @brief Creates a player entity with the given position, color, and game scale.
-     * 
-     * The player is assigned various components including a transform, collision, velocity, input handling, health, score, and a color. 
+     *
+     * The player is assigned various components including a transform, collision, velocity, input handling, health, score, and a color.
      * It also loads the player sprite and handles animation setup.
-     * 
+     *
      * @param registry The ECS registry managing the entities.
      * @param position The initial position of the player.
      * @param color An integer representing the player's color for sprite customization.
@@ -80,14 +80,13 @@ public:
      * @param position The position of the button in the UI.
      * @param size The size of the button.
      * @param label The text label displayed on the button.
-     * @param onClick A callback function to be invoked when the button is clicked.
-     * @param scene The scene in which the button will be active.
+     * @param onClick A callback function to be invoked when the button is clicked.q
      * @return The created button entity.
      */
-    static core::ecs::Entity createButton(core::GameEngine& gameEngine, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void()>& onClick, int scene);
-    static core::ecs::Entity createTextInput(core::GameEngine& gameEngine, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& title, int scene);
-    static core::ecs::Entity createSlider(core::GameEngine& gameEngine, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void(float)>& onChange, int scene, float currentValue);
-    static core::ecs::Entity createImage(core::GameEngine& gameEngine, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& textureName, int scene);
+    static core::ecs::Entity createButton(core::GameEngine& gameEngine, core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void()>& onClick);
+    static core::ecs::Entity createTextInput(core::GameEngine& gameEngine, core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& title);
+    static core::ecs::Entity createSlider(core::GameEngine& gameEngine, core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void(float)>& onChange, float currentValue);
+    static core::ecs::Entity createImage(core::GameEngine& gameEngine, core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& textureName);
 };
 
 #endif // ENTITY_FACTORY_HPP

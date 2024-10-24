@@ -21,7 +21,7 @@ struct Tile {
 /**
  * @class Game
  * @brief Manages the game logic, including initialization, event handling, rendering, and updating game state.
- * 
+ *
  * The Game class coordinates different game systems and runs the game loop, which processes events,
  * updates game components, and renders the current state. It also manages key entities such as players, enemies,
  * and game states like the main menu and gameplay.
@@ -61,7 +61,7 @@ public:
      * @enum GameState
      * @brief Represents the various states of the game.
      */
-    enum class GameState {
+    enum GameState: uint8_t {
         MainMenu = 0,
         RoomMenu = 1,
         Settings = 2,

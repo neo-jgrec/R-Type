@@ -12,7 +12,7 @@
 
 void Game::init()
 {
-    _gameEngine.currentScene = static_cast<int>(GameState::Loading);
+    _gameEngine.currentScene = GameState::Loading;
 
     _gameEngine.window.setFramerateLimit(60);
     _gameEngine.window.setKeyRepeatEnabled(true);
@@ -55,13 +55,13 @@ void Game::init()
 
     updateLoadingProgress(60);
     inputSystem(_gameEngine.registry);
+    playerMovementSystem(_gameEngine.registry);
     projectileMovementSystem(_gameEngine.registry);
     enemyMovementSystem(_gameEngine.registry);
     viewSystem(_gameEngine.registry);
 
     _viewEntity = _gameEngine.registry.spawn_entity();
     _gameEngine.registry.add_component(_viewEntity, ViewComponent{_gameEngine.window.getDefaultView()});
-    _gameEngine.registry.add_component(_viewEntity, core::ge::SceneComponent{static_cast<int>(GameState::Playing)});
 
     networkingService.init();
     setHandlers();
@@ -127,13 +127,87 @@ void Game::loadAssets()
     }
 }
 
+void Game::initMainMenu()
+{
+    sf::Vector2u windowSize = _gameEngine.window.getSize();
+    float centerX = static_cast<float>(windowSize.x) / 2.0f;
+    float centerY = static_cast<float>(windowSize.y) / 2.0f;
+
+    sf::Vector2f buttonSize(200.0f, 50.0f);
+    float buttonSpacing = 20.0f;
+
+    EntityFactory::createImage(
+        _gameEngine,
+        _gameEngine.registry,
+        sf::Vector2f(0.0f, 0.0f),
+        sf::Vector2f(static_cast<float>(_gameEngine.window.getSize().x), static_cast<float>(windowSize.y)),
+        "background"
+    );
+
+    EntityFactory::createImage(
+        _gameEngine,
+        _gameEngine.registry,
+        sf::Vector2f(centerX - 500.0f, centerY - 400.0f),
+        sf::Vector2f(1000.0f, 300.0f),
+        "logo"
+    );
+
+    EntityFactory::createButton(
+        _gameEngine,
+        _gameEngine.registry,
+        sf::Vector2f(centerX - buttonSize.x / 2, centerY - buttonSize.y - buttonSpacing),
+        buttonSize,
+        "Start Game",
+        [this]() {
+            if (_gameEngine.currentScene != MainMenu)
+                return;
+
+            _gameEngine.currentScene = Playing;
+            playerConnectionHeader = networkingService.sendRequest("127.0.0.1", 1111, PlayerConnect, {});
+            networkingService.sendRequest("127.0.0.1", 1111, GameStart, {});
+        }
+    );
+
+    EntityFactory::createButton(
+        _gameEngine,
+        _gameEngine.registry,
+        sf::Vector2f(centerX - buttonSize.x / 2, centerY),
+        buttonSize,
+        "Options",
+        []() { }
+    );
+
+    EntityFactory::createButton(
+        _gameEngine,
+        _gameEngine.registry,
+        sf::Vector2f(centerX - buttonSize.x / 2, centerY + buttonSize.y + buttonSpacing),
+        buttonSize,
+        "Quit",
+        [this]() {
+            _windowOpen = false;
+            networkingService.stop();
+        }
+    );
+
+    EntityFactory::createSlider(
+        _gameEngine,
+        _gameEngine.registry,
+        sf::Vector2f(centerX - buttonSize.x / 2, centerY + 3 * (buttonSize.y + (buttonSpacing += 10.0f))),
+        sf::Vector2f(200.0f, 10.0f),
+        "Volume",
+        [this](float value) { _gameEngine.musicManager.setVolume(value); },
+        _gameEngine.musicManager.getVolume()
+    );
+}
+
 void Game::update()
 {
     // events
     _gameEngine.registry.run_system<EventComponent>();
 
     _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent>();
-    _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent, InputStateComponent, ShootCounterComponent, Player>();
+    _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent, Player>();
+    _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent, InputStateComponent, ShootCounterComponent, Player, core::ge::AnimationComponent>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::TransformComponent>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::AnimationComponent>();
 
@@ -141,31 +215,28 @@ void Game::update()
     _gameEngine.registry.run_system<core::ge::SoundComponent>();
 
     // Projectile movement
-    _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent, Projectile>();
-
-    // Enemy movement
-    if (_gameEngine.currentScene == static_cast<int>(GameState::Playing))
-        _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent, Enemy>();
+    // _gameEngine.registry.run_system<core::ge::TransformComponent, Projectile>();
+    // _gameEngine.registry.run_system<core::ge::TransformComponent, Enemy>();
 
     // Collision detection
-    _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent, core::ge::SceneComponent>();
+    // _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent>();
 
     // Clickable
-    _gameEngine.registry.run_system<core::ge::ClickableComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent, core::ge::TransformComponent>();
+    _gameEngine.registry.run_system<core::ge::ClickableComponent, core::ge::DrawableComponent, core::ge::TextComponent, core::ge::TransformComponent>();
 
     // View
-    _gameEngine.registry.run_system<ViewComponent, core::ge::SceneComponent>();
+    _gameEngine.registry.run_system<ViewComponent>();
 }
 
 void Game::render()
 {
     _gameEngine.window.clear();
-    _gameEngine.registry.run_system<ViewComponent, core::ge::SceneComponent>();
-    _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::SceneComponent>();
-    _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::SceneComponent, core::ge::DisabledComponent>();
-    _gameEngine.registry.run_system<core::ge::TextComponent, core::ge::SceneComponent>();
-    _gameEngine.registry.run_system<core::ge::SliderComponent, core::ge::SceneComponent>();
-    _gameEngine.registry.run_system<core::ge::TextInputComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent>();
+    _gameEngine.registry.run_system<ViewComponent>();
+    _gameEngine.registry.run_system<core::ge::DrawableComponent>();
+    _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::DisabledComponent>();
+    _gameEngine.registry.run_system<core::ge::TextComponent>();
+    _gameEngine.registry.run_system<core::ge::SliderComponent>();
+    _gameEngine.registry.run_system<core::ge::TextInputComponent, core::ge::DrawableComponent, core::ge::TextComponent>();
     _gameEngine.window.display();
 }
 

@@ -456,7 +456,6 @@ public:
         init();
         thread = std::jthread([this] {
             io_context_.run();
-            std::cout << "Networking service thread started" << std::endl;
         });
 
     }

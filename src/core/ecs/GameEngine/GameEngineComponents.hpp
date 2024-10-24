@@ -192,16 +192,6 @@ struct TextComponent {
 };
 
 /**
- * @struct SceneComponent
- * @brief Associates an entity with a specific scene.
- *
- * This component assigns an entity to a scene, identified by an integer name. It allows managing which entities belong to which scenes.
- */
-struct SceneComponent {
-    int sceneName;
-};
-
-/**
  * @struct TextInputComponent
  * @brief Component for text input fields.
  */

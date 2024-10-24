@@ -160,7 +160,7 @@ Event EventFactory::handlePlayerDisconnect([[maybe_unused]] const GDTPHeader& he
 
 Event EventFactory::handleGameStart([[maybe_unused]] const GDTPHeader& header, [[maybe_unused]] const std::vector<uint8_t>& payload)
 {
-    if (payload.empty()) {
+    if (!payload.empty()) {
         throw std::runtime_error("Invalid payload size for GameStart event");
     }
     return {RequestType::GameStart, header};
@@ -168,7 +168,7 @@ Event EventFactory::handleGameStart([[maybe_unused]] const GDTPHeader& header, [
 
 Event EventFactory::handleGameOver([[maybe_unused]] const GDTPHeader& header, [[maybe_unused]] const std::vector<uint8_t>& payload)
 {
-    if (payload.empty()) {
+    if (!payload.empty()) {
         throw std::runtime_error("Invalid payload size for GameOver event");
     }
     return {RequestType::GameOver, header};

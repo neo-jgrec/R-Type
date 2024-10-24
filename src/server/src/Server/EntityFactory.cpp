@@ -21,7 +21,7 @@ core::ecs::Entity EntityFactory::createWorld(
     const core::ecs::Entity world = gameEngine.registry.spawn_entity();
 
     gameEngine.registry.add_component(world, Network{networkingService});
-    gameEngine.registry.add_component(world, core::ge::VelocityComponent{75, 0});
+    gameEngine.registry.add_component(world, core::ge::VelocityComponent{50, 0});
     gameEngine.registry.add_component(world, core::ge::TransformComponent{sf::Vector2f(0, 0), sf::Vector2f(1920, 1080), sf::Vector2f(1, 1), 0});
     gameEngine.registry.add_component(world, core::ge::CollisionComponent{WORLD, {
         {-1000, 0, 1000, 1080},
@@ -117,7 +117,9 @@ core::ecs::Entity EntityFactory::createPlayer(
         {ENEMY, onCollision},
         {TILE, onCollision},
         {WORLD, [&, id](const core::ecs::Entity &entity, const core::ecs::Entity &otherEntity) {
+
             const auto &playerTransformComponent = gameEngine.registry.get_component<core::ge::TransformComponent>(entity);
+            std::cout << "Player " << static_cast<int>(id) << " collided with world at " << playerTransformComponent->position.x << ", " << playerTransformComponent->position.y << std::endl;
 
             if (const auto &worldTransformComponent = gameEngine.registry.get_component<core::ge::TransformComponent>(otherEntity);
                 playerTransformComponent->position.x < worldTransformComponent->position.x)
@@ -201,6 +203,10 @@ core::ecs::Entity EntityFactory::createEnemy(Server &server, const uint32_t x)
     const std::function onCollision = [&, currentId](const core::ecs::Entity& entity, const core::ecs::Entity& otherEntity) {
         std::cout << "Enemy " << static_cast<int>(currentId) << " collided" << std::endl;
 
+        const auto &worldEntity = gameEngine.registry.get_entities<World>()[0];
+        if (otherEntity == worldEntity)
+            std::cout << "Enemy " << static_cast<int>(currentId) << " collided with world" << std::endl;
+
         gameEngine.run_collision(ENEMY, otherEntity);
 
         server.sendRequestToPlayers(EnemyDie, {currentId});
@@ -211,7 +217,7 @@ core::ecs::Entity EntityFactory::createEnemy(Server &server, const uint32_t x)
 
     const sf::Vector2i position = {static_cast<int>(x), rand() % 880 + 100};
     gameEngine.registry.add_component(enemy, Network{networkingService});
-    gameEngine.registry.add_component(enemy, core::ge::VelocityComponent{-100, 0});
+    gameEngine.registry.add_component(enemy, core::ge::VelocityComponent{-200, 0});
     gameEngine.registry.add_component(enemy, core::ge::TransformComponent{sf::Vector2f(position), sf::Vector2f(worldComponent->tileSize, worldComponent->tileSize), sf::Vector2f(1, 1), 0});
     gameEngine.registry.add_component(enemy, core::ge::CollisionComponent{ENEMY, std::vector{sf::FloatRect(0, 0, worldComponent->tileSize, worldComponent->tileSize)},{
         {PLAYER, onCollision},
@@ -261,7 +267,7 @@ core::ecs::Entity EntityFactory::createProjectile(
 
     const auto &playerTransform = gameEngine.registry.get_component<core::ge::TransformComponent>(player);
 
-    gameEngine.registry.add_component(projectile, core::ge::VelocityComponent{1843, 0});
+    gameEngine.registry.add_component(projectile, core::ge::VelocityComponent{500, 0});
     gameEngine.registry.add_component(projectile, core::ge::TransformComponent{playerTransform->position, sf::Vector2f(8, 8), sf::Vector2f(1, 1), 0});
     gameEngine.registry.add_component(projectile, core::ge::CollisionComponent{PLAYER_PROJECTILE, std::vector{sf::FloatRect(0, 0, 8, 8)},{
         {ENEMY, onCollision},
