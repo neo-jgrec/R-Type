@@ -226,8 +226,21 @@ core::ecs::Entity EntityFactory::createEnemy(core::GameEngine& gameEngine, Confi
 {
     core::ecs::Entity enemy = gameEngine.registry.spawn_entity();
 
-    gameEngine.registry.add_component(enemy, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 36.0f), gameScale * 3.5f, 0.0f});
-    gameEngine.registry.add_component(enemy, core::ge::CollisionComponent{ENEMY, {sf::FloatRect(0.0f, 0.0f, 33.0f, 36.0f)}, {
+    sf::Vector2f enemySize = sf::Vector2f(
+        config.getValue<float>("/enemies/0/size/x"),
+        config.getValue<float>("/enemies/0/size/y")
+    );
+
+    sf::Vector2f enemySpeed = sf::Vector2f(
+        config.getValue<float>("/enemies/0/speed/x"),
+        config.getValue<float>("/enemies/0/speed/y")
+    );
+
+    int enemyHealth = config.getValue<int>("/enemies/0/health");
+    int enemyDamage = config.getValue<int>("/enemies/0/damage");
+
+    gameEngine.registry.add_component(enemy, core::ge::TransformComponent{position, enemySize, gameScale, 0.0f});
+    gameEngine.registry.add_component(enemy, core::ge::CollisionComponent{ENEMY, {sf::FloatRect(0.0f, 0.0f, enemySize.x, enemySize.y)}, {
         { PLAYER_PROJECTILE, [&](const core::ecs::Entity self, const core::ecs::Entity other) {
                 auto enemyHealth = gameEngine.registry.get_component<HealthComponent>(self);
                 auto projDamage = gameEngine.registry.get_component<DamageComponent>(other);
@@ -266,9 +279,9 @@ core::ecs::Entity EntityFactory::createEnemy(core::GameEngine& gameEngine, Confi
                 animComp->isPlaying = true;
         }},
     }});
-    gameEngine.registry.add_component(enemy, VelocityComponent{2.0f, 2.0f});
-    gameEngine.registry.add_component(enemy, HealthComponent{10});
-    gameEngine.registry.add_component(enemy, DamageComponent{10});
+    gameEngine.registry.add_component(enemy, VelocityComponent{enemySpeed.x, enemySpeed.y});
+    gameEngine.registry.add_component(enemy, HealthComponent{enemyHealth});
+    gameEngine.registry.add_component(enemy, DamageComponent{enemyDamage});
     gameEngine.registry.add_component(enemy, Enemy{
         .id = enemyId
     });

@@ -140,7 +140,7 @@ private:
      * @param mapFilePath The file path to the JSON map.
      * @param window The SFML render window for the game.
      */
-    void parseMap(core::ecs::Registry& registry, const std::string& mapFilePath, sf::RenderWindow& window);
+    void parseMap(core::GameEngine& gameEngine, ConfigManager& config, const std::string& mapFilePath, sf::RenderWindow& window);
 
     /**
      * @brief Initializes the background based on the map data.
