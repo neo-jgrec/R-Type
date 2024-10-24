@@ -2,7 +2,7 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-#include "Game.hpp"
+#include "GameEngine.hpp"
 #include "../../../game/Components.hpp"
 #include "../../../game/CollisionMask.hpp"
 #include "src/Game/Utils/ClientComponents.hpp"
@@ -153,7 +153,7 @@ void Game::parseMap(core::GameEngine& gameEngine, ConfigManager& config, const s
         }
 
         try {
-            core::ecs::Entity tileEntity = game.spawn_entity();
+            core::ecs::Entity tileEntity = gameEngine.registry.spawn_entity();
             int tileIdx = tile["tileIndex"].get<int>() - 1;
             if (tileIdx < 0)
                 continue;
@@ -165,48 +165,48 @@ void Game::parseMap(core::GameEngine& gameEngine, ConfigManager& config, const s
             tileShape.setTexture(tileTextures[tileIdx].get());
             tileShape.setTextureRect(tileRects[tileIdx]);
 
-            game.add_component(tileEntity, core::ge::TransformComponent{tilePos, {mapData["cellSize"].get<float>() * gameScale.x, mapData["cellSize"].get<float>() * gameScale.y}, {1.0f, 1.0f}, 0.0f});
-            game.add_component(tileEntity, core::ge::DrawableComponent{tileShape});
-            game.add_component(tileEntity, core::ge::TextureComponent{tileTextures[tileIdx]});
-            game.add_component(tileEntity, core::ge::SceneComponent{static_cast<int>(GameState::Playing)});
-            game.add_component(tileEntity, TileComponent{isDestructible});
+            gameEngine.add_component(tileEntity, core::ge::TransformComponent{tilePos, {mapData["cellSize"].get<float>() * gameScale.x, mapData["cellSize"].get<float>() * gameScale.y}, {1.0f, 1.0f}, 0.0f});
+            gameEngine.add_component(tileEntity, core::ge::DrawableComponent{tileShape});
+            gameEngine.add_component(tileEntity, core::ge::TextureComponent{tileTextures[tileIdx]});
+            gameEngine.add_component(tileEntity, core::ge::SceneComponent{static_cast<int>(GameState::Playing)});
+            gameEngine.add_component(tileEntity, TileComponent{isDestructible});
 
-            game.add_component(tileEntity, core::ge::CollisionComponent{
+            gameEngine.add_component(tileEntity, core::ge::CollisionComponent{
                 WORLD, {sf::FloatRect(0.0f, 0.0f, mapData["cellSize"].get<float>() * gameScale.x, mapData["cellSize"].get<float>() * gameScale.y)},
                 {
                     {PLAYER_PROJECTILE, [&](const core::ecs::Entity self, const core::ecs::Entity other) {
-                        const auto& tileOpt = game.get_components<TileComponent>()[self];
+                        const auto& tileOpt = gameEngine.get_components<TileComponent>()[self];
                         if (tileOpt.has_value()) {
                             const auto& tile = tileOpt.value();
                             if (tile->isDestructible)
-                                game.remove_component<core::ge::DrawableComponent>(self);
+                                gameEngine.remove_component<core::ge::DrawableComponent>(self);
                         } else {
                             std::cerr << "Error: TileComponent not found for entity." << std::endl;
                         }
-                        game.remove_component<core::ge::DrawableComponent>(other);
+                        gameEngine.remove_component<core::ge::DrawableComponent>(other);
                     }},
                     {PLAYER_MISSILE, [&](const core::ecs::Entity self, [[maybe_unused]] const core::ecs::Entity other) {
-                        const auto& tileOpt = game.get_components<TileComponent>()[self];
+                        const auto& tileOpt = gameEngine.get_components<TileComponent>()[self];
                         if (tileOpt.has_value()) {
                             const auto& tile = tileOpt.value();
                             if (tile->isDestructible)
-                                game.remove_component<core::ge::DrawableComponent>(self);
+                                gameEngine.remove_component<core::ge::DrawableComponent>(self);
                         } else {
                             std::cerr << "Error: TileComponent not found for entity." << std::endl;
                         }
 
-                        const auto& healthOpt = game.get_components<HealthComponent>()[other];
+                        const auto& healthOpt = gameEngine.get_components<HealthComponent>()[other];
                         if (healthOpt.has_value()) {
                             auto& health = healthOpt.value();
                             health->health -= tileDamage;
                             if (health->health <= 0)
-                                game.remove_component<core::ge::DrawableComponent>(other);
+                                gameEngine.remove_component<core::ge::DrawableComponent>(other);
                         } else {
                             std::cerr << "Error: HealthComponent not found for entity." << std::endl;
                         }
                     }},
                     {PLAYER, [&](const core::ecs::Entity, const core::ecs::Entity other) {
-                        auto disabled = game.get_component<core::ge::DisabledComponent>(other);
+                        auto disabled = gameEngine.get_component<core::ge::DisabledComponent>(other);
                         disabled->disabled = true;
                     }},
                 }
