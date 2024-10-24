@@ -6,6 +6,7 @@
 #include "../../../game/Components.hpp"
 #include "../../../game/CollisionMask.hpp"
 #include "src/Game/Utils/ClientComponents.hpp"
+#include "Game.hpp"
 
 std::shared_ptr<sf::Texture> loadTextureOrRed(const std::string& filePath)
 {
@@ -195,7 +196,7 @@ void Game::parseMap(core::GameEngine& gameEngine, ConfigManager& config, const s
                             std::cerr << "Error: TileComponent not found for entity." << std::endl;
                         }
 
-                        const auto& healthOpt = gameEngine.get_components<HealthComponent>()[other];
+                        const auto& healthOpt = gameEngine.registry.get_components<HealthComponent>()[other];
                         if (healthOpt.has_value()) {
                             auto& health = healthOpt.value();
                             health->health -= tileDamage;
