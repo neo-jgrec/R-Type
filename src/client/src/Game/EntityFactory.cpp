@@ -56,12 +56,12 @@ core::ecs::Entity EntityFactory::createPlayer(core::GameEngine& gameEngine, Conf
         registry.add_component(player_anim, PlayerAnim{static_cast<std::uint8_t>(playerId)});
     }
 
-    gameEngine.registry.add_component(player, core::ge::TransformComponent{position, playerSize, gameScale, 0.0f});
-    gameEngine.registry.add_component(player, core::ge::CollisionComponent{PLAYER, {sf::FloatRect(0.0f, 0.0f, playerSize.x, playerSize.y)}, {
-        { ENEMY, [&](const core::ecs::Entity self, [[maybe_unused]] const core::ecs::Entity other) {
-                auto disabled = gameEngine.registry.get_component<core::ge::DisabledComponent>(self);
-                disabled->disabled = true;
-        }}}});
+    registry.add_component(player, core::ge::TransformComponent{position, playerSize, gameScale * 3.5f, 0.0f});
+    // registry.add_component(player, core::ge::CollisionComponent{PLAYER, {sf::FloatRect(0.0f, 0.0f, playerSize.x, playerSize.y)}, {
+    //     { ENEMY, [&](const core::ecs::Entity self, [[maybe_unused]] const core::ecs::Entity other) {
+    //             auto disabled = registry.get_component<core::ge::DisabledComponent>(self);
+    //             disabled->disabled = true;
+    //     }}}});
     if (self) {
         gameEngine.registry.add_component(player, InputStateComponent{});
     }
@@ -232,46 +232,46 @@ core::ecs::Entity EntityFactory::createEnemy(core::GameEngine& gameEngine, Confi
     int enemyHealth = config.getValue<int>("/enemies/0/health");
     int enemyDamage = config.getValue<int>("/enemies/0/damage");
 
-    gameEngine.registry.add_component(enemy, core::ge::TransformComponent{position, enemySize, gameScale, 0.0f});
-    gameEngine.registry.add_component(enemy, core::ge::CollisionComponent{ENEMY, {sf::FloatRect(0.0f, 0.0f, enemySize.x, enemySize.y)}, {
-        { PLAYER_PROJECTILE, [&](const core::ecs::Entity self, const core::ecs::Entity other) {
-                auto enemyHealth = gameEngine.registry.get_component<HealthComponent>(self);
-                auto projDamage = gameEngine.registry.get_component<DamageComponent>(other);
-                enemyHealth->health -= projDamage->damage;
-                gameEngine.registry.remove_component<core::ge::DrawableComponent>(other);
-                if (enemyHealth->health > 0)
-                    return;
-                auto animComp = registry.get_component<core::ge::AnimationComponent>(self);
-                registry.remove_component<core::ge::VelocityComponent>(self);
-                registry.remove_component<core::ge::TransformComponent>(self);
-                registry.remove_component<core::ge::CollisionComponent>(self);
-                animComp->currentState = core::ge::AnimationState::Dying;
-                animComp->currentFrame = 0;
-                animComp->frameTime = 0.2f;
-                animComp->elapsedTime = 0.0f;
-                animComp->recurrence_max = 1;
-                animComp->recurrence_count = 0;
-                animComp->isPlaying = true;
-        }}, { PLAYER_MISSILE, [&](const core::ecs::Entity self, const core::ecs::Entity other) {
-                auto enemyHealth = gameEngine.registry.get_component<HealthComponent>(self);
-                auto missileDamage = gameEngine.registry.get_component<DamageComponent>(other);
-                enemyHealth->health -= missileDamage->damage;
-                gameEngine.registry.remove_component<core::ge::DrawableComponent>(other);
-                if (enemyHealth->health > 0)
-                    return;
-                auto animComp = registry.get_component<core::ge::AnimationComponent>(self);
-                registry.remove_component<core::ge::VelocityComponent>(self);
-                registry.remove_component<core::ge::TransformComponent>(self);
-                registry.remove_component<core::ge::CollisionComponent>(self);
-                animComp->currentState = core::ge::AnimationState::Dying;
-                animComp->currentFrame = 0;
-                animComp->frameTime = 0.2f;
-                animComp->elapsedTime = 0.0f;
-                animComp->recurrence_max = 1;
-                animComp->recurrence_count = 0;
-                animComp->isPlaying = true;
-        }},
-    }});
+    registry.add_component(enemy, core::ge::TransformComponent{position, enemySize, gameScale * 3.5f, 0.0f});
+    // registry.add_component(enemy, core::ge::CollisionComponent{ENEMY, {sf::FloatRect(0.0f, 0.0f, enemySize.x, enemySize.y)}, {
+    //     { PLAYER_PROJECTILE, [&](const core::ecs::Entity self, const core::ecs::Entity other) {
+    //             auto enemyHealth = registry.get_component<HealthComponent>(self);
+    //             auto projDamage = registry.get_component<DamageComponent>(other);
+    //             enemyHealth->health -= projDamage->damage;
+    //             registry.remove_component<core::ge::DrawableComponent>(other);
+    //             if (enemyHealth->health > 0)
+    //                 return;
+    //             auto animComp = registry.get_component<core::ge::AnimationComponent>(self);
+    //             registry.remove_component<core::ge::VelocityComponent>(self);
+    //             registry.remove_component<core::ge::TransformComponent>(self);
+    //             registry.remove_component<core::ge::CollisionComponent>(self);
+    //             animComp->currentState = core::ge::AnimationState::Dying;
+    //             animComp->currentFrame = 0;
+    //             animComp->frameTime = 0.2f;
+    //             animComp->elapsedTime = 0.0f;
+    //             animComp->recurrence_max = 1;
+    //             animComp->recurrence_count = 0;
+    //             animComp->isPlaying = true;
+    //     }}, { PLAYER_MISSILE, [&](const core::ecs::Entity self, const core::ecs::Entity other) {
+    //             auto enemyHealth = registry.get_component<HealthComponent>(self);
+    //             auto missileDamage = registry.get_component<DamageComponent>(other);
+    //             enemyHealth->health -= missileDamage->damage;
+    //             registry.remove_component<core::ge::DrawableComponent>(other);
+    //             if (enemyHealth->health > 0)
+    //                 return;
+    //             auto animComp = registry.get_component<core::ge::AnimationComponent>(self);
+    //             registry.remove_component<core::ge::VelocityComponent>(self);
+    //             registry.remove_component<core::ge::TransformComponent>(self);
+    //             registry.remove_component<core::ge::CollisionComponent>(self);
+    //             animComp->currentState = core::ge::AnimationState::Dying;
+    //             animComp->currentFrame = 0;
+    //             animComp->frameTime = 0.2f;
+    //             animComp->elapsedTime = 0.0f;
+    //             animComp->recurrence_max = 1;
+    //             animComp->recurrence_count = 0;
+    //             animComp->isPlaying = true;
+    //     }},
+    // }});
     registry.add_component(enemy, core::ge::VelocityComponent{enemySpeed.x, enemySpeed.y});
     registry.add_component(enemy, HealthComponent{enemyHealth});
     registry.add_component(enemy, DamageComponent{enemyDamage});

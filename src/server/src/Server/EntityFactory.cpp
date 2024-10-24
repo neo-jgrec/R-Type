@@ -119,7 +119,6 @@ core::ecs::Entity EntityFactory::createPlayer(
         {WORLD, [&, id](const core::ecs::Entity &entity, const core::ecs::Entity &otherEntity) {
 
             const auto &playerTransformComponent = gameEngine.registry.get_component<core::ge::TransformComponent>(entity);
-            std::cout << "Player " << static_cast<int>(id) << " collided with world at " << playerTransformComponent->position.x << ", " << playerTransformComponent->position.y << std::endl;
 
             if (const auto &worldTransformComponent = gameEngine.registry.get_component<core::ge::TransformComponent>(otherEntity);
                 playerTransformComponent->position.x < worldTransformComponent->position.x)
@@ -202,10 +201,6 @@ core::ecs::Entity EntityFactory::createEnemy(Server &server, const uint32_t x)
     const auto currentId = id;
     const std::function onCollision = [&, currentId](const core::ecs::Entity& entity, const core::ecs::Entity& otherEntity) {
         std::cout << "Enemy " << static_cast<int>(currentId) << " collided" << std::endl;
-
-        const auto &worldEntity = gameEngine.registry.get_entities<World>()[0];
-        if (otherEntity == worldEntity)
-            std::cout << "Enemy " << static_cast<int>(currentId) << " collided with world" << std::endl;
 
         gameEngine.run_collision(ENEMY, otherEntity);
 

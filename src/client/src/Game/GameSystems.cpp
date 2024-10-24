@@ -186,10 +186,6 @@ void Game::eventSystem(core::ecs::Registry& registry)
                     std::cout << "Player move" << std::endl;
                     auto [id, position] = std::get<std::pair<std::uint8_t, sf::Vector2u>>(event.getPayload());
                     for (auto playerEntity : registry.get_entities<Player>()) {
-                        if (const auto playerComponent = registry.get_component<Player>(playerEntity);
-                            playerComponent->id == id)
-                            return;
-
                         if (const auto disabledComponent = registry.get_component<core::ge::DisabledComponent>(playerEntity))
                             disabledComponent->disabled = false;
 
@@ -200,6 +196,7 @@ void Game::eventSystem(core::ecs::Registry& registry)
                 }
 
                 case PlayerDie: {
+                    std::cout << "Player died" << std::endl;
                     const auto playerId = std::get<std::uint8_t>(event.getPayload());
                     for (auto playerEntity : registry.get_entities<Player>()) {
                         if (const auto playerComponent = registry.get_component<Player>(playerEntity);
@@ -211,15 +208,16 @@ void Game::eventSystem(core::ecs::Registry& registry)
                 }
 
                 case PlayerHit: {
-                    const auto playerId = std::get<std::uint8_t>(event.getPayload());
-                    for (auto playerEntity : registry.get_entities<Player>()) {
-                        if (registry.get_component<Player>(playerEntity)->id != playerId)
-                            continue;
-                        const auto healthComponent = registry.get_component<HealthComponent>(playerEntity);
-                        healthComponent->health -= 10;
-                        if (healthComponent->health <= 0)
-                            registry.kill_entity(playerEntity);
-                    }
+                    std::cout << "Player hit" << std::endl;
+                    // const auto playerId = std::get<std::uint8_t>(event.getPayload());
+                    // for (auto playerEntity : registry.get_entities<Player>()) {
+                    //     if (registry.get_component<Player>(playerEntity)->id != playerId)
+                    //         continue;
+                    //     const auto healthComponent = registry.get_component<HealthComponent>(playerEntity);
+                    //     healthComponent->health -= 10;
+                    //     if (healthComponent->health <= 0)
+                    //         registry.kill_entity(playerEntity);
+                    // }
                     // TODO: Handle player hit
                     break;
                 }
@@ -280,9 +278,10 @@ void Game::eventSystem(core::ecs::Registry& registry)
                 }
 
                 case EnemyDie: {
+                    std::cout << "Enemy died" << std::endl;
                     const auto enemyDiePayload = std::get<std::uint8_t>(event.getPayload());
                     for (auto enemyEntity : registry.get_entities<Enemy>()) {
-                        if (registry.get_component<Enemy>(enemyEntity)->id == enemyDiePayload)
+                        if (registry.get_component<Enemy>(enemyEntity)->id != enemyDiePayload)
                             return;
 
                         const auto animComp = registry.get_component<core::ge::AnimationComponent>(enemyEntity);
