@@ -2,7 +2,7 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-#include "GameEngine.hpp"
+#include "../../../core/ecs/GameEngine/GameEngine.hpp"
 #include "../../../game/Components.hpp"
 #include "../../../game/CollisionMask.hpp"
 #include "src/Game/Utils/ClientComponents.hpp"
