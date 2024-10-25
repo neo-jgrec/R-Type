@@ -203,10 +203,10 @@ void Game::eventSystem(core::ecs::Registry& registry)
                     if (type == RequestType::PlayerConnect) {
                         if (event.getHeader().packetId == playerConnectionHeader.packetId) {
                             auto playerId = std::get<std::uint8_t>(event.getPayload());
-                            EntityFactory::createPlayer(_gameEngine, _configManager, sf::Vector2f(_gameEngine.window.getView().getSize().x / 2.0f, _gameEngine.window.getView().getSize().y / 2.0f), playerId, *this, gameScale, playerId, true);
+                            EntityFactory::createPlayer(_gameEngine, _configManager, sf::Vector2f(_gameEngine.window.getView().getSize().x / 2.0f, _gameEngine.window.getView().getSize().y / 2.0f), playerId, gameScale, playerId, true);
                         } else {
                             auto playerId = std::get<std::uint8_t>(event.getPayload());
-                            EntityFactory::createPlayer(_gameEngine, _configManager, sf::Vector2f(_gameEngine.window.getView().getSize().x / 2.0f, _gameEngine.window.getView().getSize().y / 2.0f), playerId, *this, gameScale, playerId, false);
+                            EntityFactory::createPlayer(_gameEngine, _configManager, sf::Vector2f(_gameEngine.window.getView().getSize().x / 2.0f, _gameEngine.window.getView().getSize().y / 2.0f), playerId, gameScale, playerId, false);
                         }
                     } else if (type == RequestType::PlayerMove) {
                         auto playerMovePayload = std::get<std::pair<std::uint8_t, sf::Vector2u>>(event.getPayload());

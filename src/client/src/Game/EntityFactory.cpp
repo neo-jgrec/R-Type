@@ -13,7 +13,7 @@
 #include "../../../core/ecs/GameEngine/GameEngineComponents.hpp"
 #include "Game.hpp"
 
-core::ecs::Entity EntityFactory::createPlayer(core::GameEngine& gameEngine, ConfigManager& config, const sf::Vector2f& position, int color, Game &game, sf::Vector2f gameScale, std::uint16_t playerId, bool self)
+core::ecs::Entity EntityFactory::createPlayer(core::GameEngine& gameEngine, ConfigManager& config, const sf::Vector2f& position, int color, sf::Vector2f gameScale, std::uint16_t playerId, bool self)
 {
     core::ecs::Entity player = gameEngine.registry.spawn_entity();
     sf::Vector2f playerSize = sf::Vector2f(
@@ -317,7 +317,7 @@ core::ecs::Entity EntityFactory::createEnemy(core::GameEngine& gameEngine, Confi
     return enemy;
 }
 
-core::ecs::Entity EntityFactory::createButton(core::GameEngine& gameEngine, ConfigManager& config, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void()>& onClick, int scene)
+core::ecs::Entity EntityFactory::createButton(core::GameEngine& gameEngine, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void()>& onClick, int scene)
 {
     core::ecs::Entity button = gameEngine.registry.spawn_entity();
 
@@ -347,7 +347,7 @@ core::ecs::Entity EntityFactory::createButton(core::GameEngine& gameEngine, Conf
     return button;
 }
 
-core::ecs::Entity EntityFactory::createTextInput(core::GameEngine& gameEngine, ConfigManager& config, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& title, int scene)
+core::ecs::Entity EntityFactory::createTextInput(core::GameEngine& gameEngine, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& title, int scene)
 {
     core::ecs::Entity textInput = gameEngine.registry.spawn_entity();
 
@@ -382,7 +382,7 @@ core::ecs::Entity EntityFactory::createTextInput(core::GameEngine& gameEngine, C
     return textInput;
 }
 
-core::ecs::Entity EntityFactory::createSlider(core::GameEngine& gameEngine, ConfigManager& config, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void(float)>& onChange, int scene, float currentValue)
+core::ecs::Entity EntityFactory::createSlider(core::GameEngine& gameEngine, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void(float)>& onChange, int scene, float currentValue)
 {
     core::ecs::Entity slider = gameEngine.registry.spawn_entity();
 
@@ -412,7 +412,7 @@ core::ecs::Entity EntityFactory::createSlider(core::GameEngine& gameEngine, Conf
     return slider;
 }
 
-core::ecs::Entity EntityFactory::createImage(core::GameEngine& gameEngine, ConfigManager& config, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& textureName, int scene)
+core::ecs::Entity EntityFactory::createImage(core::GameEngine& gameEngine, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& textureName, int scene)
 {
     core::ecs::Entity img = gameEngine.registry.spawn_entity();
 
