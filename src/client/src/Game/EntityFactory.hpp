@@ -72,6 +72,16 @@ public:
     static core::ecs::Entity createEnemy(core::GameEngine& gameEngine, ConfigManager& config, const sf::Vector2f& position, sf::Vector2f gameScale, std::uint8_t enemyId);
 
     /**
+     * @brief Creates a shooter enemy entity for the game.
+     * @param gameEngine The game engine instance.
+     * @param config The configuration manager instance.
+     * @param position The initial position of the enemy.
+     * @param gameScale The scale factor for the game to adjust entity sizes.
+     * @return The created shooter enemy entity.
+     */
+    static core::ecs::Entity createShooterEnemy(core::GameEngine& gameEngine, ConfigManager& config, const sf::Vector2f& position, sf::Vector2f gameScale, std::uint8_t enemyId);
+
+    /**
      * @brief Creates a button entity for the game's UI.
      *
      * The button is assigned components such as transform, drawable, text, and a callback function for when the button is clicked.

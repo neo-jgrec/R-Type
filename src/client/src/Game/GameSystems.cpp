@@ -271,7 +271,11 @@ void Game::eventSystem(core::ecs::Registry& registry)
                         }
                     } else if (type == RequestType::EnemySpawn) {
                         auto enemySpawnPayload = std::get<std::pair<std::uint8_t, sf::Vector2u>>(event.getPayload());
-                        EntityFactory::createEnemy(_gameEngine, _configManager, sf::Vector2f(enemySpawnPayload.second), gameScale, enemySpawnPayload.first);
+                        int random = rand() % 100;
+                        if (random < 50)
+                            EntityFactory::createEnemy(_gameEngine, _configManager, sf::Vector2f(enemySpawnPayload.second), gameScale, enemySpawnPayload.first);
+                        else
+                            EntityFactory::createShooterEnemy(_gameEngine, _configManager, sf::Vector2f(enemySpawnPayload.second), gameScale, enemySpawnPayload.first);
                     } else if (type == RequestType::EnemyMove) {
                         auto enemyMovePayload = std::get<std::pair<std::uint8_t, sf::Vector2u>>(event.getPayload());
                         auto enemyEntities = registry.get_entities<Enemy>();

@@ -308,12 +308,104 @@ core::ecs::Entity EntityFactory::createEnemy(core::GameEngine& gameEngine, Confi
             {core::ge::AnimationState::Moving, moveFrames},
             {core::ge::AnimationState::Dying, dieFrames}
         },
-        .frameTime = 0.1f,
+        .frameTime = 0.05f,
         .elapsedTime = 0.0f,
         .currentFrame = 0,
         .loop = true
     });
 
+    return enemy;
+}
+
+core::ecs::Entity EntityFactory::createShooterEnemy(core::GameEngine& gameEngine, ConfigManager& config, const sf::Vector2f& position, sf::Vector2f gameScale, std::uint8_t enemyId)
+{
+    core::ecs::Entity enemy = gameEngine.registry.spawn_entity();
+    sf::Vector2f enemySize = sf::Vector2f(
+        config.getValue<float>("/enemies/1/size/x"),
+        config.getValue<float>("/enemies/1/size/y")
+    );
+
+    sf::Vector2f enemySpeed = sf::Vector2f(
+        config.getValue<float>("/enemies/1/speed/x"),
+        config.getValue<float>("/enemies/1/speed/y")
+    );
+
+    int enemyHealth = config.getValue<int>("/enemies/1/health");
+    int enemyDamage = config.getValue<int>("/enemies/1/damage");
+
+    gameEngine.registry.add_component(enemy, core::ge::TransformComponent{position, enemySize, gameScale, 0.0f});
+    gameEngine.registry.add_component(enemy, core::ge::CollisionComponent{ENEMY, {sf::FloatRect(0.0f, 0.0f, enemySize.x, enemySize.y)}, {
+        { PLAYER_PROJECTILE, [&](const core::ecs::Entity self, const core::ecs::Entity other) {
+                auto enemyHealth = gameEngine.registry.get_component<HealthComponent>(self);
+                auto projDamage = gameEngine.registry.get_component<DamageComponent>(other);
+                enemyHealth->health -= projDamage->damage;
+                gameEngine.registry.remove_component<core::ge::DrawableComponent>(other);
+                if (enemyHealth->health > 0)
+                    return;
+                auto animComp = gameEngine.registry.get_component<core::ge::AnimationComponent>(self);
+                gameEngine.registry.remove_component<VelocityComponent>(self);
+                gameEngine.registry.remove_component<core::ge::TransformComponent>(self);
+                gameEngine.registry.remove_component<core::ge::CollisionComponent>(self);
+                animComp->currentState = core::ge::AnimationState::Dying;
+                animComp->currentFrame = 0;
+                animComp->frameTime = 0.2f;
+                animComp->elapsedTime = 0.0f;
+                animComp->recurrence_max = 1;
+                animComp->recurrence_count = 0;
+                animComp->isPlaying = true;
+        }}, { PLAYER_MISSILE, [&](const core::ecs::Entity self, const core::ecs::Entity other) {
+                auto enemyHealth = gameEngine.registry.get_component<HealthComponent>(self);
+                auto missileDamage = gameEngine.registry.get_component<DamageComponent>(other);
+                enemyHealth->health -= missileDamage->damage;
+                gameEngine.registry.remove_component<core::ge::DrawableComponent>(other);
+                if (enemyHealth->health > 0)
+                    return;
+                auto animComp = gameEngine.registry.get_component<core::ge::AnimationComponent>(self);
+                gameEngine.registry.remove_component<VelocityComponent>(self);
+                gameEngine.registry.remove_component<core::ge::TransformComponent>(self);
+                gameEngine.registry.remove_component<core::ge::CollisionComponent>(self);
+                animComp->currentState = core::ge::AnimationState::Dying;
+                animComp->currentFrame = 0;
+                animComp->frameTime = 0.2f;
+                animComp->elapsedTime = 0.0f;
+                animComp->recurrence_max = 1;
+                animComp->recurrence_count = 0;
+                animComp->isPlaying = true;
+        }},
+    }});
+    gameEngine.registry.add_component(enemy, VelocityComponent{enemySpeed.x, enemySpeed.y});
+    gameEngine.registry.add_component(enemy, HealthComponent{enemyHealth});
+    gameEngine.registry.add_component(enemy, DamageComponent{enemyDamage});
+    gameEngine.registry.add_component(enemy, Enemy{
+        .id = enemyId
+    });
+
+    auto texture = gameEngine.assetManager.getTexture("shooter_enemy");
+
+    sf::RectangleShape enemyShape(enemySize);
+    enemyShape.setTexture(texture.get());
+    enemyShape.setTextureRect(sf::IntRect(0, 0, 33, 22));
+    gameEngine.registry.add_component(enemy, core::ge::DrawableComponent{enemyShape});
+    gameEngine.registry.add_component(enemy, core::ge::TextureComponent{texture});
+    gameEngine.registry.add_component(enemy, core::ge::SceneComponent{static_cast<int>(Game::GameState::Playing)});
+    std::vector<sf::IntRect> moveFrames;
+    moveFrames.reserve(8);
+    for (int i = 0; i < 8; i++)
+        moveFrames.emplace_back(i * 33, 0, 33, 22);
+    std::vector<sf::IntRect> dieFrames;
+    dieFrames.reserve(6);
+    for (int i = 0; i < 6; i++)
+        dieFrames.emplace_back(i * 33, 22, 33, 22);
+    gameEngine.registry.add_component(enemy, core::ge::AnimationComponent{
+        .animations = {
+            {core::ge::AnimationState::Moving, moveFrames},
+            {core::ge::AnimationState::Dying, dieFrames}
+        },
+        .frameTime = 0.1f,
+        .elapsedTime = 0.0f,
+        .currentFrame = 0,
+        .loop = true
+    });
     return enemy;
 }
 

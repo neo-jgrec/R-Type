@@ -66,6 +66,20 @@
                 "x": 115,
                 "y": 126
             }
+        },
+        {
+            "type": "shooter",
+            "isShooting": true,
+            "speed": {
+                "x": 2,
+                "y": 2
+            },
+            "health": 10,
+            "damage": 10,
+            "size": {
+                "x": 132,
+                "y": 88
+            }
         }
     ],
     "map": {
