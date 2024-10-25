@@ -19,6 +19,8 @@ void Game::init()
     _gameEngine.window.setKeyRepeatEnabled(true);
 
     loadAssets();
+    _configManager.parse("assets/Data/config.json");
+    initWindow();
 
     _gameEngine.musicManager.loadMusic("level1", "assets/music/level1.ogg");
     _gameEngine.musicManager.setVolume(10.0f);
@@ -41,7 +43,7 @@ void Game::init()
     _gameEngine.registry.register_component<TileComponent>();
 
     // TODO: implement a way to load maps at runtimes dynamically
-    parseMap(_gameEngine.registry, "./JY_map.json", _gameEngine.window);
+    parseMap(_gameEngine, _configManager, "./JY_map.json", _gameEngine.window);
 
     // _enemyEntity = EntityFactory::createEnemy(_gameEngine.registry, sf::Vector2f(700.0f, 100.0f), gameScale);
 
@@ -65,6 +67,15 @@ void Game::init()
     core::ecs::Entity EventEntity = _gameEngine.registry.spawn_entity();
     _gameEngine.registry.add_component(EventEntity, EventComponent{});
     eventSystem(_gameEngine.registry);
+}
+
+void Game::initWindow()
+{
+    sf::VideoMode videoMode(
+        _configManager.getValue<int>("/view/size/x"),
+        _configManager.getValue<int>("/view/size/y")
+    );
+    _gameEngine.initWindow(videoMode, 60, "R-Type");
 }
 
 void Game::loadAssets()

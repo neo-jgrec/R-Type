@@ -5,6 +5,7 @@
 #include "../../../core/ecs/Entity/Entity.hpp"
 #include "../../../core/ecs/GameEngine/GameEngine.hpp"
 #include "../../../core/network/NetworkService.hpp"
+#include "../../../core/config/ConfigManager.hpp"
 #include "Menus.hpp"
 
 /**
@@ -71,6 +72,7 @@ public:
     Menus menus = Menus(*this); ///< Manages the initialization of different menus in the game.
     core::GameEngine _gameEngine; ///< Game engine responsible for managing entities, components, and systems.
     NetworkingService &networkingService = NetworkingService::getInstance(); ///< Singleton instance of the networking service.
+    ConfigManager _configManager;
     GDTPHeader playerConnectionHeader{}; ///< Header for player connection requests.
     bool _windowOpen = true;           ///< Flag to track if the game window is open.
     sf::Vector2f gameScale = {1.0f, 1.0f}; ///< Scaling factor for the game view, adjusted during window resizing.
@@ -138,7 +140,7 @@ private:
      * @param mapFilePath The file path to the JSON map.
      * @param window The SFML render window for the game.
      */
-    void parseMap(core::ecs::Registry& registry, const std::string& mapFilePath, sf::RenderWindow& window);
+    void parseMap(core::GameEngine& gameEngine, ConfigManager& config, const std::string& mapFilePath, sf::RenderWindow& window);
 
     /**
      * @brief Initializes the background based on the map data.
@@ -147,6 +149,11 @@ private:
      * @param window The SFML render window for the game.
      */
     void initBackground(core::ecs::Registry& registry, nlohmann::json& mapData, sf::RenderWindow& window) const;
+
+    /**
+     * @brief Initializes the window based on the configuration.
+     */
+    void initWindow();
 
     /**
      * @brief Loads all assets used in the game.

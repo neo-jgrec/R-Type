@@ -58,7 +58,7 @@ void Game::inputSystem(core::ecs::Registry& registry)
         auto playerAnim = getPlayerAnimComponents(registry).second;
         if (!playerAnimTransform || !playerAnim)
             return;
-        playerAnimTransform->position = transform.position + sf::Vector2f(115.0f, 10.0f);
+        playerAnimTransform->position = transform.position + sf::Vector2f(100.0f, -30.0f);
         if (input.up) {
             transform.position.y -= vel.dy;
             if (animation.currentFrame == 3) {
@@ -128,7 +128,7 @@ void Game::inputSystem(core::ecs::Registry& registry)
             }
         } else {
             if (shootCounter.nextShotType == 0) {
-                EntityFactory::createPlayerProjectile(_gameEngine, registry, transform, gameScale);
+                EntityFactory::createPlayerProjectile(_gameEngine, _configManager, transform, gameScale);
                 networkingService.sendRequest(
                     "127.0.0.1",
                     1111,
@@ -137,7 +137,7 @@ void Game::inputSystem(core::ecs::Registry& registry)
                 );
             }
             if (shootCounter.nextShotType == 1) {
-                EntityFactory::createPlayerMissile(_gameEngine, registry, transform, gameScale);
+                EntityFactory::createPlayerMissile(_gameEngine, _configManager, transform, gameScale);
                 networkingService.sendRequest(
                     "127.0.0.1",
                     1111,
@@ -203,10 +203,10 @@ void Game::eventSystem(core::ecs::Registry& registry)
                     if (type == RequestType::PlayerConnect) {
                         if (event.getHeader().packetId == playerConnectionHeader.packetId) {
                             auto playerId = std::get<std::uint8_t>(event.getPayload());
-                            EntityFactory::createPlayer(_gameEngine, registry, sf::Vector2f(_gameEngine.window.getView().getSize().x / 2.0f, _gameEngine.window.getView().getSize().y / 2.0f), playerId, *this, gameScale, playerId, true);
+                            EntityFactory::createPlayer(_gameEngine, _configManager, sf::Vector2f(_gameEngine.window.getView().getSize().x / 2.0f, _gameEngine.window.getView().getSize().y / 2.0f), playerId, gameScale, playerId, true);
                         } else {
                             auto playerId = std::get<std::uint8_t>(event.getPayload());
-                            EntityFactory::createPlayer(_gameEngine, registry, sf::Vector2f(_gameEngine.window.getView().getSize().x / 2.0f, _gameEngine.window.getView().getSize().y / 2.0f), playerId, *this, gameScale, playerId, false);
+                            EntityFactory::createPlayer(_gameEngine, _configManager, sf::Vector2f(_gameEngine.window.getView().getSize().x / 2.0f, _gameEngine.window.getView().getSize().y / 2.0f), playerId, gameScale, playerId, false);
                         }
                     } else if (type == RequestType::PlayerMove) {
                         auto playerMovePayload = std::get<std::pair<std::uint8_t, sf::Vector2u>>(event.getPayload());
@@ -266,12 +266,12 @@ void Game::eventSystem(core::ecs::Registry& registry)
                             auto playerComponent = registry.get_component<Player>(playerEntity);
                             if (playerComponent->id == playerShootPayload) {
                                 auto playerTransform = registry.get_component<core::ge::TransformComponent>(playerEntity);
-                                EntityFactory::createPlayerProjectile(_gameEngine, registry, *playerTransform, gameScale);
+                                EntityFactory::createPlayerProjectile(_gameEngine, _configManager, *playerTransform, gameScale);
                             }
                         }
                     } else if (type == RequestType::EnemySpawn) {
                         auto enemySpawnPayload = std::get<std::pair<std::uint8_t, sf::Vector2u>>(event.getPayload());
-                        EntityFactory::createEnemy(_gameEngine, registry, sf::Vector2f(enemySpawnPayload.second), gameScale, enemySpawnPayload.first);
+                        EntityFactory::createEnemy(_gameEngine, _configManager, sf::Vector2f(enemySpawnPayload.second), gameScale, enemySpawnPayload.first);
                     } else if (type == RequestType::EnemyMove) {
                         auto enemyMovePayload = std::get<std::pair<std::uint8_t, sf::Vector2u>>(event.getPayload());
                         auto enemyEntities = registry.get_entities<Enemy>();
