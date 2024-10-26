@@ -20,6 +20,7 @@ void Game::init()
 
     loadAssets();
     _configManager.parse("assets/Data/config.json");
+    _scrollSpeed = _configManager.getValue<float>("/view/speed/x");
     initWindow();
 
     _gameEngine.musicManager.loadMusic("level1", "assets/music/level1.ogg");
