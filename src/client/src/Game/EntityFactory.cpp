@@ -64,7 +64,12 @@ core::ecs::Entity EntityFactory::createPlayer(core::GameEngine& gameEngine, Conf
         { ENEMY, [&](const core::ecs::Entity self, [[maybe_unused]] const core::ecs::Entity other) {
                 auto disabled = gameEngine.registry.get_component<core::ge::DisabledComponent>(self);
                 disabled->disabled = true;
-        }}}});
+        }},
+        { ENEMY_PROJECTILE, [&](const core::ecs::Entity self, [[maybe_unused]] const core::ecs::Entity other) {
+                auto disabled = gameEngine.registry.get_component<core::ge::DisabledComponent>(self);
+                disabled->disabled = true;
+        }}
+    }});
     gameEngine.registry.add_component(player, VelocityComponent{playerSpeed.x, playerSpeed.y});
     if (self) {
         gameEngine.registry.add_component(player, InputStateComponent{});
@@ -315,6 +320,65 @@ core::ecs::Entity EntityFactory::createEnemy(core::GameEngine& gameEngine, Confi
     });
 
     return enemy;
+}
+
+core::ecs::Entity EntityFactory::createShooterProjectile(core::GameEngine& gameEngine, ConfigManager& config, const sf::Vector2f& position, sf::Vector2f gameScale, std::uint8_t projectileId)
+{
+    core::ecs::Entity projectile = gameEngine.registry.spawn_entity();
+
+    sf::Vector2f projectileSize = sf::Vector2f(
+        config.getValue<float>("/enemies/1/projectile/size/x"),
+        config.getValue<float>("/enemies/1/projectile/size/y")
+    );
+
+    sf::Vector2f projectileSpeed = sf::Vector2f(
+        config.getValue<float>("/enemies/1/projectile/speed/x"),
+        config.getValue<float>("/enemies/1/projectile/speed/y")
+    );
+
+    int damage = config.getValue<int>("/enemies/1/projectile/damage");
+
+    gameEngine.registry.add_component(projectile, core::ge::TransformComponent{position, projectileSize, gameScale, 0.0f});
+    gameEngine.registry.add_component(projectile, core::ge::CollisionComponent{ENEMY_PROJECTILE, {sf::FloatRect(0.0f, 0.0f, projectileSize.x, projectileSize.y)}});
+    gameEngine.registry.add_component(projectile, VelocityComponent{-projectileSpeed.x, projectileSpeed.y});
+    gameEngine.registry.add_component(projectile, DamageComponent{damage});
+    gameEngine.registry.add_component(projectile, Projectile{
+    });
+    gameEngine.registry.add_component(projectile, core::ge::DrawableComponent{
+        sf::RectangleShape(projectileSize)
+    });
+
+    auto texture = gameEngine.assetManager.getTexture("shooter_enemy");
+
+    sf::RectangleShape projectileShape(projectileSize);
+    projectileShape.setTexture(texture.get());
+    projectileShape.setTextureRect(sf::IntRect(0, 0, 7, 6));
+    gameEngine.registry.add_component(projectile, core::ge::DrawableComponent{projectileShape});
+    gameEngine.registry.add_component(projectile, core::ge::TextureComponent{texture});
+    gameEngine.registry.add_component(projectile, core::ge::SceneComponent{static_cast<int>(Game::GameState::Playing)});
+
+    std::vector<sf::IntRect> animFrames;
+    animFrames.reserve(8);
+    for (int i = 0; i < 8; i++)
+        animFrames.emplace_back(i * 17, 45, 7, 6);
+    gameEngine.registry.add_component(projectile, core::ge::AnimationComponent{
+        .animations = {
+            {core::ge::AnimationState::Moving, animFrames}
+        },
+        .frameTime = 0.05f,
+        .elapsedTime = 0.0f,
+        .currentFrame = 0,
+        .loop = true
+    });
+
+    std::cout << "shooter projectile created :" << std::endl;
+    std::cout << "projectile size : " << projectileSize.x << " " << projectileSize.y << std::endl;
+    std::cout << "projectile speed : " << projectileSpeed.x << " " << projectileSpeed.y << std::endl;
+    std::cout << "projectile damage : " << damage << std::endl;
+    std::cout << "projectile position : " << position.x << " " << position.y << std::endl;
+    std::cout << "projectile game scale : " << gameScale.x << " " << gameScale.y << std::endl;
+
+    return projectile;
 }
 
 core::ecs::Entity EntityFactory::createShooterEnemy(core::GameEngine& gameEngine, ConfigManager& config, const sf::Vector2f& position, sf::Vector2f gameScale, std::uint8_t enemyId)

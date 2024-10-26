@@ -125,7 +125,10 @@ struct Enemy {
  * 
  * This tag is applied to entities that represent projectiles, used to distinguish them from other entities.
  */
-struct Projectile {};
+struct Projectile {
+    bool isPlayer = false;
+    std::uint8_t id = 0;
+};
 
 /**
  * @struct Missile
