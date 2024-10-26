@@ -277,7 +277,6 @@ void Menus::initSettingsMenu()
 {
     sf::Vector2u windowSize = _game._gameEngine.window.getSize();
     float centerX = static_cast<float>(windowSize.x) / 2.0f;
-    //float centerY = static_cast<float>(windowSize.y) / 2.0f;
 
     sf::Vector2f buttonSize(200.0f, 50.0f);
     float buttonSpacing = 40.0f;
@@ -337,12 +336,12 @@ void Menus::initSettingsMenu()
         text.setCharacterSize(24);
         text.setFillColor(sf::Color::White);
         text.setPosition(buttonSize.y, y);
-        _game.keyBindingTexts[label] = text;
 
         core::ecs::Entity entity = _game._gameEngine.registry.spawn_entity();
         _game._gameEngine.registry.add_component(entity, core::ge::TextComponent{text, font});
         _game._gameEngine.registry.add_component(entity, core::ge::SceneComponent{static_cast<int>(Game::GameState::Settings)});
 
+        _game.keyBindingTexts[label] = entity;
         y += text.getGlobalBounds().height + labelSpacing;
     };
 

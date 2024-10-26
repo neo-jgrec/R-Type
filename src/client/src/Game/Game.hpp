@@ -77,7 +77,7 @@ public:
     bool _windowOpen = true;           ///< Flag to track if the game window is open.
     sf::Vector2f gameScale = {1.0f, 1.0f}; ///< Scaling factor for the game view, adjusted during window resizing.
     std::optional<std::string> keyToUpdate; ///< The key to update in the settings menu.
-    std::map<std::string, sf::Text> keyBindingTexts; ///< The key bindings for the game.
+    std::map<std::string, core::ecs::Entity> keyBindingTexts; ///< The key bindings for the game.
 
 private:
     /**
