@@ -151,7 +151,7 @@ private:
      * @param mapData The JSON data representing the map.
      * @param window The SFML render window for the game.
      */
-    void initBackground(core::ecs::Registry& registry, nlohmann::json& mapData, sf::RenderWindow& window) const;
+    static void initBackground(core::ecs::Registry& registry, nlohmann::json& mapData, sf::RenderWindow& window, sf::Vector2f& gameScale);
 
     /**
      * @brief Initializes the window based on the configuration.
