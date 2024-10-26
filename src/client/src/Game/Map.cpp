@@ -23,7 +23,7 @@ std::shared_ptr<sf::Texture> loadTextureOrRed(const std::string& filePath)
     return texture;
 }
 
-void Game::initBackground(core::ecs::Registry& registry, nlohmann::json& mapData, sf::RenderWindow& window) const
+void Game::initBackground(core::ecs::Registry& registry, nlohmann::json& mapData, sf::RenderWindow& window, sf::Vector2f& gameScale)
 {
     if (!mapData.contains("background")) {
         std::cerr << "Error: Missing essential map data fields." << std::endl;
@@ -96,8 +96,6 @@ void Game::parseMap(core::GameEngine& gameEngine, ConfigManager& config, const s
         return;
     }
 
-    initBackground(gameEngine.registry, mapData, window);
-
     std::unordered_map<int, sf::IntRect> tileRects;
     std::unordered_map<int, std::shared_ptr<sf::Texture>> tileTextures;
     int tileIndex = 0;
@@ -146,6 +144,8 @@ void Game::parseMap(core::GameEngine& gameEngine, ConfigManager& config, const s
     float scale = static_cast<float>(window.getSize().y) / mapHeight;
 
     gameScale = sf::Vector2f(scale, scale);
+
+    initBackground(gameEngine.registry, mapData, window, gameScale);
 
     for (const auto& tile : mapData["tiles"]) {
         if (!tile.contains("tileIndex") || !tile.contains("x") || !tile.contains("y") || !tile.contains("isDestructible")) {
