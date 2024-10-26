@@ -210,6 +210,34 @@ void Game::processEvents()
                 }
             }
         }
+
+        if (keyToUpdate.has_value() && event.type == sf::Event::KeyPressed) {
+            auto playerEntities = _gameEngine.registry.get_entities<Player, core::ge::KeyBinding>();
+            if (!playerEntities.empty()) {
+                auto playerEntity = playerEntities[0];
+                auto keyBinding = _gameEngine.registry.get_component<core::ge::KeyBinding>(playerEntity);
+
+                sf::Keyboard::Key key = event.key.code;
+
+                if (keyToUpdate.value() == "Move Up") {
+                    keyBinding->moveUpKey = key;
+                    keyBindingTexts["Move Up"].setString("Move Up: " + Menus::keyToString(key));
+                } else if (keyToUpdate.value() == "Move Down") {
+                    keyBinding->moveDownKey = key;
+                    keyBindingTexts["Move Down"].setString("Move Down: " + Menus::keyToString(key));
+                } else if (keyToUpdate.value() == "Move Left") {
+                    keyBinding->moveLeftKey = key;
+                    keyBindingTexts["Move Left"].setString("Move Left: " + Menus::keyToString(key));
+                } else if (keyToUpdate.value() == "Move Right") {
+                    keyBinding->moveRightKey = key;
+                    keyBindingTexts["Move Right"].setString("Move Right: " + Menus::keyToString(key));
+                } else if (keyToUpdate.value() == "Shoot") {
+                    keyBinding->fireKey = key;
+                }
+                
+            keyToUpdate.reset();
+            }
+        }
     }
 }
 

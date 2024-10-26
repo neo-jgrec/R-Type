@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SFML/Graphics.hpp>
+#include "../../../core/ecs/GameEngine/GameEngineComponents.hpp"
 
 class Game;
 /**
@@ -32,6 +33,16 @@ public:
      * @brief Initializes the settings menu scene.
      */
     void initSettingsMenu();
+
+    /**
+     * @brief Helper function to convert an SFML keyboard key to a string representation.
+     */
+    static std::string keyToString(sf::Keyboard::Key key);
+
+    /**
+     * @brief Gets the key bindings for the player.
+     */
+    core::ge::KeyBinding getPlayerKeyBindings();
 
 private:
     Game& _game; ///< Reference to the Game instance to access its components.

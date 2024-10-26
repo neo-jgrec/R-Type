@@ -1,10 +1,31 @@
 #include "Menus.hpp"
+#include <SFML/Window/Keyboard.hpp>
 #include "EntityFactory.hpp"
 #include "../../../core/ecs/GameEngine/GameEngine.hpp"
 #include "../../../core/network/NetworkService.hpp"
 #include "../../../game/RequestType.hpp"
+#include "../../../game/Components.hpp"
 
 Menus::Menus(Game& game) : _game(game) {
+}
+
+std::string Menus::keyToString(sf::Keyboard::Key key)
+{
+    switch (key) {
+        case sf::Keyboard::Up: return "Up";
+        case sf::Keyboard::Down: return "Down";
+        case sf::Keyboard::Left: return "Left";
+        case sf::Keyboard::Right: return "Right";
+        case sf::Keyboard::Space: return "Shoot";
+
+        default: return "Unknown";
+    }
+}
+
+core::ge::KeyBinding Menus::getPlayerKeyBindings()
+{
+    auto playerEntities = _game._gameEngine.registry.get_entities<Player, core::ge::KeyBinding>();
+    return playerEntities.empty() ? core::ge::KeyBinding{} : *_game._gameEngine.registry.get_component<core::ge::KeyBinding>(playerEntities[0]);
 }
 
 void Menus::initMainMenu()
@@ -78,17 +99,6 @@ void Menus::initMainMenu()
         },
         static_cast<int>(Game::GameState::MainMenu)
     );
-
-    // EntityFactory::createSlider(
-    //     _game._gameEngine,
-    //     _game._configManager,
-    //     sf::Vector2f(centerX - buttonSize.x / 2, centerY + 3 * (buttonSize.y + (buttonSpacing += 10.0f))),
-    //     sf::Vector2f(200.0f, 10.0f),
-    //     "Volume",
-    //     [this](float value) { _game._gameEngine.musicManager.setVolume(value); },
-    //     static_cast<int>(Game::GameState::MainMenu),
-    //     _game._gameEngine.musicManager.getVolume()
-    // );
 }
 
 void Menus::initRoomMenu()
@@ -273,6 +283,84 @@ void Menus::initSettingsMenu()
         [this](float value) { _game._gameEngine.musicManager.setVolume(value); },
         static_cast<int>(Game::GameState::Settings),
         _game._gameEngine.musicManager.getVolume()
+    );
+
+    float startY = buttonSize.y * 3 + buttonSpacing * 2;
+    const auto& keyBindings = getPlayerKeyBindings();
+
+    auto createKeyBindingDisplay = [&](const std::string& label, sf::Keyboard::Key key, float y) {
+        sf::Text text;
+        text.setFont(font);
+        text.setString(label + ": " + keyToString(key));
+        text.setCharacterSize(24);
+        text.setFillColor(sf::Color::White);
+        text.setPosition(buttonSize.y * 2 + buttonSpacing, y);
+        _game.keyBindingTexts[label] = text;
+
+        core::ecs::Entity entity = _game._gameEngine.registry.spawn_entity();
+        _game._gameEngine.registry.add_component(entity, core::ge::TextComponent{text, font});
+        _game._gameEngine.registry.add_component(entity, core::ge::SceneComponent{static_cast<int>(Game::GameState::Settings)});
+    };
+
+    createKeyBindingDisplay("Move Up", keyBindings.moveUpKey, startY);
+    createKeyBindingDisplay("Move Down", keyBindings.moveDownKey, startY + buttonSpacing);
+    createKeyBindingDisplay("Move Left", keyBindings.moveLeftKey, startY + buttonSpacing * 2);
+    createKeyBindingDisplay("Move Right", keyBindings.moveRightKey, startY + buttonSpacing * 3);
+    createKeyBindingDisplay("Shoot", keyBindings.fireKey, startY + buttonSpacing * 4);
+
+    EntityFactory::createButton(
+        _game._gameEngine,
+        sf::Vector2f(buttonSize.y, startY),
+        buttonSize,
+        "Move Up",
+        [this]() {
+            _game.keyToUpdate = "Move Up";
+        },
+        static_cast<int>(Game::GameState::Settings)
+    );
+
+    EntityFactory::createButton(
+        _game._gameEngine,
+        sf::Vector2f(buttonSize.y, startY + buttonSpacing),
+        buttonSize,
+        "Move Down",
+        [this]() {
+            _game.keyToUpdate = "Move Down";
+        },
+        static_cast<int>(Game::GameState::Settings)
+    );
+
+    EntityFactory::createButton(
+        _game._gameEngine,
+        sf::Vector2f(buttonSize.y, startY + buttonSpacing * 2),
+        buttonSize,
+        "Move Left",
+        [this]() {
+            _game.keyToUpdate = "Move Left";
+        },
+        static_cast<int>(Game::GameState::Settings)
+    );
+
+    EntityFactory::createButton(
+        _game._gameEngine,
+        sf::Vector2f(buttonSize.y, startY + buttonSpacing * 3),
+        buttonSize,
+        "Move Right",
+        [this]() {
+            _game.keyToUpdate = "Move Right";
+        },
+        static_cast<int>(Game::GameState::Settings)
+    );
+
+    EntityFactory::createButton(
+        _game._gameEngine,
+        sf::Vector2f(buttonSize.y, startY + buttonSpacing * 4),
+        buttonSize,
+        "Shoot",
+        [this]() {
+            _game.keyToUpdate = "Shoot";
+        },
+        static_cast<int>(Game::GameState::Settings)
     );
 
 }
