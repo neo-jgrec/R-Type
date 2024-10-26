@@ -78,7 +78,6 @@ public:
     sf::Vector2f gameScale = {1.0f, 1.0f}; ///< Scaling factor for the game view, adjusted during window resizing.
     std::optional<std::string> keyToUpdate; ///< The key to update in the settings menu.
     std::map<std::string, sf::Text> keyBindingTexts; ///< The key bindings for the game.
-    core::ge::KeyBinding keyBindingsConfig; ///< The key bindings configuration for the game.
 
 private:
     /**

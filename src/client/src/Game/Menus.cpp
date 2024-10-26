@@ -328,7 +328,7 @@ void Menus::initSettingsMenu()
     );
 
     float startY = buttonSize.y * 4 + buttonSpacing * 3;
-    const auto& keyBindings = _game.keyBindingsConfig;
+    const auto& keyBindings = _game._gameEngine.keyBindingsConfig;
 
     auto createKeyBindingDisplay = [&](const std::string& label, sf::Keyboard::Key key, float y) {
         sf::Text text;

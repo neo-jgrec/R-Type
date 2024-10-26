@@ -219,24 +219,24 @@ void Game::processEvents()
 
             if (keyToUpdate.value() == "Move Up") {
                 std::cout << "Entered move up" << std::endl;
-                keyBindingsConfig.moveUpKey = key;
+                _gameEngine.keyBindingsConfig.moveUpKey = key;
                 std::cout << "string key = " << Menus::keyToString(key) << std::endl;
                 keyBindingTexts["Move Up"].setString("Move Up: " + Menus::keyToString(key));
                 std::cout << "Keybinding text: " << keyBindingTexts["Move Up"].getString().toAnsiString() << std::endl;
             } else if (keyToUpdate.value() == "Move Down"){
-                keyBindingsConfig.moveDownKey = key;
+                _gameEngine.keyBindingsConfig.moveDownKey = key;
                 keyBindingTexts["Move Down"].setString("Move Down: " + Menus::keyToString(key));
             } else if (keyToUpdate.value() == "Move Left"){
-                keyBindingsConfig.moveLeftKey = key;
+                _gameEngine.keyBindingsConfig.moveLeftKey = key;
                 keyBindingTexts["Move Left"].setString("Move Left: " + Menus::keyToString(key));
             } else if (keyToUpdate.value() == "Move Right"){
-                keyBindingsConfig.moveRightKey = key;
+                _gameEngine.keyBindingsConfig.moveRightKey = key;
                 keyBindingTexts["Move Right"].setString("Move Right: " + Menus::keyToString(key));
             } else if (keyToUpdate.value() == "Shoot") {
-                keyBindingsConfig.fireKey = key;
+                _gameEngine.keyBindingsConfig.fireKey = key;
                 keyBindingTexts["Shoot"].setString("Shoot: " + Menus::keyToString(key));
             }
-            std::cout << "Keybindings: " << keyBindingsConfig.moveUpKey << " " << keyBindingsConfig.moveDownKey << " " << keyBindingsConfig.moveLeftKey << " " << keyBindingsConfig.moveRightKey << " " << keyBindingsConfig.fireKey << std::endl;
+            std::cout << "Keybindings: " << _gameEngine.keyBindingsConfig.moveUpKey << " " << _gameEngine.keyBindingsConfig.moveDownKey << " " << _gameEngine.keyBindingsConfig.moveLeftKey << " " << _gameEngine.keyBindingsConfig.moveRightKey << " " << _gameEngine.keyBindingsConfig.fireKey << std::endl;
             keyToUpdate.reset();
         }
     }
