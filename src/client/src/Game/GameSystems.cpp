@@ -303,6 +303,20 @@ void Game::eventSystem(core::ecs::Registry& registry)
                                 animComp->isPlaying = true;
                             }
                         }
+                    } else if (type == RequestType::MapScroll) {
+                        auto mapScrollPayload = static_cast<float>(std::get<std::uint32_t>(event.getPayload()) * 24);
+                        auto currentTime = std::chrono::steady_clock::now();
+
+                        auto timeDiff = std::chrono::duration_cast<std::chrono::duration<float>>(currentTime - _lastScrollTime).count();
+
+                        if (timeDiff > 0 && _lastScrollPosition != 0) {
+                            auto scrollDiff = static_cast<float>(mapScrollPayload - static_cast<float>(_lastScrollPosition));
+                            float estimatedSpeed = scrollDiff / timeDiff;
+                            _scrollSpeed = _scrollSpeed * 0.9f + estimatedSpeed * 0.1f;
+                            std::cout << "Estimated scroll speed: " << _scrollSpeed << " units/second" << std::endl;
+                        }
+                        _lastScrollTime = currentTime;
+                        _lastScrollPosition = static_cast<std::uint32_t>(mapScrollPayload);
                     }
                 } catch (const std::exception &e) {
                     std::cerr << "Error processing event: " << e.what() << std::endl;
@@ -318,9 +332,10 @@ void Game::viewSystem(core::ecs::Registry& registry)
             if (_gameEngine.currentScene != static_cast<int>(GameState::Playing))
                 return;
 
-            float scrollAmount = 20.0f * _gameEngine.delta_t;
+            float scrollAmount = _scrollSpeed * _gameEngine.delta_t;
 
             view.view.move(scrollAmount, 0);
             _gameEngine.window.setView(view.view);
         });
 }
+
