@@ -39,10 +39,7 @@ public:
      */
     static std::string keyToString(sf::Keyboard::Key key);
 
-    /**
-     * @brief Gets the key bindings for the player.
-     */
-    core::ge::KeyBinding getPlayerKeyBindings();
+    void updateSettingsMenu(core::ge::KeyBinding& keyBindingsConfig);
 
 private:
     Game& _game; ///< Reference to the Game instance to access its components.

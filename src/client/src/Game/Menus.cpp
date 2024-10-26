@@ -1,5 +1,6 @@
 #include "Menus.hpp"
 #include <SFML/Window/Keyboard.hpp>
+#include <iostream>
 #include <unordered_map>
 #include "EntityFactory.hpp"
 #include "../../../core/ecs/GameEngine/GameEngine.hpp"
@@ -66,12 +67,6 @@ std::string Menus::keyToString(sf::Keyboard::Key key)
 
     auto it = keyMap.find(key);
     return (it != keyMap.end()) ? it->second : "Unknown";
-}
-
-core::ge::KeyBinding Menus::getPlayerKeyBindings()
-{
-    auto playerEntities = _game._gameEngine.registry.get_entities<Player, core::ge::KeyBinding>();
-    return playerEntities.empty() ? core::ge::KeyBinding{} : *_game._gameEngine.registry.get_component<core::ge::KeyBinding>(playerEntities[0]);
 }
 
 void Menus::initMainMenu()
@@ -333,7 +328,7 @@ void Menus::initSettingsMenu()
     );
 
     float startY = buttonSize.y * 4 + buttonSpacing * 3;
-    const auto& keyBindings = getPlayerKeyBindings();
+    const auto& keyBindings = _game.keyBindingsConfig;
 
     auto createKeyBindingDisplay = [&](const std::string& label, sf::Keyboard::Key key, float y) {
         sf::Text text;

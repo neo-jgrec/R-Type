@@ -1,6 +1,7 @@
 #include "Game.hpp"
 #include <SFML/System/String.hpp>
 #include <SFML/System/Time.hpp>
+#include <SFML/Window/Keyboard.hpp>
 #include <iostream>
 #include "EntityFactory.hpp"
 #include "../../../game/Components.hpp"
@@ -212,31 +213,31 @@ void Game::processEvents()
         }
 
         if (keyToUpdate.has_value() && event.type == sf::Event::KeyPressed) {
-            auto playerEntities = _gameEngine.registry.get_entities<Player, core::ge::KeyBinding>();
-            if (!playerEntities.empty()) {
-                auto playerEntity = playerEntities[0];
-                auto keyBinding = _gameEngine.registry.get_component<core::ge::KeyBinding>(playerEntity);
+            sf::Keyboard::Key key = event.key.code;
+            std::cout << "Key to change: " << keyToUpdate.value() << std::endl;
+            std::cout << "Key pressed: " << key << std::endl;
 
-                sf::Keyboard::Key key = event.key.code;
-
-                if (keyToUpdate.value() == "Move Up") {
-                    keyBinding->moveUpKey = key;
-                    keyBindingTexts["Move Up"].setString("Move Up: " + Menus::keyToString(key));
-                } else if (keyToUpdate.value() == "Move Down") {
-                    keyBinding->moveDownKey = key;
-                    keyBindingTexts["Move Down"].setString("Move Down: " + Menus::keyToString(key));
-                } else if (keyToUpdate.value() == "Move Left") {
-                    keyBinding->moveLeftKey = key;
-                    keyBindingTexts["Move Left"].setString("Move Left: " + Menus::keyToString(key));
-                } else if (keyToUpdate.value() == "Move Right") {
-                    keyBinding->moveRightKey = key;
-                    keyBindingTexts["Move Right"].setString("Move Right: " + Menus::keyToString(key));
-                } else if (keyToUpdate.value() == "Shoot") {
-                    keyBinding->fireKey = key;
-                }
-                
-            keyToUpdate.reset();
+            if (keyToUpdate.value() == "Move Up") {
+                std::cout << "Entered move up" << std::endl;
+                keyBindingsConfig.moveUpKey = key;
+                std::cout << "string key = " << Menus::keyToString(key) << std::endl;
+                keyBindingTexts["Move Up"].setString("Move Up: " + Menus::keyToString(key));
+                std::cout << "Keybinding text: " << keyBindingTexts["Move Up"].getString().toAnsiString() << std::endl;
+            } else if (keyToUpdate.value() == "Move Down"){
+                keyBindingsConfig.moveDownKey = key;
+                keyBindingTexts["Move Down"].setString("Move Down: " + Menus::keyToString(key));
+            } else if (keyToUpdate.value() == "Move Left"){
+                keyBindingsConfig.moveLeftKey = key;
+                keyBindingTexts["Move Left"].setString("Move Left: " + Menus::keyToString(key));
+            } else if (keyToUpdate.value() == "Move Right"){
+                keyBindingsConfig.moveRightKey = key;
+                keyBindingTexts["Move Right"].setString("Move Right: " + Menus::keyToString(key));
+            } else if (keyToUpdate.value() == "Shoot") {
+                keyBindingsConfig.fireKey = key;
+                keyBindingTexts["Shoot"].setString("Shoot: " + Menus::keyToString(key));
             }
+            std::cout << "Keybindings: " << keyBindingsConfig.moveUpKey << " " << keyBindingsConfig.moveDownKey << " " << keyBindingsConfig.moveLeftKey << " " << keyBindingsConfig.moveRightKey << " " << keyBindingsConfig.fireKey << std::endl;
+            keyToUpdate.reset();
         }
     }
 }
