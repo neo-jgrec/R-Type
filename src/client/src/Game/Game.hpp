@@ -66,7 +66,8 @@ public:
         RoomMenu = 1,
         Settings = 2,
         Playing = 3,
-        GameOver = 4
+        GameOver = 4,
+        Loading = 63
     };
 
     Menus menus = Menus(*this); ///< Manages the initialization of different menus in the game.
@@ -139,6 +140,8 @@ private:
 
     std::vector<std::vector<Tile>> _tileMap; ///< Represents the game map as a grid of tiles.
 
+    float _loadingProgress = 0.0f;
+
     /**
      * @brief Parses a JSON map file and creates the corresponding tiles and entities in the game.
      * @param registry The entity-component system registry managing game entities.
@@ -164,6 +167,17 @@ private:
      * @brief Loads all assets used in the game.
      */
     void loadAssets();
+
+    /**
+     * @brief Updates the loading progress of the assets.
+     */
+    void renderLoadingScreen();
+
+    /**
+     * @brief Updates the loading progress of the assets.
+     * @param progress The progress of the loading process.
+     */
+    void updateLoadingProgress(float progress);
 
     /**
      * @brief Handles game events such as player collisions, enemy attacks, and power-ups.

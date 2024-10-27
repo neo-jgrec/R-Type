@@ -1,7 +1,6 @@
 #ifndef ENTITY_FACTORY_HPP
 #define ENTITY_FACTORY_HPP
 
-#include "../../../core/ecs/Registry/Registry.hpp"
 #include <SFML/Graphics.hpp>
 #include <SFML/System/Vector2.hpp>
 #include "../../../core/ecs/GameEngine/GameEngineComponents.hpp"

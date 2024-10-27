@@ -141,7 +141,6 @@ public:
 
 
 private:
-    // Storage for the various asset types
     std::unordered_map<std::string, std::shared_ptr<sf::Texture>> textures;
     std::unordered_map<std::string, std::shared_ptr<sf::Font>> fonts;
     std::unordered_map<std::string, std::shared_ptr<sf::SoundBuffer>> sounds;
