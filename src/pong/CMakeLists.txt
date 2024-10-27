@@ -26,10 +26,7 @@ endif()
 if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
     if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 12)
         if(NOT MSVC)
-            # GCC 12 supports automatically initializing variables to zero
             add_compile_options(-O)
-
-            # Adjust _FORTIFY_SOURCE for GCC/Clang
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 ")
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 ")
         endif()
@@ -44,6 +41,8 @@ find_package(asio REQUIRED)
 find_package(SFML COMPONENTS graphics window system audio network REQUIRED)
 find_package(SDL2 REQUIRED)
 find_package(SDL2_image CONFIG REQUIRED)
+find_package(SDL2_mixer CONFIG REQUIRED)
+find_package(SDL2_ttf CONFIG REQUIRED)
 
 file(GLOB_RECURSE SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
@@ -67,6 +66,8 @@ target_link_libraries(pong
         asio::asio
         sfml-graphics sfml-window sfml-system sfml-audio sfml-network
         SDL2::SDL2
+        $<IF:$<TARGET_EXISTS:SDL2_mixer::SDL2_mixer>,SDL2_mixer::SDL2_mixer,SDL2_mixer::SDL2_mixer-static>
+        $<IF:$<TARGET_EXISTS:SDL2_ttf::SDL2_ttf>,SDL2_ttf::SDL2_ttf,SDL2_ttf::SDL2_ttf-static>
 )
 
 # Install the target

@@ -102,7 +102,11 @@ public:
     sf::Clock clock;                    ///< SFML clock for tracking time in the game loop.
     core::ge::KeyBinding keyBindingsConfig; ///< The key bindings configuration for the game.
 
-    void initWindow(sf::VideoMode size, [[maybe_unused]] int framerateLimit, const std::string& title , sf::Uint32 style = sf::Style::Default)
+    #ifdef GE_USE_SDL
+        void initWindow(sf::VideoMode size, int framerateLimit, const std::string& title, SDL_WindowFlags style = SDL_WINDOW_SHOWN)
+    #else
+        void initWindow(sf::VideoMode size, [[maybe_unused]] int framerateLimit, const std::string& title , sf::Uint32 style = sf::Style::Default)
+    #endif
     {
 #ifdef GE_USE_SDL
         // Initialize SDL window
