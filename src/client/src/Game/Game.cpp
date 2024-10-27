@@ -320,7 +320,7 @@ void Game::releaseColor(const int color) {
 }
 
 void Game::run() {
-    _gameEngine.musicManager.playMusic("level1");
+    _gameEngine.musicManager.playMusic("menu");
     _networkingService.run();
 
     // TODO: implement a way to load maps at runtimes dynamically

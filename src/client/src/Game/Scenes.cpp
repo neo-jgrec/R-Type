@@ -382,6 +382,7 @@ namespace Scenes {
         auto &networkingService = game.getNetworkingService();
 
         gameEngine.currentScene = Game::GameState::Playing;
+        gameEngine.musicManager.playMusic("level1");
 
         game.addToScene(EntityFactory::createGameEventManager(game));
 
