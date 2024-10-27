@@ -58,6 +58,9 @@ void Game::inputSystem(core::ecs::Registry& registry)
         auto playerAnim = getPlayerAnimComponents(registry).second;
         if (!playerAnimTransform || !playerAnim)
             return;
+        if (_autoFire) {
+            input.fire = true;
+        }
         playerAnimTransform->position = transform.position + sf::Vector2f(100.0f, -30.0f);
         if (input.up) {
             transform.position.y -= vel.dy;

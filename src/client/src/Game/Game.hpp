@@ -81,6 +81,7 @@ public:
     float _scrollSpeed = 20.0f;
     std::chrono::steady_clock::time_point _lastScrollTime;
     uint32_t _lastScrollPosition = 0;
+    bool _autoFire = false;
 
 private:
     /**

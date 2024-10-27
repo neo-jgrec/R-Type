@@ -1,4 +1,6 @@
 #include "Menus.hpp"
+#include <SFML/Graphics/Text.hpp>
+#include <SFML/System/Vector2.hpp>
 #include <SFML/Window/Keyboard.hpp>
 #include <iostream>
 #include <unordered_map>
@@ -409,7 +411,23 @@ void Menus::initSettingsMenu()
         },
         static_cast<int>(Game::GameState::Settings)
     );
+    startY += buttonSpacing + buttonSize.y * 2 + labelSpacing;
 
+    core::ecs::Entity autoFireButtonEntity = EntityFactory::createButton(
+        _game._gameEngine,
+        sf::Vector2f(buttonSize.y, startY),
+        sf::Vector2f(300.0f, 50.0f),
+        std::string("Auto-fire Mode: ") + (_game._autoFire ? "On" : "Off"),
+        nullptr,
+        static_cast<int>(Game::GameState::Settings)
+    );
+
+    auto clickable = _game._gameEngine.registry.get_component<core::ge::ClickableComponent>(autoFireButtonEntity);
+    clickable->onClick = [this, autoFireButtonEntity]() {
+        _game._autoFire = !_game._autoFire;
+        auto text = _game._gameEngine.registry.get_component<core::ge::TextComponent>(autoFireButtonEntity);
+        text->text.setString(std::string("Auto-fire Mode: ") + (_game._autoFire ? "On" : "Off"));
+    };
 }
 
 
