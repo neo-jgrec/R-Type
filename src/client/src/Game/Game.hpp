@@ -124,7 +124,7 @@ private:
      * @brief Updates the loading progress.
      * @param progress The progress of the loading process.
      */
-    void Game::loadingProgress(float progress);
+    void loadingProgress(float progress);
 
     /**
      * @brief Handles game events such as player collisions, enemy attacks, and power-ups.
