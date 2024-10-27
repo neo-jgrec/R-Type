@@ -14,7 +14,7 @@ namespace core::ge {
 /**
  * @enum AnimationState
  * @brief Enumerates the possible states for entity animations.
- * 
+ *
  * Represents different animation states an entity can be in, such as moving, dying, etc.
  */
 enum class AnimationState {
@@ -28,7 +28,7 @@ enum class AnimationState {
 /**
  * @struct KeyBinding
  * @brief Stores the key bindings for player controls.
- * 
+ *
  * Contains the key mappings for movement and actions like firing.
  */
 struct KeyBinding {
@@ -42,7 +42,7 @@ struct KeyBinding {
 /**
  * @struct InputStateComponent
  * @brief Tracks the current input state for player movement and actions.
- * 
+ *
  * Flags that are set based on whether the player is pressing movement keys or the fire key.
  */
 struct InputStateComponent {
@@ -56,7 +56,7 @@ struct InputStateComponent {
 /**
  * @struct DrawableComponent
  * @brief Contains the drawable shape for an entity.
- * 
+ *
  * This component holds the graphical representation (e.g., a rectangle shape) of the entity that can be rendered on screen.
  */
 struct DrawableComponent {
@@ -66,7 +66,7 @@ struct DrawableComponent {
 /**
  * @struct ClockComponent
  * @brief Manages time tracking for an entity.
- * 
+ *
  * Stores a clock and elapsed time, typically used for time-sensitive operations like animations or cooldowns.
  */
 struct ClockComponent {
@@ -77,7 +77,7 @@ struct ClockComponent {
 /**
  * @struct TransformComponent
  * @brief Defines the position, size, scale, and rotation of an entity.
- * 
+ *
  * This component holds the transform data, used to control where and how the entity appears in the game world.
  */
 struct TransformComponent {
@@ -100,7 +100,7 @@ struct ClickableComponent {
 /**
  * @struct AnimationComponent
  * @brief Manages entity animations, including animation frames and states.
- * 
+ *
  * This component stores animations for different states (e.g., moving, dying) and tracks the current frame and elapsed time between frames.
  */
 struct AnimationComponent {
@@ -118,7 +118,7 @@ struct AnimationComponent {
 /**
  * @struct ColorComponent
  * @brief Represents the color of an entity.
- * 
+ *
  * This component allows changing the color of an entity, which could be useful for distinguishing players or states.
  */
 struct ColorComponent {
@@ -128,7 +128,7 @@ struct ColorComponent {
 /**
  * @struct SoundComponent
  * @brief Stores and manages sound playback for an entity.
- * 
+ *
  * This component includes a sound object and its associated buffer, and tracks whether the sound should play once or loop.
  */
 struct SoundComponent {
@@ -149,7 +149,7 @@ struct MusicComponent {
 /**
  * @struct TextureComponent
  * @brief Stores the texture applied to an entity.
- * 
+ *
  * This component holds a shared pointer to the texture used by the entity for rendering.
  */
 struct TextureComponent {
@@ -157,13 +157,25 @@ struct TextureComponent {
 };
 
 /**
+* @struct VelocityComponent
+* @brief Holds velocity data for an entity's movement.
+*
+* The velocity component stores the change in position (dx, dy) for an entity per update cycle.
+* This is typically used for movement systems to modify an entity's position.
+*/
+struct VelocityComponent {
+    float dx;
+    float dy;
+};
+
+/**
  * @struct CollisionComponent
  * @brief Manages collision data and responses for an entity.
- * 
+ *
  * Contains collision masks and bounding boxes used for collision detection, as well as a list of functions to execute upon collision with specific entities.
  */
 struct CollisionComponent {
-    uint32_t collisionMask = 0;
+    uint32_t collisionMask;
     std::vector<sf::FloatRect> collisionBoxes;
     std::vector<std::pair<uint32_t, std::function<void(const ecs::Entity&, const ecs::Entity&)>>> onCollision = {};
 };
@@ -171,22 +183,12 @@ struct CollisionComponent {
 /**
  * @struct TextComponent
  * @brief Manages text rendering for an entity.
- * 
+ *
  * This component stores an SFML text object and font, allowing the entity to display text in the game.
  */
 struct TextComponent {
     sf::Text text;
     sf::Font font;
-};
-
-/**
- * @struct SceneComponent
- * @brief Associates an entity with a specific scene.
- * 
- * This component assigns an entity to a scene, identified by an integer name. It allows managing which entities belong to which scenes.
- */
-struct SceneComponent {
-    int sceneName;
 };
 
 /**

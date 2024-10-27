@@ -18,10 +18,10 @@ class EntityFactory {
 public:
     /**
      * @brief Creates a player entity with the given position, color, and game scale.
-     * 
-     * The player is assigned various components including a transform, collision, velocity, input handling, health, score, and a color. 
+     *
+     * The player is assigned various components including a transform, collision, velocity, input handling, health, score, and a color.
      * It also loads the player sprite and handles animation setup.
-     * 
+     *
      * @param registry The ECS registry managing the entities.
      * @param position The initial position of the player.
      * @param color An integer representing the player's color for sprite customization.
@@ -29,7 +29,7 @@ public:
      * @param gameScale The scale factor for the game to adjust entity sizes.
      * @return The created player entity.
      */
-    static core::ecs::Entity createPlayer(core::GameEngine& gameEngine, ConfigManager& config, const sf::Vector2f& position, int color, sf::Vector2f gameScale, std::uint16_t playerId, bool self = false);
+    static core::ecs::Entity createPlayer(Game &game, const sf::Vector2f& position, int color, sf::Vector2f gameScale, std::uint16_t playerId, bool self = false);
 
     /**
      * @brief Creates a projectile entity for the player, using the player's position and scale.
@@ -42,7 +42,7 @@ public:
      * @param gameScale The scale factor for the game to adjust entity sizes.
      * @return The created projectile entity.
      */
-    static core::ecs::Entity createPlayerProjectile(core::GameEngine& gameEngine, ConfigManager& config, core::ge::TransformComponent& playerTransform, sf::Vector2f gameScale);
+    static core::ecs::Entity createPlayerProjectile(Game &game, core::ge::TransformComponent& playerTransform, sf::Vector2f gameScale);
 
     /**
      * @brief Creates a missile entity for the player, using the player's position and scale.
@@ -55,7 +55,7 @@ public:
      * @param gameScale The scale factor for the game to adjust entity sizes.
      * @return The created missile entity.
      */
-    static core::ecs::Entity createPlayerMissile(core::GameEngine& gameEngine, ConfigManager& config, core::ge::TransformComponent& playerTransform, sf::Vector2f gameScale);
+    static core::ecs::Entity createPlayerMissile(Game &game, core::ge::TransformComponent& playerTransform, sf::Vector2f gameScale);
 
     /**
      * @brief Creates an enemy entity with the given position and game scale.
@@ -68,7 +68,7 @@ public:
      * @param gameScale The scale factor for the game to adjust entity sizes.
      * @return The created enemy entity.
      */
-    static core::ecs::Entity createEnemy(core::GameEngine& gameEngine, ConfigManager& config, const sf::Vector2f& position, sf::Vector2f gameScale, std::uint8_t enemyId);
+    static core::ecs::Entity createEnemy(Game &game, const sf::Vector2f& position, sf::Vector2f gameScale, std::uint8_t enemyId);
 
     /**
      * @brief Creates a button entity for the game's UI.
@@ -80,14 +80,14 @@ public:
      * @param position The position of the button in the UI.
      * @param size The size of the button.
      * @param label The text label displayed on the button.
-     * @param onClick A callback function to be invoked when the button is clicked.
-     * @param scene The scene in which the button will be active.
+     * @param onClick A callback function to be invoked when the button is clicked.q
      * @return The created button entity.
      */
-    static core::ecs::Entity createButton(core::GameEngine& gameEngine, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void()>& onClick, int scene);
-    static core::ecs::Entity createTextInput(core::GameEngine& gameEngine, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& title, int scene);
-    static core::ecs::Entity createSlider(core::GameEngine& gameEngine, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void(float)>& onChange, int scene, float currentValue);
-    static core::ecs::Entity createImage(core::GameEngine& gameEngine, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& textureName, int scene);
+    static core::ecs::Entity createButton(Game &game, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void()>& onClick);
+    static core::ecs::Entity createTextInput(Game &game, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& title);
+    static core::ecs::Entity createSlider(Game &game, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void(float)>& onChange, float currentValue);
+    static core::ecs::Entity createImage(Game &game, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& textureName);
+    static core::ecs::Entity createGameEventManager(Game &game);
 };
 
 #endif // ENTITY_FACTORY_HPP
