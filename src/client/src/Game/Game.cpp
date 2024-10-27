@@ -46,9 +46,9 @@ void Game::init()
     updateLoadingProgress(50);
     initWindow();
 
-    _gameEngine.musicManager.loadMusic("level1", "assets/music/level1.ogg");
+    _gameEngine.musicManager.addMusic("level1", "level1", _gameEngine.assetManager);
+    _gameEngine.musicManager.addMusic("menu", "menu", _gameEngine.assetManager);
     _gameEngine.musicManager.setVolume(10.0f);
-    _gameEngine.musicManager.playMusic("level1");
 
     updateLoadingProgress(60);
     inputSystem(_gameEngine.registry);
@@ -73,8 +73,12 @@ void Game::init()
     menus.initRoomMenu();
     menus.initSettingsMenu();
 
+    std::cout << "Menus initialized" << std::endl;
+
     updateLoadingProgress(100);
     _gameEngine.currentScene = static_cast<int>(GameState::MainMenu);
+    std::cout << "Playing menu music" << std::endl;
+    _gameEngine.musicManager.playMusic("menu");
 }
 
 void Game::initWindow()
@@ -110,6 +114,11 @@ void Game::loadAssets()
         _gameEngine.assetManager.loadTexture("logo", "assets/logo.png");
         updateLoadingProgress(21);
         _gameEngine.assetManager.loadTexture("player_anim", "assets/Player/missile_charging.png");
+        updateLoadingProgress(22);
+        _gameEngine.assetManager.loadMusic("level1", "assets/music/level1.ogg");
+        updateLoadingProgress(23);
+        _gameEngine.assetManager.loadMusic("menu", "assets/music/menu.ogg");
+        updateLoadingProgress(24);
     } catch (const std::runtime_error &e) {
         std::cerr << "Error loading assets: " << e.what() << std::endl;
     }
