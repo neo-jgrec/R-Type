@@ -50,8 +50,6 @@ void Game::init()
     _gameEngine.musicManager.addMusic("menu", "menu", _gameEngine.assetManager);
     _gameEngine.musicManager.setVolume(10.0f);
 
-    std::cout << "Music added" << std::endl;
-
     updateLoadingProgress(60);
     inputSystem(_gameEngine.registry);
     projectileMovementSystem(_gameEngine.registry);
