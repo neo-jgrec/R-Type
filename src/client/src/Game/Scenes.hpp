@@ -7,6 +7,12 @@ namespace Scenes {
     void loadMainMenu(Game &game);
     void updateMainMenu(Game &game);
 
+    void loadRoomMenu(Game &game);
+    void updateRoomMenu(Game &game);
+
+    void loadSettingsMenu(Game &game);
+    void updateSettingsMenu(Game &game);
+
     void loadGame(Game &game);
     void updateGame(Game &game);
 };

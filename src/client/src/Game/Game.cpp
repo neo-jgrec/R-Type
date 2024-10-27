@@ -10,6 +10,64 @@
 
 #include "Scenes.hpp"
 
+std::string Game::keyToString(const sf::Keyboard::Key key)
+{
+    static const std::unordered_map<sf::Keyboard::Key, std::string> keyMap = {
+        {sf::Keyboard::A, "A"}, {sf::Keyboard::B, "B"}, {sf::Keyboard::C, "C"},
+        {sf::Keyboard::D, "D"}, {sf::Keyboard::E, "E"}, {sf::Keyboard::F, "F"},
+        {sf::Keyboard::G, "G"}, {sf::Keyboard::H, "H"}, {sf::Keyboard::I, "I"},
+        {sf::Keyboard::J, "J"}, {sf::Keyboard::K, "K"}, {sf::Keyboard::L, "L"},
+        {sf::Keyboard::M, "M"}, {sf::Keyboard::N, "N"}, {sf::Keyboard::O, "O"},
+        {sf::Keyboard::P, "P"}, {sf::Keyboard::Q, "Q"}, {sf::Keyboard::R, "R"},
+        {sf::Keyboard::S, "S"}, {sf::Keyboard::T, "T"}, {sf::Keyboard::U, "U"},
+        {sf::Keyboard::V, "V"}, {sf::Keyboard::W, "W"}, {sf::Keyboard::X, "X"},
+        {sf::Keyboard::Y, "Y"}, {sf::Keyboard::Z, "Z"},
+
+        {sf::Keyboard::Num0, "0"}, {sf::Keyboard::Num1, "1"}, {sf::Keyboard::Num2, "2"},
+        {sf::Keyboard::Num3, "3"}, {sf::Keyboard::Num4, "4"}, {sf::Keyboard::Num5, "5"},
+        {sf::Keyboard::Num6, "6"}, {sf::Keyboard::Num7, "7"}, {sf::Keyboard::Num8, "8"},
+        {sf::Keyboard::Num9, "9"},
+
+        {sf::Keyboard::Escape, "Escape"}, {sf::Keyboard::LControl, "Left Control"},
+        {sf::Keyboard::LShift, "Left Shift"}, {sf::Keyboard::LAlt, "Left Alt"},
+        {sf::Keyboard::LSystem, "Left System"}, {sf::Keyboard::RControl, "Right Control"},
+        {sf::Keyboard::RShift, "Right Shift"}, {sf::Keyboard::RAlt, "Right Alt"},
+        {sf::Keyboard::RSystem, "Right System"}, {sf::Keyboard::Menu, "Menu"},
+
+        {sf::Keyboard::LBracket, "["}, {sf::Keyboard::RBracket, "]"}, {sf::Keyboard::SemiColon, ";"},
+        {sf::Keyboard::Comma, ","}, {sf::Keyboard::Period, "."}, {sf::Keyboard::Quote, "'"},
+        {sf::Keyboard::Slash, "/"}, {sf::Keyboard::BackSlash, "\\"}, {sf::Keyboard::Tilde, "~"},
+        {sf::Keyboard::Equal, "="}, {sf::Keyboard::Dash, "-"}, {sf::Keyboard::Space, "Space"},
+        {sf::Keyboard::Return, "Enter"}, {sf::Keyboard::BackSpace, "Backspace"},
+        {sf::Keyboard::Tab, "Tab"}, {sf::Keyboard::PageUp, "Page Up"}, {sf::Keyboard::PageDown, "Page Down"},
+        {sf::Keyboard::End, "End"}, {sf::Keyboard::Home, "Home"}, {sf::Keyboard::Insert, "Insert"},
+        {sf::Keyboard::Delete, "Delete"},
+
+        {sf::Keyboard::Add, "+"}, {sf::Keyboard::Subtract, "-"},
+        {sf::Keyboard::Multiply, "*"}, {sf::Keyboard::Divide, "/"},
+
+        {sf::Keyboard::Left, "Left"}, {sf::Keyboard::Right, "Right"},
+        {sf::Keyboard::Up, "Up"}, {sf::Keyboard::Down, "Down"},
+
+        {sf::Keyboard::Numpad0, "Numpad 0"}, {sf::Keyboard::Numpad1, "Numpad 1"},
+        {sf::Keyboard::Numpad2, "Numpad 2"}, {sf::Keyboard::Numpad3, "Numpad 3"},
+        {sf::Keyboard::Numpad4, "Numpad 4"}, {sf::Keyboard::Numpad5, "Numpad 5"},
+        {sf::Keyboard::Numpad6, "Numpad 6"}, {sf::Keyboard::Numpad7, "Numpad 7"},
+        {sf::Keyboard::Numpad8, "Numpad 8"}, {sf::Keyboard::Numpad9, "Numpad 9"},
+
+        {sf::Keyboard::F1, "F1"}, {sf::Keyboard::F2, "F2"}, {sf::Keyboard::F3, "F3"},
+        {sf::Keyboard::F4, "F4"}, {sf::Keyboard::F5, "F5"}, {sf::Keyboard::F6, "F6"},
+        {sf::Keyboard::F7, "F7"}, {sf::Keyboard::F8, "F8"}, {sf::Keyboard::F9, "F9"},
+        {sf::Keyboard::F10, "F10"}, {sf::Keyboard::F11, "F11"}, {sf::Keyboard::F12, "F12"},
+        {sf::Keyboard::F13, "F13"}, {sf::Keyboard::F14, "F14"}, {sf::Keyboard::F15, "F15"},
+
+        {sf::Keyboard::Pause, "Pause"}
+    };
+
+    const auto it = keyMap.find(key);
+    return (it != keyMap.end()) ? it->second : "Unknown";
+}
+
 void Game::init()
 {
     _gameEngine.currentScene = GameState::Loading;
@@ -144,8 +202,8 @@ void Game::processEvents()
                 auto &keyBindingOpt = _gameEngine.registry.get_components<core::ge::KeyBinding>()[playerEntity];
 
                 if (inputStateOpt.has_value() && keyBindingOpt.has_value()) {
-                    auto &keyBinding = *keyBindingOpt.value();
-                    auto &inputState = *inputStateOpt.value();
+                    auto &[moveUpKey, moveDownKey, moveLeftKey, moveRightKey, fireKey] = *keyBindingOpt.value();
+                    auto &[up, down, left, right, fire, fireReleased] = *inputStateOpt.value();
 
                     auto set_input_state = [&event, isPressed](auto key, bool &state) {
                         if (event.key.code == key) {
@@ -153,11 +211,11 @@ void Game::processEvents()
                         }
                     };
 
-                    set_input_state(keyBinding.moveUpKey, inputState.up);
-                    set_input_state(keyBinding.moveDownKey, inputState.down);
-                    set_input_state(keyBinding.moveLeftKey, inputState.left);
-                    set_input_state(keyBinding.moveRightKey, inputState.right);
-                    set_input_state(keyBinding.fireKey, inputState.fire);
+                    set_input_state(moveUpKey, up);
+                    set_input_state(moveDownKey, down);
+                    set_input_state(moveLeftKey, left);
+                    set_input_state(moveRightKey, right);
+                    set_input_state(fireKey, fire);
                 }
             }
         }
@@ -193,23 +251,24 @@ void Game::processEvents()
         if (keyToUpdate.has_value() && event.type == sf::Event::KeyPressed) {
             sf::Keyboard::Key key = event.key.code;
             core::ecs::Entity entity = keyBindingTexts[keyToUpdate.value()];
-            auto text = _gameEngine.registry.get_component<core::ge::TextComponent>(entity);
+            addToScene(entity);
+            const auto text = _gameEngine.registry.get_component<core::ge::TextComponent>(entity);
 
             if (keyToUpdate.value() == "Move Up") {
                 _gameEngine.keyBindingsConfig.moveUpKey = key;
-                // text->text.setString("Move Up: " + Menus::keyToString(key));
+                text->text.setString("Move Up: " + keyToString(key));
             } else if (keyToUpdate.value() == "Move Down"){
                 _gameEngine.keyBindingsConfig.moveDownKey = key;
-                // text->text.setString("Move Down: " + Menus::keyToString(key));
+                text->text.setString("Move Down: " + keyToString(key));
             } else if (keyToUpdate.value() == "Move Left"){
                 _gameEngine.keyBindingsConfig.moveLeftKey = key;
-                // text->text.setString("Move Left: " + Menus::keyToString(key));
+                text->text.setString("Move Left: " + keyToString(key));
             } else if (keyToUpdate.value() == "Move Right"){
                 _gameEngine.keyBindingsConfig.moveRightKey = key;
-                // text->text.setString("Move Right: " + Menus::keyToString(key));
+                text->text.setString("Move Right: " + keyToString(key));
             } else if (keyToUpdate.value() == "Shoot") {
                 _gameEngine.keyBindingsConfig.fireKey = key;
-                // text->text.setString("Shoot: " + Menus::keyToString(key));
+                text->text.setString("Shoot: " + keyToString(key));
             }
             keyToUpdate.reset();
         }
@@ -235,7 +294,9 @@ void Game::run() {
     _gameEngine.musicManager.playMusic("level1");
     _networkingService.run();
 
-    // Load map on the game scene only set at half the screen size and other scale are biger
+
+    // TODO: implement a way to load maps at runtimes dynamically
+    // Load map on the game scene only set at half the screen size and other scale are bigger
     parseMap(*this, "./JY_map.json", _gameEngine.window);
     Scenes::loadMainMenu(*this);
     while (_windowOpen) {
@@ -246,6 +307,9 @@ void Game::run() {
         switch (_gameEngine.currentScene) {
             case MainMenu:
                 Scenes::updateMainMenu(*this);
+                break;
+            case Settings:
+                Scenes::updateSettingsMenu(*this);
                 break;
             case Playing:
                 Scenes::updateGame(*this);
@@ -259,6 +323,7 @@ void Game::run() {
         sound();
         render();
     }
+    networkingService.stop();
 }
 
 void Game::renderLoadingScreen()

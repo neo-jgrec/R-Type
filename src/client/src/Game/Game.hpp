@@ -7,7 +7,6 @@
 #include "../../../core/ecs/GameEngine/GameEngine.hpp"
 #include "../../../core/network/NetworkService.hpp"
 #include "../../../core/config/ConfigManager.hpp"
-#include "Menus.hpp"
 
 /**
  * @struct Tile
@@ -210,4 +209,6 @@ public:
             _gameEngine.registry.kill_entity(entity);
         _sceneEntities.clear();
     }
+
+    static std::string keyToString(sf::Keyboard::Key key);
 };
