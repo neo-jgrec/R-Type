@@ -126,7 +126,12 @@ public:
         if (found == fonts.end()) {
             throw std::runtime_error("Font not found: " + name);
         }
+        // return *found->second;
+        #ifndef GE_USE_SDL
         return *found->second;
+        #else
+        return found->second;
+        #endif
     }
 
     /**
@@ -210,7 +215,11 @@ public:
         if (found == music.end()) {
             throw std::runtime_error("Music not found: " + name);
         }
+        #ifndef GE_USE_SDL
         return *found->second;
+        #else
+        return found->second;
+        #endif
     }
 
 private:

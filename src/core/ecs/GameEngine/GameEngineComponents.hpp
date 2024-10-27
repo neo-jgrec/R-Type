@@ -4,11 +4,10 @@
 #include <functional>
 #include <memory>
 
-#ifndef GE_USE_SDL
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <SFML/System/Vector2.hpp>
-#else
+#ifdef GE_USE_SDL
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_mixer.h>
@@ -193,6 +192,7 @@ struct TextComponent {
     TTF_Font* font = nullptr;
     SDL_Texture* textTexture = nullptr;
     SDL_Color color;
+    SDL_Rect text;
 #endif
 };
 
