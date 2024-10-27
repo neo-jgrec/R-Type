@@ -5,6 +5,7 @@
 #include <iostream>
 #include "../../../game/Components.hpp"
 #include "src/Game/Utils/ClientComponents.hpp"
+#include "src/event/EventPool.hpp"
 #include <iostream>
 #include <ostream>
 #include <vector>
@@ -18,8 +19,9 @@ void Game::init()
 
     _gameEngine.assetManager.loadFont("arial", "assets/Fonts/Arial.ttf");
     updateLoadingProgress(10);
+    loadAssets();
 
-    updateLoadingProgress(20);
+    updateLoadingProgress(30);
     _gameEngine.registry.register_component<VelocityComponent>();
     _gameEngine.registry.register_component<InputStateComponent>();
     _gameEngine.registry.register_component<HealthComponent>();
@@ -36,15 +38,12 @@ void Game::init()
     _gameEngine.registry.register_component<EventComponent>();
     _gameEngine.registry.register_component<TileComponent>();
 
-    updateLoadingProgress(10);
+    updateLoadingProgress(40);
     _configManager.parse("assets/Data/config.json");
+    _scrollSpeed = _configManager.getValue<float>("/view/speed/x");
     parseMap(_gameEngine, _configManager, "./JY_map.json", _gameEngine.window);
 
-    updateLoadingProgress(40);
-    loadAssets();
-
-    updateLoadingProgress(60);
-    _scrollSpeed = _configManager.getValue<float>("/view/speed/x");
+    updateLoadingProgress(50);
     initWindow();
 
     _gameEngine.musicManager.addMusic("level1", "level1", _gameEngine.assetManager);
@@ -53,15 +52,25 @@ void Game::init()
 
     std::cout << "Music added" << std::endl;
 
-    updateLoadingProgress(80);
+    updateLoadingProgress(60);
     inputSystem(_gameEngine.registry);
     projectileMovementSystem(_gameEngine.registry);
     enemyMovementSystem(_gameEngine.registry);
     viewSystem(_gameEngine.registry);
 
-    std::cout << "Systems initialized" << std::endl;
+    _viewEntity = _gameEngine.registry.spawn_entity();
+    _gameEngine.registry.add_component(_viewEntity, ViewComponent{_gameEngine.window.getDefaultView()});
+    _gameEngine.registry.add_component(_viewEntity, core::ge::SceneComponent{static_cast<int>(GameState::Playing)});
 
-    updateLoadingProgress(90);
+    networkingService.init();
+    setHandlers();
+    networkingService.run();
+
+    core::ecs::Entity EventEntity = _gameEngine.registry.spawn_entity();
+    _gameEngine.registry.add_component(EventEntity, EventComponent{});
+    eventSystem(_gameEngine.registry);
+
+    updateLoadingProgress(70);
     menus.initMainMenu();
     menus.initRoomMenu();
     menus.initSettingsMenu();
@@ -87,25 +96,25 @@ void Game::loadAssets()
 {
     try {
         _gameEngine.assetManager.loadTexture("enemie1", "assets/Enemies/enemie1.png");
-        updateLoadingProgress(41);
+        updateLoadingProgress(12);
         _gameEngine.assetManager.loadTexture("player", "assets/player_sprite.png");
-        updateLoadingProgress(42);
+        updateLoadingProgress(13);
         _gameEngine.assetManager.loadSound("shooting", "assets/shooting_sound.ogg");
-        updateLoadingProgress(43);
+        updateLoadingProgress(14);
         _gameEngine.assetManager.loadTexture("player_projectile", "assets/player_projectile.png");
-        updateLoadingProgress(44);
+        updateLoadingProgress(15);
         _gameEngine.assetManager.loadSound("missile_sound", "assets/missile_sound.ogg");
-        updateLoadingProgress(45);
+        updateLoadingProgress(16);
         _gameEngine.assetManager.loadTexture("player_missile", "assets/player_missile.png");
-        updateLoadingProgress(46);
+        updateLoadingProgress(17);
         _gameEngine.assetManager.loadTexture("enemie1", "assets/Enemies/enemie1.png");
-        updateLoadingProgress(47);
+        updateLoadingProgress(18);
         _gameEngine.assetManager.loadFont("arial", "assets/Fonts/Arial.ttf");
-        updateLoadingProgress(48);
+        updateLoadingProgress(19);
         _gameEngine.assetManager.loadTexture("background", "assets/background.png");
-        updateLoadingProgress(49);
+        updateLoadingProgress(20);
         _gameEngine.assetManager.loadTexture("logo", "assets/logo.png");
-        updateLoadingProgress(50);
+        updateLoadingProgress(21);
         _gameEngine.assetManager.loadTexture("player_anim", "assets/Player/missile_charging.png");
         updateLoadingProgress(51);
         _gameEngine.assetManager.loadMusic("level1", "assets/music/level1.ogg");
