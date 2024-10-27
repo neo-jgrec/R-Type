@@ -1,6 +1,7 @@
 #include "Game.hpp"
 #include <SFML/System/String.hpp>
 #include <SFML/System/Time.hpp>
+#include <SFML/Window/Keyboard.hpp>
 #include <iostream>
 #include "EntityFactory.hpp"
 #include "../../../game/Components.hpp"
@@ -210,6 +211,30 @@ void Game::processEvents()
                     transform->get()->shape.setScale(gameScale);
                 }
             }
+        }
+
+        if (keyToUpdate.has_value() && event.type == sf::Event::KeyPressed) {
+            sf::Keyboard::Key key = event.key.code;
+            core::ecs::Entity entity = keyBindingTexts[keyToUpdate.value()];
+            auto text = _gameEngine.registry.get_component<core::ge::TextComponent>(entity);
+
+            if (keyToUpdate.value() == "Move Up") {
+                _gameEngine.keyBindingsConfig.moveUpKey = key;
+                text->text.setString("Move Up: " + Menus::keyToString(key));
+            } else if (keyToUpdate.value() == "Move Down"){
+                _gameEngine.keyBindingsConfig.moveDownKey = key;
+                text->text.setString("Move Down: " + Menus::keyToString(key));
+            } else if (keyToUpdate.value() == "Move Left"){
+                _gameEngine.keyBindingsConfig.moveLeftKey = key;
+                text->text.setString("Move Left: " + Menus::keyToString(key));
+            } else if (keyToUpdate.value() == "Move Right"){
+                _gameEngine.keyBindingsConfig.moveRightKey = key;
+                text->text.setString("Move Right: " + Menus::keyToString(key));
+            } else if (keyToUpdate.value() == "Shoot") {
+                _gameEngine.keyBindingsConfig.fireKey = key;
+                text->text.setString("Shoot: " + Menus::keyToString(key));
+            }
+            keyToUpdate.reset();
         }
     }
 }

@@ -69,7 +69,7 @@ core::ecs::Entity EntityFactory::createPlayer(core::GameEngine& gameEngine, Conf
     if (self) {
         gameEngine.registry.add_component(player, InputStateComponent{});
     }
-    gameEngine.registry.add_component(player, core::ge::KeyBinding{});
+    gameEngine.registry.add_component(player, core::ge::KeyBinding{gameEngine.keyBindingsConfig});
     gameEngine.registry.add_component(player, HealthComponent{10});
     gameEngine.registry.add_component(player, ScoreComponent{0});
     gameEngine.registry.add_component(player, Player{
