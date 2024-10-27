@@ -41,24 +41,20 @@ public:
         Loading = 63
     };
 
-    // Menus menus = Menus(*this); ///< Manages the initialization of different menus in the game.
-    core::GameEngine _gameEngine; ///< Game engine responsible for managing entities, components, and systems.
-    NetworkingService &networkingService = NetworkingService::getInstance(); ///< Singleton instance of the networking service.
-    ConfigManager _configManager;
-    GDTPHeader playerConnectionHeader{}; ///< Header for player connection requests.
     bool _windowOpen = true;           ///< Flag to track if the game window is open.
     sf::Vector2f gameScale = {1.0f, 1.0f}; ///< Scaling factor for the game view, adjusted during window resizing.
     std::optional<std::string> keyToUpdate; ///< The key to update in the settings menu.
     std::map<std::string, core::ecs::Entity> keyBindingTexts; ///< The key bindings for the game.
-    float _scrollSpeed = 20.0f;
-    std::chrono::steady_clock::time_point _lastScrollTime;
-    uint32_t _lastScrollPosition = 0;
 
 private:
-    NetworkingService &_networkingService = NetworkingService::getInstance(); ///< Singleton instance of the networking service.
-    GDTPHeader _playerConnectionHeader{}; ///< Header for player connection requests.
-    GameState _gameState = GameState::MainMenu; ///< The current state of the game.
+    GameState _gameState = GameState::Loading; ///< The current state of the game.
+    core::GameEngine _gameEngine; ///< Game engine responsible for managing entities, components, and systems.
     std::list<core::ecs::Entity> _sceneEntities; ///< List of entities in the current scene.
+    NetworkingService &_networkingService = NetworkingService::getInstance(); ///< Singleton instance of the networking service.
+    ConfigManager _configManager;
+    core::ecs::Entity _viewEntity; ///< The entity representing the game view.
+
+    GDTPHeader _playerConnectionHeader{}; ///< Header for player connection requests.
 
     /**
      * @brief Processes SFML events like keyboard inputs, window resizing, and window closing.
@@ -90,13 +86,8 @@ private:
      */
     int assignColor();
 
-    core::ecs::Entity _viewEntity = core::ecs::Entity();
-
-    GameState _currentState = GameState::MainMenu; ///< The current state of the game.
-
     /**
      * @brief Handles input system logic for player movement and actions.
-     * @param registry The entity-component system registry managing game entities.
      */
     void inputSystem(Game &game);
 
@@ -109,12 +100,8 @@ private:
     std::vector<int> availableColors = {0, 1, 2, 3, 4}; ///< Pool of available colors for players.
 
     std::vector<std::vector<Tile>> _tileMap; ///< Represents the game map as a grid of tiles.
-
-    float _loadingProgress = 0.0f;
-
     /**
      * @brief Parses a JSON map file and creates the corresponding tiles and entities in the game.
-     * @param registry The entity-component system registry managing game entities.
      * @param mapFilePath The file path to the JSON map.
      * @param window The SFML render window for the game.
      */
@@ -129,36 +116,23 @@ private:
     static void initBackground(core::ecs::Registry& registry, nlohmann::json& mapData, sf::RenderWindow& window, sf::Vector2f& gameScale);
 
     /**
-     * @brief Initializes the window based on the configuration.
-     */
-    void initWindow();
-
-    /**
      * @brief Loads all assets used in the game.
      */
     void loadAssets();
 
     /**
-     * @brief Updates the loading progress of the assets.
-     */
-    void renderLoadingScreen();
-
-    /**
-     * @brief Updates the loading progress of the assets.
+     * @brief Updates the loading progress.
      * @param progress The progress of the loading process.
      */
-    void updateLoadingProgress(float progress);
+    void Game::loadingProgress(float progress);
 
     /**
      * @brief Handles game events such as player collisions, enemy attacks, and power-ups.
-     *
-     * @param registry
      */
     void eventSystem(Game &game);
 
     /**
      * @brief Updates the view based on the player's position.
-     * @param registry The entity-component system registry managing game entities.
      */
     void viewSystem(Game &game);
 

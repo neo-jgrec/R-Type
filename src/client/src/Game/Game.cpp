@@ -70,21 +70,16 @@ std::string Game::keyToString(const sf::Keyboard::Key key)
 
 void Game::init()
 {
-    _gameEngine.currentScene = GameState::Loading;
-
     _gameEngine.window.setFramerateLimit(60);
     _gameEngine.window.setKeyRepeatEnabled(true);
-
-    _gameEngine.assetManager.loadFont("arial", "assets/Fonts/Arial.ttf");
-    updateLoadingProgress(10);
     loadAssets();
 
-    updateLoadingProgress(30);
+    loadingProgress(30);
     _gameEngine.musicManager.addMusic("level1", "level1", _gameEngine.assetManager);
     _gameEngine.musicManager.addMusic("menu", "menu", _gameEngine.assetManager);
     _gameEngine.musicManager.setVolume(10.0f);
 
-    updateLoadingProgress(50);
+    loadingProgress(40);
     _gameEngine.registry.register_component<InputStateComponent>();
     _gameEngine.registry.register_component<HealthComponent>();
     _gameEngine.registry.register_component<ScoreComponent>();
@@ -100,58 +95,94 @@ void Game::init()
     _gameEngine.registry.register_component<EventComponent>();
     _gameEngine.registry.register_component<TileComponent>();
 
-    updateLoadingProgress(70);
+    loadingProgress(50);
     inputSystem(*this);
     playerMovementSystem(_gameEngine.registry);
     viewSystem(*this);
     eventSystem(*this);
 
+    loadingProgress(60);
     _viewEntity = _gameEngine.registry.spawn_entity();
     _gameEngine.registry.add_component(_viewEntity, ViewComponent{_gameEngine.window.getDefaultView()});
 
-    updateLoadingProgress(80);
+    loadingProgress(70);
     _networkingService.init();
     setHandlers();
-    networkingService.run();
 
-    core::ecs::Entity EventEntity = _gameEngine.registry.spawn_entity();
-    _gameEngine.registry.add_component(EventEntity, EventComponent{});
-    eventSystem(_gameEngine.registry);
+    loadingProgress(80);
+    _configManager.parse("assets/Data/config.json");
 
-    updateLoadingProgress(100);
+    loadingProgress(100);
+    setGameState(GameState::MainMenu);
+    Scenes::loadMainMenu(*this);
 }
 
 void Game::loadAssets()
 {
-    try {
-        _gameEngine.assetManager.loadTexture("enemie1", "assets/Enemies/enemie1.png");
-        updateLoadingProgress(12);
-        _gameEngine.assetManager.loadTexture("player", "assets/player_sprite.png");
-        updateLoadingProgress(13);
-        _gameEngine.assetManager.loadSound("shooting", "assets/shooting_sound.ogg");
-        updateLoadingProgress(14);
-        _gameEngine.assetManager.loadTexture("player_projectile", "assets/player_projectile.png");
-        updateLoadingProgress(15);
-        _gameEngine.assetManager.loadSound("missile_sound", "assets/missile_sound.ogg");
-        updateLoadingProgress(16);
-        _gameEngine.assetManager.loadTexture("player_missile", "assets/player_missile.png");
-        updateLoadingProgress(17);
-        _gameEngine.assetManager.loadTexture("enemie1", "assets/Enemies/enemie1.png");
-        updateLoadingProgress(18);
-        _gameEngine.assetManager.loadFont("arial", "assets/Fonts/Arial.ttf");
-        updateLoadingProgress(19);
-        _gameEngine.assetManager.loadTexture("background", "assets/background.png");
-        updateLoadingProgress(20);
-        _gameEngine.assetManager.loadTexture("logo", "assets/logo.png");
-        updateLoadingProgress(21);
-        _gameEngine.assetManager.loadTexture("player_anim", "assets/Player/missile_charging.png");
-        updateLoadingProgress(22);
-        _gameEngine.assetManager.loadMusic("level1", "assets/music/level1.ogg");
-        updateLoadingProgress(23);
-        _gameEngine.assetManager.loadMusic("menu", "assets/music/menu.ogg");
-        updateLoadingProgress(24);
-    } catch (const std::runtime_error &e) {
-        std::cerr << "Error loading assets: " << e.what() << std::endl;
+    uint8_t load = 10;
+
+    std::list<std::pair<std::string, std::string>> fonts = {
+        {"arial", "assets/Fonts/Arial.ttf"}
+    };
+
+    for (auto &[name, path] : fonts) {
+        try {
+            _gameEngine.assetManager.loadFont(name, path);
+        } catch (const std::runtime_error &e) {
+            std::cerr << "Error loading assets: " << e.what() << std::endl;
+        }
+        load += 2;
+        loadingProgress(load);
+    }
+
+    std::list <std::pair<std::string, std::string>> textures = {
+        {"enemie1", "assets/Enemies/enemie1.png"},
+        {"player", "assets/player_sprite.png"},
+        {"player_projectile", "assets/player_projectile.png"},
+        {"player_missile", "assets/player_missile.png"},
+        {"background", "assets/background.png"},
+        {"logo", "assets/logo.png"},
+        {"player_anim", "assets/Player/missile_charging.png"}
+    };
+
+    for (auto &[name, path] : textures) {
+        try {
+            _gameEngine.assetManager.loadTexture(name, path);
+        } catch (const std::runtime_error &e) {
+            std::cerr << "Error loading assets: " << e.what() << std::endl;
+        }
+        load += 2;
+        loadingProgress(load);
+    }
+
+    std::list<std::pair<std::string, std::string>> sounds = {
+        {"shooting", "assets/shooting_sound.ogg"},
+        {"missile_sound", "assets/missile_sound.ogg"}
+    };
+
+    for (auto &[name, path] : sounds) {
+        try {
+            _gameEngine.assetManager.loadSound(name, path);
+        } catch (const std::runtime_error &e) {
+            std::cerr << "Error loading assets: " << e.what() << std::endl;
+        }
+        load += 2;
+        loadingProgress(load);
+    }
+
+    std::list<std::pair<std::string, std::string>> music = {
+        {"level1", "assets/music/level1.ogg"},
+        {"menu", "assets/music/menu.ogg"}
+    };
+
+    for (auto &[name, path] : music) {
+        try {
+            _gameEngine.assetManager.loadMusic(name, path);
+        } catch (const std::runtime_error &e) {
+            std::cerr << "Error loading assets: " << e.what() << std::endl;
+        }
+        load += 2;
+        loadingProgress(load);
     }
 }
 
@@ -181,8 +212,6 @@ void Game::processEvents()
     while (_gameEngine.window.pollEvent(event)) {
         if (event.type == sf::Event::Closed) {
             _windowOpen = false;
-            _gameEngine.window.close();
-            _networkingService.stop();
         }
 
         if (event.type == sf::Event::KeyPressed || event.type == sf::Event::KeyReleased) {
@@ -294,9 +323,7 @@ void Game::run() {
     _gameEngine.musicManager.playMusic("level1");
     _networkingService.run();
 
-
     // TODO: implement a way to load maps at runtimes dynamically
-    // Load map on the game scene only set at half the screen size and other scale are bigger
     parseMap(*this, "./JY_map.json", _gameEngine.window);
     Scenes::loadMainMenu(*this);
     while (_windowOpen) {
@@ -308,14 +335,14 @@ void Game::run() {
             case MainMenu:
                 Scenes::updateMainMenu(*this);
                 break;
+            case RoomMenu:
+                Scenes::updateRoomMenu(*this);
+                break;
             case Settings:
                 Scenes::updateSettingsMenu(*this);
                 break;
             case Playing:
                 Scenes::updateGame(*this);
-                break;
-            case Loading:
-                renderLoadingScreen();
                 break;
             default:
                 break;
@@ -323,10 +350,11 @@ void Game::run() {
         sound();
         render();
     }
-    networkingService.stop();
+    _gameEngine.window.close();
+    _networkingService.stop();
 }
 
-void Game::renderLoadingScreen()
+void Game::loadingProgress(const float progress)
 {
     _gameEngine.window.clear(sf::Color(30, 30, 30));
 
@@ -358,9 +386,8 @@ void Game::renderLoadingScreen()
         static_cast<float>(_gameEngine.window.getSize().y) / 2.0f + 50.0f
     );
 
-    float progress = _loadingProgress / 100.0f;
     sf::RectangleShape progressBar;
-    progressBar.setSize(sf::Vector2f(barSize.x * progress, barSize.y));
+    progressBar.setSize(sf::Vector2f(barSize.x * progress / 100, barSize.y));
     progressBar.setFillColor(sf::Color(0, 255, 0));
     progressBar.setPosition(loadingBar.getPosition());
 
@@ -368,10 +395,4 @@ void Game::renderLoadingScreen()
     _gameEngine.window.draw(progressBar);
     _gameEngine.window.draw(loadingText);
     _gameEngine.window.display();
-}
-
-void Game::updateLoadingProgress(float progress)
-{
-    _loadingProgress = progress;
-    renderLoadingScreen();
 }

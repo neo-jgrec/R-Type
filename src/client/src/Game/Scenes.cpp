@@ -22,7 +22,7 @@ namespace Scenes {
         const float centerY = static_cast<float>(windowSize.y) / 2.0f;
 
         const sf::Vector2f buttonSize(200.0f, 50.0f);
-        const float buttonSpacing = 20.0f;
+        constexpr float buttonSpacing = 20.0f;
 
         game.addToScene(EntityFactory::createImage(
             game,
