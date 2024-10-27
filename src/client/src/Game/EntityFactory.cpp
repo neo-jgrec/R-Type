@@ -9,10 +9,12 @@
 #include "../../../game/Components.hpp"
 #include "../../../game/CollisionMask.hpp"
 #include "../../../core/ecs/GameEngine/GameEngineComponents.hpp"
+#include "Utils/ClientComponents.hpp"
 
-core::ecs::Entity EntityFactory::createPlayer(core::GameEngine& gameEngine, ConfigManager& config, const sf::Vector2f& position, int color, sf::Vector2f gameScale, std::uint16_t playerId, bool self)
+core::ecs::Entity EntityFactory::createPlayer(Game &game, const sf::Vector2f& position, int color, sf::Vector2f gameScale, std::uint16_t playerId, bool self)
 {
-    core::ecs::Entity player = gameEngine.registry.spawn_entity();
+    core::ecs::Entity player = registry.spawn_entity();
+
     sf::Vector2f playerSize = sf::Vector2f(
         config.getValue<float>("/player/size/x"),
         config.getValue<float>("/player/size/y")
@@ -57,11 +59,6 @@ core::ecs::Entity EntityFactory::createPlayer(core::GameEngine& gameEngine, Conf
     }
 
     registry.add_component(player, core::ge::TransformComponent{position, playerSize, gameScale * 3.5f, 0.0f});
-    // registry.add_component(player, core::ge::CollisionComponent{PLAYER, {sf::FloatRect(0.0f, 0.0f, playerSize.x, playerSize.y)}, {
-    //     { ENEMY, [&](const core::ecs::Entity self, [[maybe_unused]] const core::ecs::Entity other) {
-    //             auto disabled = registry.get_component<core::ge::DisabledComponent>(self);
-    //             disabled->disabled = true;
-    //     }}}});
     if (self) {
         gameEngine.registry.add_component(player, InputStateComponent{});
     }
@@ -105,9 +102,12 @@ core::ecs::Entity EntityFactory::createPlayer(core::GameEngine& gameEngine, Conf
     return player;
 }
 
-core::ecs::Entity EntityFactory::createPlayerProjectile(core::GameEngine& gameEngine, ConfigManager& config, core::ge::TransformComponent& playerTransform, sf::Vector2f gameScale)
+core::ecs::Entity EntityFactory::createPlayerProjectile(Game &game, core::ge::TransformComponent& playerTransform, sf::Vector2f gameScale)
 {
-    core::ecs::Entity projectile = gameEngine.registry.spawn_entity();
+    auto& gameEngine = game.getGameEngine();
+    auto& registry = gameEngine.registry;
+
+    core::ecs::Entity projectile = registry.spawn_entity();
 
     sf::Vector2f projectileSize = sf::Vector2f(
         config.getValue<float>("/player/weapons/0/size/x"),
@@ -151,9 +151,12 @@ core::ecs::Entity EntityFactory::createPlayerProjectile(core::GameEngine& gameEn
     return projectile;
 }
 
-core::ecs::Entity EntityFactory::createPlayerMissile(core::GameEngine& gameEngine, ConfigManager& config, core::ge::TransformComponent &playerTransform, sf::Vector2f gameScale)
+core::ecs::Entity EntityFactory::createPlayerMissile(Game &game, core::ge::TransformComponent &playerTransform, sf::Vector2f gameScale)
 {
-    core::ecs::Entity missile = gameEngine.registry.spawn_entity();
+    auto& gameEngine = game.getGameEngine();
+    auto& registry = gameEngine.registry;
+
+    core::ecs::Entity missile = registry.spawn_entity();
 
     sf::Vector2f missileSize = sf::Vector2f(
         config.getValue<float>("/player/weapons/1/size/x"),
@@ -215,9 +218,12 @@ core::ecs::Entity EntityFactory::createPlayerMissile(core::GameEngine& gameEngin
     return missile;
 }
 
-core::ecs::Entity EntityFactory::createEnemy(core::GameEngine& gameEngine, ConfigManager& config, const sf::Vector2f& position, sf::Vector2f gameScale, std::uint8_t enemyId)
+core::ecs::Entity EntityFactory::createEnemy(Game &game, const sf::Vector2f& position, sf::Vector2f gameScale, std::uint8_t enemyId)
 {
-    core::ecs::Entity enemy = gameEngine.registry.spawn_entity();
+    auto& gameEngine = game.getGameEngine();
+    auto& registry = gameEngine.registry;
+
+    core::ecs::Entity enemy = registry.spawn_entity();
 
     sf::Vector2f enemySize = sf::Vector2f(
         config.getValue<float>("/enemies/0/size/x"),
@@ -233,45 +239,6 @@ core::ecs::Entity EntityFactory::createEnemy(core::GameEngine& gameEngine, Confi
     int enemyDamage = config.getValue<int>("/enemies/0/damage");
 
     registry.add_component(enemy, core::ge::TransformComponent{position, enemySize, gameScale * 3.5f, 0.0f});
-    // registry.add_component(enemy, core::ge::CollisionComponent{ENEMY, {sf::FloatRect(0.0f, 0.0f, enemySize.x, enemySize.y)}, {
-    //     { PLAYER_PROJECTILE, [&](const core::ecs::Entity self, const core::ecs::Entity other) {
-    //             auto enemyHealth = registry.get_component<HealthComponent>(self);
-    //             auto projDamage = registry.get_component<DamageComponent>(other);
-    //             enemyHealth->health -= projDamage->damage;
-    //             registry.remove_component<core::ge::DrawableComponent>(other);
-    //             if (enemyHealth->health > 0)
-    //                 return;
-    //             auto animComp = registry.get_component<core::ge::AnimationComponent>(self);
-    //             registry.remove_component<core::ge::VelocityComponent>(self);
-    //             registry.remove_component<core::ge::TransformComponent>(self);
-    //             registry.remove_component<core::ge::CollisionComponent>(self);
-    //             animComp->currentState = core::ge::AnimationState::Dying;
-    //             animComp->currentFrame = 0;
-    //             animComp->frameTime = 0.2f;
-    //             animComp->elapsedTime = 0.0f;
-    //             animComp->recurrence_max = 1;
-    //             animComp->recurrence_count = 0;
-    //             animComp->isPlaying = true;
-    //     }}, { PLAYER_MISSILE, [&](const core::ecs::Entity self, const core::ecs::Entity other) {
-    //             auto enemyHealth = registry.get_component<HealthComponent>(self);
-    //             auto missileDamage = registry.get_component<DamageComponent>(other);
-    //             enemyHealth->health -= missileDamage->damage;
-    //             registry.remove_component<core::ge::DrawableComponent>(other);
-    //             if (enemyHealth->health > 0)
-    //                 return;
-    //             auto animComp = registry.get_component<core::ge::AnimationComponent>(self);
-    //             registry.remove_component<core::ge::VelocityComponent>(self);
-    //             registry.remove_component<core::ge::TransformComponent>(self);
-    //             registry.remove_component<core::ge::CollisionComponent>(self);
-    //             animComp->currentState = core::ge::AnimationState::Dying;
-    //             animComp->currentFrame = 0;
-    //             animComp->frameTime = 0.2f;
-    //             animComp->elapsedTime = 0.0f;
-    //             animComp->recurrence_max = 1;
-    //             animComp->recurrence_count = 0;
-    //             animComp->isPlaying = true;
-    //     }},
-    // }});
     registry.add_component(enemy, core::ge::VelocityComponent{enemySpeed.x, enemySpeed.y});
     registry.add_component(enemy, HealthComponent{enemyHealth});
     registry.add_component(enemy, DamageComponent{enemyDamage});
@@ -309,9 +276,12 @@ core::ecs::Entity EntityFactory::createEnemy(core::GameEngine& gameEngine, Confi
     return enemy;
 }
 
-core::ecs::Entity EntityFactory::createButton(core::GameEngine& gameEngine, core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void()>& onClick)
+core::ecs::Entity EntityFactory::createButton(Game &game, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void()>& onClick)
 {
-    core::ecs::Entity button = gameEngine.registry.spawn_entity();
+    auto& gameEngine = game.getGameEngine();
+    auto& registry = gameEngine.registry;
+
+    core::ecs::Entity button = registry.spawn_entity();
 
     sf::RectangleShape shape(size);
     shape.setPosition(position);
@@ -338,9 +308,12 @@ core::ecs::Entity EntityFactory::createButton(core::GameEngine& gameEngine, core
     return button;
 }
 
-core::ecs::Entity EntityFactory::createTextInput(core::GameEngine& gameEngine, core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& title)
+core::ecs::Entity EntityFactory::createTextInput(Game &game, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& title)
 {
-    core::ecs::Entity textInput = gameEngine.registry.spawn_entity();
+    auto& gameEngine = game.getGameEngine();
+    auto& registry = gameEngine.registry;
+
+    core::ecs::Entity textInput = registry.spawn_entity();
 
     sf::RectangleShape shape(size);
     shape.setPosition(position);
@@ -372,9 +345,12 @@ core::ecs::Entity EntityFactory::createTextInput(core::GameEngine& gameEngine, c
     return textInput;
 }
 
-core::ecs::Entity EntityFactory::createSlider(core::GameEngine& gameEngine, core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void(float)>& onChange, float currentValue)
+core::ecs::Entity EntityFactory::createSlider(Game &game, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void(float)>& onChange, float currentValue)
 {
-    core::ecs::Entity slider = gameEngine.registry.spawn_entity();
+    auto& gameEngine = game.getGameEngine();
+    auto& registry = gameEngine.registry;
+
+    core::ecs::Entity slider = registry.spawn_entity();
 
     sf::RectangleShape bar(size);
     bar.setPosition(position);
@@ -401,9 +377,12 @@ core::ecs::Entity EntityFactory::createSlider(core::GameEngine& gameEngine, core
     return slider;
 }
 
-core::ecs::Entity EntityFactory::createImage(core::GameEngine& gameEngine, core::ecs::Registry& registry, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& textureName)
+core::ecs::Entity EntityFactory::createImage(Game &game, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& textureName)
 {
-    core::ecs::Entity img = gameEngine.registry.spawn_entity();
+    auto& gameEngine = game.getGameEngine();
+    auto& registry = gameEngine.registry;
+
+    core::ecs::Entity img = registry.spawn_entity();
 
     sf::RectangleShape shape(size);
     shape.setPosition(position);
@@ -416,4 +395,16 @@ core::ecs::Entity EntityFactory::createImage(core::GameEngine& gameEngine, core:
     registry.add_component(img, core::ge::TextureComponent{texture});
 
     return img;
+}
+
+core::ecs::Entity EntityFactory::createGameEventManager(Game &game)
+{
+    auto& gameEngine = game.getGameEngine();
+    auto& registry = gameEngine.registry;
+
+    const core::ecs::Entity eventManager = registry.spawn_entity();
+
+    registry.add_component(eventManager, EventComponent{});
+
+    return eventManager;
 }

@@ -6,9 +6,9 @@
 #include "../../../game/Components.hpp"
 #include "src/Game/Utils/ClientComponents.hpp"
 #include "src/event/EventPool.hpp"
-#include <iostream>
-#include <ostream>
 #include <vector>
+
+#include "Scenes.hpp"
 
 void Game::init()
 {
@@ -22,10 +22,11 @@ void Game::init()
     loadAssets();
 
     updateLoadingProgress(30);
-    _gameEngine.musicManager.loadMusic("level1", "assets/music/level1.ogg");
+    _gameEngine.musicManager.addMusic("level1", "level1", _gameEngine.assetManager);
+    _gameEngine.musicManager.addMusic("menu", "menu", _gameEngine.assetManager);
     _gameEngine.musicManager.setVolume(10.0f);
-    _gameEngine.musicManager.playMusic("level1");
 
+    updateLoadingProgress(50);
     _gameEngine.registry.register_component<InputStateComponent>();
     _gameEngine.registry.register_component<HealthComponent>();
     _gameEngine.registry.register_component<ScoreComponent>();
@@ -41,29 +42,17 @@ void Game::init()
     _gameEngine.registry.register_component<EventComponent>();
     _gameEngine.registry.register_component<TileComponent>();
 
-    updateLoadingProgress(40);
-    _configManager.parse("assets/Data/config.json");
-    _scrollSpeed = _configManager.getValue<float>("/view/speed/x");
-    parseMap(_gameEngine, _configManager, "./JY_map.json", _gameEngine.window);
-
-    updateLoadingProgress(50);
-    initWindow();
-
-    _gameEngine.musicManager.addMusic("level1", "level1", _gameEngine.assetManager);
-    _gameEngine.musicManager.addMusic("menu", "menu", _gameEngine.assetManager);
-    _gameEngine.musicManager.setVolume(10.0f);
-
-    updateLoadingProgress(60);
-    inputSystem(_gameEngine.registry);
+    updateLoadingProgress(70);
+    inputSystem(*this);
     playerMovementSystem(_gameEngine.registry);
-    projectileMovementSystem(_gameEngine.registry);
-    enemyMovementSystem(_gameEngine.registry);
     viewSystem(_gameEngine.registry);
+    eventSystem(*this);
 
     _viewEntity = _gameEngine.registry.spawn_entity();
     _gameEngine.registry.add_component(_viewEntity, ViewComponent{_gameEngine.window.getDefaultView()});
 
-    networkingService.init();
+    updateLoadingProgress(80);
+    _networkingService.init();
     setHandlers();
     networkingService.run();
 
@@ -71,17 +60,7 @@ void Game::init()
     _gameEngine.registry.add_component(EventEntity, EventComponent{});
     eventSystem(_gameEngine.registry);
 
-    updateLoadingProgress(70);
-    menus.initMainMenu();
-    menus.initRoomMenu();
-    menus.initSettingsMenu();
-
-    std::cout << "Menus initialized" << std::endl;
-
     updateLoadingProgress(100);
-    _gameEngine.currentScene = static_cast<int>(GameState::MainMenu);
-    std::cout << "Playing menu music" << std::endl;
-    _gameEngine.musicManager.playMusic("menu");
 }
 
 void Game::initWindow()
@@ -127,109 +106,16 @@ void Game::loadAssets()
     }
 }
 
-void Game::initMainMenu()
+void Game::sound()
 {
-    sf::Vector2u windowSize = _gameEngine.window.getSize();
-    float centerX = static_cast<float>(windowSize.x) / 2.0f;
-    float centerY = static_cast<float>(windowSize.y) / 2.0f;
-
-    sf::Vector2f buttonSize(200.0f, 50.0f);
-    float buttonSpacing = 20.0f;
-
-    EntityFactory::createImage(
-        _gameEngine,
-        _gameEngine.registry,
-        sf::Vector2f(0.0f, 0.0f),
-        sf::Vector2f(static_cast<float>(_gameEngine.window.getSize().x), static_cast<float>(windowSize.y)),
-        "background"
-    );
-
-    EntityFactory::createImage(
-        _gameEngine,
-        _gameEngine.registry,
-        sf::Vector2f(centerX - 500.0f, centerY - 400.0f),
-        sf::Vector2f(1000.0f, 300.0f),
-        "logo"
-    );
-
-    EntityFactory::createButton(
-        _gameEngine,
-        _gameEngine.registry,
-        sf::Vector2f(centerX - buttonSize.x / 2, centerY - buttonSize.y - buttonSpacing),
-        buttonSize,
-        "Start Game",
-        [this]() {
-            if (_gameEngine.currentScene != MainMenu)
-                return;
-
-            _gameEngine.currentScene = Playing;
-            playerConnectionHeader = networkingService.sendRequest("127.0.0.1", 1111, PlayerConnect, {});
-            networkingService.sendRequest("127.0.0.1", 1111, GameStart, {});
-        }
-    );
-
-    EntityFactory::createButton(
-        _gameEngine,
-        _gameEngine.registry,
-        sf::Vector2f(centerX - buttonSize.x / 2, centerY),
-        buttonSize,
-        "Options",
-        []() { }
-    );
-
-    EntityFactory::createButton(
-        _gameEngine,
-        _gameEngine.registry,
-        sf::Vector2f(centerX - buttonSize.x / 2, centerY + buttonSize.y + buttonSpacing),
-        buttonSize,
-        "Quit",
-        [this]() {
-            _windowOpen = false;
-            networkingService.stop();
-        }
-    );
-
-    EntityFactory::createSlider(
-        _gameEngine,
-        _gameEngine.registry,
-        sf::Vector2f(centerX - buttonSize.x / 2, centerY + 3 * (buttonSize.y + (buttonSpacing += 10.0f))),
-        sf::Vector2f(200.0f, 10.0f),
-        "Volume",
-        [this](float value) { _gameEngine.musicManager.setVolume(value); },
-        _gameEngine.musicManager.getVolume()
-    );
-}
-
-void Game::update()
-{
-    // events
-    _gameEngine.registry.run_system<EventComponent>();
-
-    _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent>();
-    _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent, Player>();
-    _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent, InputStateComponent, ShootCounterComponent, Player, core::ge::AnimationComponent>();
-    _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::TransformComponent>();
-    _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::AnimationComponent>();
-
-    // Sound
     _gameEngine.registry.run_system<core::ge::SoundComponent>();
-
-    // Projectile movement
-    // _gameEngine.registry.run_system<core::ge::TransformComponent, Projectile>();
-    // _gameEngine.registry.run_system<core::ge::TransformComponent, Enemy>();
-
-    // Collision detection
-    // _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent>();
-
-    // Clickable
-    _gameEngine.registry.run_system<core::ge::ClickableComponent, core::ge::DrawableComponent, core::ge::TextComponent, core::ge::TransformComponent>();
-
-    // View
-    _gameEngine.registry.run_system<ViewComponent>();
 }
 
 void Game::render()
 {
+    _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::TransformComponent>();
+    _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::AnimationComponent>();
+
     _gameEngine.window.clear();
     _gameEngine.registry.run_system<ViewComponent>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent>();
@@ -247,7 +133,7 @@ void Game::processEvents()
         if (event.type == sf::Event::Closed) {
             _windowOpen = false;
             _gameEngine.window.close();
-            networkingService.stop();
+            _networkingService.stop();
         }
 
         if (event.type == sf::Event::KeyPressed || event.type == sf::Event::KeyReleased) {
@@ -340,33 +226,46 @@ void Game::processEvents()
 }
 
 int Game::assignColor() {
-    if (!availableColors.empty()) {
-        int color = availableColors.back();
-        availableColors.pop_back();
-        return color;
-    } else {
+    if (availableColors.empty()) {
         std::cerr << "No available colors left!" << std::endl;
         return -1;
     }
+
+    const int color = availableColors.back();
+    availableColors.pop_back();
+    return color;
 }
 
-void Game::releaseColor(int color) {
+void Game::releaseColor(const int color) {
     availableColors.push_back(color);
 }
 
 void Game::run() {
+    _gameEngine.musicManager.playMusic("level1");
+    _networkingService.run();
+
+    // Load map on the game scene only set at half the screen size and other scale are biger
+    parseMap(_gameEngine.registry, "./JY_map.json", _gameEngine.window);
+    Scenes::loadMainMenu(*this);
     while (_windowOpen) {
         sf::Time elapsed = _gameEngine.clock.restart();
         _gameEngine.delta_t = elapsed.asSeconds();
 
         processEvents();
-
-        if (_gameEngine.currentScene == static_cast<int>(GameState::Loading)) {
-            renderLoadingScreen();
-            continue;
+        switch (_gameEngine.currentScene) {
+            case MainMenu:
+                Scenes::updateMainMenu(*this);
+                break;
+            case Playing:
+                Scenes::updateGame(*this);
+                break;
+            case Loading:
+                renderLoadingScreen();
+                break;
+            default:
+                break;
         }
-
-        update();
+        sound();
         render();
     }
 }

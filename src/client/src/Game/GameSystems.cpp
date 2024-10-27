@@ -12,8 +12,6 @@ sf::Vector2f getViewBounds(const sf::RenderWindow& window);
 
 static void sendPayloadMove(NetworkingService& networkingService, const sf::Vector2f& position, uint8_t playerId)
 {
-    std::cout << "Sending move payload" << std::endl;
-
     const auto [x, y] = sf::Vector2u(position);
     networkingService.sendRequest(
         "127.0.0.1",
@@ -45,8 +43,10 @@ std::pair<std::shared_ptr<core::ge::TransformComponent>, std::shared_ptr<core::g
     };
 }
 
-void Game::inputSystem(core::ecs::Registry& registry)
+void Game::inputSystem(Game &game)
 {
+    auto& registry = game.getGameEngine().registry;
+
     registry.add_system<core::ge::TransformComponent, core::ge::VelocityComponent, InputStateComponent, ShootCounterComponent, Player, core::ge::AnimationComponent>(
         [&](core::ecs::Entity, core::ge::TransformComponent &transform, core::ge::VelocityComponent &vel, const InputStateComponent &input, ShootCounterComponent &shootCounter, Player &player, core::ge::AnimationComponent &animation) {
 
@@ -103,8 +103,8 @@ void Game::inputSystem(core::ecs::Registry& registry)
                 }
             } else {
                 if (shootCounter.nextShotType == 0) {
-                    EntityFactory::createPlayerProjectile(_gameEngine, registry, transform, gameScale);
-                    networkingService.sendRequest(
+                    game.addToScene(EntityFactory::createPlayerProjectile(*this, transform, gameScale));
+                    _networkingService.sendRequest(
                         "127.0.0.1",
                         1111,
                         PlayerShoot,
@@ -112,8 +112,8 @@ void Game::inputSystem(core::ecs::Registry& registry)
                     );
                 }
                 if (shootCounter.nextShotType == 1) {
-                    EntityFactory::createPlayerMissile(_gameEngine, registry, transform, gameScale);
-                    networkingService.sendRequest(
+                    game.addToScene(EntityFactory::createPlayerMissile(*this, transform, gameScale));
+                    _networkingService.sendRequest(
                         "127.0.0.1",
                         1111,
                         PlayerShoot,
@@ -135,34 +135,14 @@ void Game::playerMovementSystem(core::ecs::Registry& registry) const
         [&](core::ecs::Entity, const core::ge::TransformComponent &transform, const core::ge::VelocityComponent &vel, const Player &player) {
             if (vel.dx == 0 && vel.dy == 0)
                 return;
-            sendPayloadMove(networkingService, transform.position, player.id);
+            sendPayloadMove(_networkingService, transform.position, player.id);
         });
 }
 
-void Game::projectileMovementSystem(core::ecs::Registry& registry) const
+void Game::eventSystem(Game &game)
 {
-    registry.add_system<core::ge::TransformComponent, Projectile>(
-        [&](const core::ecs::Entity entity, const core::ge::TransformComponent &transform, Projectile&) {
-            if (transform.position.x < getViewBounds(_gameEngine.window).x
-                || transform.position.y < getViewBounds(_gameEngine.window).y)
-                return;
-            registry.remove_component<core::ge::DrawableComponent>(entity);
-        });
-}
+    auto& registry = game.getGameEngine().registry;
 
-void Game::enemyMovementSystem(core::ecs::Registry& registry) const
-{
-    registry.add_system<core::ge::TransformComponent, Enemy>(
-        [&](const core::ecs::Entity entity, const core::ge::TransformComponent &transform, Enemy&) {
-            if (transform.position.x < getViewBounds(_gameEngine.window).x
-                || transform.position.y < getViewBounds(_gameEngine.window).y)
-                return;
-            registry.remove_component<core::ge::DrawableComponent>(entity);
-        });
-}
-
-void Game::eventSystem(core::ecs::Registry& registry)
-{
     registry.add_system<EventComponent>([&](core::ecs::Entity, EventComponent&) {
         for (auto &event : EventPool::getInstance().getAllEvents()) {
             std::cout << event << "/" << event.getType() << std::endl;
@@ -170,15 +150,13 @@ void Game::eventSystem(core::ecs::Registry& registry)
                 case PlayerConnect: {
                     const auto playerId = std::get<std::uint8_t>(event.getPayload());
                     std::cout << "Player " << static_cast<int>(playerId) << " connected" << std::endl;
-                    EntityFactory::createPlayer(
-                        _gameEngine,
-                        registry,
+                    game.addToScene(EntityFactory::createPlayer(
+                        *this,
                         _gameEngine.window.getView().getSize() / 2.0f,
                         playerId,
-                        *this,
                         gameScale,
                         playerId,
-                        event.getHeader().packetId == playerConnectionHeader.packetId);
+                        event.getHeader().packetId == _playerConnectionHeader.packetId));
                     break;
                 }
 
@@ -209,15 +187,6 @@ void Game::eventSystem(core::ecs::Registry& registry)
 
                 case PlayerHit: {
                     std::cout << "Player hit" << std::endl;
-                    // const auto playerId = std::get<std::uint8_t>(event.getPayload());
-                    // for (auto playerEntity : registry.get_entities<Player>()) {
-                    //     if (registry.get_component<Player>(playerEntity)->id != playerId)
-                    //         continue;
-                    //     const auto healthComponent = registry.get_component<HealthComponent>(playerEntity);
-                    //     healthComponent->health -= 10;
-                    //     if (healthComponent->health <= 0)
-                    //         registry.kill_entity(playerEntity);
-                    // }
                     // TODO: Handle player hit
                     break;
                 }
@@ -252,14 +221,15 @@ void Game::eventSystem(core::ecs::Registry& registry)
                             continue;
 
                         auto playerTransform = registry.get_component<core::ge::TransformComponent>(playerEntity);
-                        EntityFactory::createPlayerProjectile(_gameEngine, registry, *playerTransform, gameScale);
+                        game.addToScene(EntityFactory::createPlayerProjectile(*this, *playerTransform, gameScale));
                     }
                     break;
                 }
 
                 case EnemySpawn: {
                     auto [id, position] = std::get<std::pair<std::uint8_t, sf::Vector2u>>(event.getPayload());
-                    EntityFactory::createEnemy(_gameEngine, registry, sf::Vector2f(position), gameScale, id);
+                    std::cout << "Enemy " << static_cast<int>(id) << " spawned" << std::endl;
+                    game.addToScene(EntityFactory::createEnemy(*this, sf::Vector2f(position), gameScale, id));
                     break;
                 }
 
@@ -278,11 +248,11 @@ void Game::eventSystem(core::ecs::Registry& registry)
                 }
 
                 case EnemyDie: {
-                    std::cout << "Enemy died" << std::endl;
                     const auto enemyDiePayload = std::get<std::uint8_t>(event.getPayload());
+                    std::cout << "Enemy " << static_cast<int>(enemyDiePayload) << " died" << std::endl;
                     for (auto enemyEntity : registry.get_entities<Enemy>()) {
                         if (registry.get_component<Enemy>(enemyEntity)->id != enemyDiePayload)
-                            return;
+                            continue;
 
                         const auto animComp = registry.get_component<core::ge::AnimationComponent>(enemyEntity);
                         registry.remove_component<core::ge::VelocityComponent>(enemyEntity);

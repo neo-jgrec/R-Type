@@ -1,5 +1,6 @@
 #pragma once
 
+#include <list>
 #include <SFML/System/Vector2.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include "../../../core/ecs/Entity/Entity.hpp"
@@ -29,35 +30,6 @@ struct Tile {
 class Game {
 public:
     /**
-     * @brief Constructs a Game object and initializes the game.
-     *
-     * The constructor initializes the game by calling `init()`, which sets up entities, components, and systems.
-     */
-    Game() {
-        init();
-    }
-
-    /**
-     * @brief Destructor for the Game class.
-     *
-     * The destructor does not perform any specific cleanup operations. Defaulted.
-     */
-    ~Game() = default;
-
-    /**
-     * @brief Runs the game loop, which processes events, updates the game state, and renders the scene.
-     *
-     * The game loop continues running until the game window is closed.
-     */
-    void run();
-
-    /**
-     * @brief Releases a previously assigned color back into the available pool.
-     * @param color The color identifier to be released.
-     */
-    void releaseColor(int color);
-
-    /**
      * @enum GameState
      * @brief Represents the various states of the game.
      */
@@ -84,6 +56,11 @@ public:
     uint32_t _lastScrollPosition = 0;
 
 private:
+    NetworkingService &_networkingService = NetworkingService::getInstance(); ///< Singleton instance of the networking service.
+    GDTPHeader _playerConnectionHeader{}; ///< Header for player connection requests.
+    GameState _gameState = GameState::MainMenu; ///< The current state of the game.
+    std::list<core::ecs::Entity> _sceneEntities; ///< List of entities in the current scene.
+
     /**
      * @brief Processes SFML events like keyboard inputs, window resizing, and window closing.
      *
@@ -94,7 +71,7 @@ private:
     /**
      * @brief Updates the game systems and runs relevant systems like movement and collision detection.
      */
-    void update();
+    void sound();
 
     /**
      * @brief Renders the game by drawing all relevant components on the screen.
@@ -122,7 +99,7 @@ private:
      * @brief Handles input system logic for player movement and actions.
      * @param registry The entity-component system registry managing game entities.
      */
-    void inputSystem(core::ecs::Registry& registry);
+    void inputSystem(Game &game);
 
     /**
      * @brief Updates player movements based on their velocity.
@@ -190,11 +167,67 @@ private:
      *
      * @param registry
      */
-    void eventSystem(core::ecs::Registry& registry);
+    void eventSystem(Game &game);
 
     /**
      * @brief Updates the view based on the player's position.
      * @param registry The entity-component system registry managing game entities.
      */
     void viewSystem(core::ecs::Registry& registry);
+
+public:
+    /**
+     * @brief Constructs a Game object and initializes the game.
+     *
+     * The constructor initializes the game by calling `init()`, which sets up entities, components, and systems.
+     */
+    Game() {
+        init();
+    }
+
+    /**
+     * @brief Destructor for the Game class.
+     *
+     * The destructor does not perform any specific cleanup operations. Defaulted.
+     */
+    ~Game() = default;
+
+    /**
+     * @brief Runs the game loop, which processes events, updates the game state, and renders the scene.
+     *
+     * The game loop continues running until the game window is closed.
+     */
+    void run();
+
+    /**
+     * @brief Releases a previously assigned color back into the available pool.
+     * @param color The color identifier to be released.
+     */
+    void releaseColor(int color);
+
+    /**
+     * @brief Parses a JSON map file and creates the corresponding tiles and entities in the game.
+     * @param registry The entity-component system registry managing game entities.
+     * @param mapFilePath The file path to the JSON map.
+     * @param window The SFML render window for the game.
+     */
+    void parseMap(core::ecs::Registry& registry, const std::string& mapFilePath, sf::RenderWindow& window);
+
+
+    core::GameEngine &getGameEngine() { return _gameEngine; }
+    core::ecs::Registry &getRegistry() { return _gameEngine.registry; }
+    NetworkingService &getNetworkingService() { return _networkingService; }
+    GameState getGameState() const { return _gameState; }
+
+    void setGameState(const GameState state) { _gameState = state; }
+    void setPlayerConnectionHeader(const GDTPHeader &header) { _playerConnectionHeader = header; }
+
+    void closeWindow() { _windowOpen = false; }
+    void addToScene(const core::ecs::Entity entity) { _sceneEntities.push_back(entity); }
+    void clearScene()
+    {
+        for (auto entity : _sceneEntities)
+            _gameEngine.registry.kill_entity(entity);
+        _sceneEntities.clear();
+    }
 };
