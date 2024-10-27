@@ -100,6 +100,7 @@ void Menus::initMainMenu()
         buttonSize,
         "Solo",
         [this]() {
+            _game._gameEngine.musicManager.playMusic("level1");
             _game._gameEngine.currentScene = static_cast<int>(Game::GameState::Playing);
             _game.playerConnectionHeader = _game.networkingService.sendRequest("127.0.0.1", 1111, PlayerConnect, {});
             _game.networkingService.sendRequest("127.0.0.1", 1111, GameStart, {});
@@ -265,6 +266,7 @@ void Menus::initRoomMenu()
         buttonSize,
         "Room 1",
         [this]() {
+            _game._gameEngine.musicManager.playMusic("level1");
             _game._gameEngine.currentScene = static_cast<int>(Game::GameState::Playing);
             _game.playerConnectionHeader = _game.networkingService.sendRequest("127.0.0.1", 1111, PlayerConnect, {});
             _game.networkingService.sendRequest("127.0.0.1", 1111, GameStart, {});

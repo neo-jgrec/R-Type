@@ -116,11 +116,11 @@ void Game::loadAssets()
         _gameEngine.assetManager.loadTexture("logo", "assets/logo.png");
         updateLoadingProgress(21);
         _gameEngine.assetManager.loadTexture("player_anim", "assets/Player/missile_charging.png");
-        updateLoadingProgress(51);
+        updateLoadingProgress(22);
         _gameEngine.assetManager.loadMusic("level1", "assets/music/level1.ogg");
-        updateLoadingProgress(52);
+        updateLoadingProgress(23);
         _gameEngine.assetManager.loadMusic("menu", "assets/music/menu.ogg");
-        updateLoadingProgress(53);
+        updateLoadingProgress(24);
     } catch (const std::runtime_error &e) {
         std::cerr << "Error loading assets: " << e.what() << std::endl;
     }
