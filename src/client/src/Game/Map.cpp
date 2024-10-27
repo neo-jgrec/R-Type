@@ -70,8 +70,12 @@ void Game::initBackground(core::ecs::Registry& registry, nlohmann::json& mapData
     }
 }
 
-void Game::parseMap(core::GameEngine& gameEngine, ConfigManager& config, const std::string& mapFilePath, sf::RenderWindow& window)
+void Game::parseMap(Game &game, const std::string& mapFilePath, sf::RenderWindow& window)
 {
+    auto& gameEngine = game.getGameEngine();
+    auto& registry = gameEngine.registry;
+    auto& config = game.getConfigManager();
+
     std::ifstream mapFile(mapFilePath);
 
     int tileDamage = config.getValue<int>("/map/tiles/health");

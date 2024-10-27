@@ -42,7 +42,7 @@ public:
         Loading = 63
     };
 
-    Menus menus = Menus(*this); ///< Manages the initialization of different menus in the game.
+    // Menus menus = Menus(*this); ///< Manages the initialization of different menus in the game.
     core::GameEngine _gameEngine; ///< Game engine responsible for managing entities, components, and systems.
     NetworkingService &networkingService = NetworkingService::getInstance(); ///< Singleton instance of the networking service.
     ConfigManager _configManager;
@@ -107,18 +107,6 @@ private:
      */
     void playerMovementSystem(core::ecs::Registry& registry) const;
 
-    /**
-     * @brief Updates projectile movements based on their velocity.
-     * @param registry The entity-component system registry managing game entities.
-     */
-    void projectileMovementSystem(core::ecs::Registry& registry) const;
-
-    /**
-     * @brief Updates enemy movements based on their velocity.
-     * @param registry The entity-component system registry managing game entities.
-     */
-    void enemyMovementSystem(core::ecs::Registry& registry) const;
-
     std::vector<int> availableColors = {0, 1, 2, 3, 4}; ///< Pool of available colors for players.
 
     std::vector<std::vector<Tile>> _tileMap; ///< Represents the game map as a grid of tiles.
@@ -131,7 +119,7 @@ private:
      * @param mapFilePath The file path to the JSON map.
      * @param window The SFML render window for the game.
      */
-    void parseMap(core::GameEngine& gameEngine, ConfigManager& config, const std::string& mapFilePath, sf::RenderWindow& window);
+    void parseMap(Game &game, const std::string& mapFilePath, sf::RenderWindow& window);
 
     /**
      * @brief Initializes the background based on the map data.
@@ -173,7 +161,7 @@ private:
      * @brief Updates the view based on the player's position.
      * @param registry The entity-component system registry managing game entities.
      */
-    void viewSystem(core::ecs::Registry& registry);
+    void viewSystem(Game &game);
 
 public:
     /**
@@ -205,18 +193,10 @@ public:
      */
     void releaseColor(int color);
 
-    /**
-     * @brief Parses a JSON map file and creates the corresponding tiles and entities in the game.
-     * @param registry The entity-component system registry managing game entities.
-     * @param mapFilePath The file path to the JSON map.
-     * @param window The SFML render window for the game.
-     */
-    void parseMap(core::ecs::Registry& registry, const std::string& mapFilePath, sf::RenderWindow& window);
-
-
     core::GameEngine &getGameEngine() { return _gameEngine; }
     core::ecs::Registry &getRegistry() { return _gameEngine.registry; }
     NetworkingService &getNetworkingService() { return _networkingService; }
+    ConfigManager &getConfigManager() { return _configManager; }
     GameState getGameState() const { return _gameState; }
 
     void setGameState(const GameState state) { _gameState = state; }

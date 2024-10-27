@@ -46,6 +46,7 @@ std::pair<std::shared_ptr<core::ge::TransformComponent>, std::shared_ptr<core::g
 void Game::inputSystem(Game &game)
 {
     auto& registry = game.getGameEngine().registry;
+    const auto& config = game.getConfigManager();
 
     registry.add_system<core::ge::TransformComponent, core::ge::VelocityComponent, InputStateComponent, ShootCounterComponent, Player, core::ge::AnimationComponent>(
         [&](core::ecs::Entity, core::ge::TransformComponent &transform, core::ge::VelocityComponent &vel, const InputStateComponent &input, ShootCounterComponent &shootCounter, Player &player, core::ge::AnimationComponent &animation) {
@@ -68,11 +69,10 @@ void Game::inputSystem(Game &game)
                 }
             }
 
-            constexpr uint16_t speed = 350;
-            vel = core::ge::VelocityComponent{
-                static_cast<float>(input.left * -speed + input.right * speed),
-                static_cast<float>(input.up * -speed + input.down * speed)
-            };
+            vel = core::ge::VelocityComponent(
+                config.getValue<float>("/player/speed/x") * static_cast<float>(input.right - input.left),
+                config.getValue<float>("/player/speed/y") * static_cast<float>(input.down - input.up)
+            );
 
             if (input.fire) {
                 shootCounter.notChargingTime = 0.0f;
@@ -276,14 +276,18 @@ void Game::eventSystem(Game &game)
     });
 }
 
-void Game::viewSystem(core::ecs::Registry& registry)
+void Game::viewSystem(Game &game)
 {
+    auto& gameEngine = game.getGameEngine();
+    auto& registry = game.getGameEngine().registry;
+    const auto& config = game.getConfigManager();
+
     registry.add_system<ViewComponent>(
         [&](core::ecs::Entity, ViewComponent& view) {
-            if (_gameEngine.currentScene != Playing)
+            if (gameEngine.currentScene != Playing)
                 return;
 
-            view.view.move(50 * _gameEngine.delta_t, 0);
-            _gameEngine.window.setView(view.view);
+            view.view.move(config.getValue<float>("/view/speed/x") * gameEngine.delta_t, config.getValue<float>("/view/speed/y") * gameEngine.delta_t);
+            gameEngine.window.setView(view.view);
         });
 }

@@ -45,7 +45,7 @@ void Game::init()
     updateLoadingProgress(70);
     inputSystem(*this);
     playerMovementSystem(_gameEngine.registry);
-    viewSystem(_gameEngine.registry);
+    viewSystem(*this);
     eventSystem(*this);
 
     _viewEntity = _gameEngine.registry.spawn_entity();
@@ -61,15 +61,6 @@ void Game::init()
     eventSystem(_gameEngine.registry);
 
     updateLoadingProgress(100);
-}
-
-void Game::initWindow()
-{
-    sf::VideoMode videoMode(
-        _configManager.getValue<int>("/view/size/x"),
-        _configManager.getValue<int>("/view/size/y")
-    );
-    _gameEngine.initWindow(videoMode, 60, "R-Type");
 }
 
 void Game::loadAssets()
@@ -206,19 +197,19 @@ void Game::processEvents()
 
             if (keyToUpdate.value() == "Move Up") {
                 _gameEngine.keyBindingsConfig.moveUpKey = key;
-                text->text.setString("Move Up: " + Menus::keyToString(key));
+                // text->text.setString("Move Up: " + Menus::keyToString(key));
             } else if (keyToUpdate.value() == "Move Down"){
                 _gameEngine.keyBindingsConfig.moveDownKey = key;
-                text->text.setString("Move Down: " + Menus::keyToString(key));
+                // text->text.setString("Move Down: " + Menus::keyToString(key));
             } else if (keyToUpdate.value() == "Move Left"){
                 _gameEngine.keyBindingsConfig.moveLeftKey = key;
-                text->text.setString("Move Left: " + Menus::keyToString(key));
+                // text->text.setString("Move Left: " + Menus::keyToString(key));
             } else if (keyToUpdate.value() == "Move Right"){
                 _gameEngine.keyBindingsConfig.moveRightKey = key;
-                text->text.setString("Move Right: " + Menus::keyToString(key));
+                // text->text.setString("Move Right: " + Menus::keyToString(key));
             } else if (keyToUpdate.value() == "Shoot") {
                 _gameEngine.keyBindingsConfig.fireKey = key;
-                text->text.setString("Shoot: " + Menus::keyToString(key));
+                // text->text.setString("Shoot: " + Menus::keyToString(key));
             }
             keyToUpdate.reset();
         }
@@ -245,7 +236,7 @@ void Game::run() {
     _networkingService.run();
 
     // Load map on the game scene only set at half the screen size and other scale are biger
-    parseMap(_gameEngine.registry, "./JY_map.json", _gameEngine.window);
+    parseMap(*this, "./JY_map.json", _gameEngine.window);
     Scenes::loadMainMenu(*this);
     while (_windowOpen) {
         sf::Time elapsed = _gameEngine.clock.restart();
