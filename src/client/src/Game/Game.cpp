@@ -73,6 +73,11 @@ std::string Game::keyToString(const sf::Keyboard::Key key)
 
 void Game::init()
 {
+    sf::VideoMode videoMode(
+        _configManager.getValue<int>("/view/size/x", 1920),
+        _configManager.getValue<int>("/view/size/y", 1080)
+    );
+    _gameEngine.initWindow(videoMode, 60, "R-Type");
     _gameEngine.window.setFramerateLimit(60);
     _gameEngine.window.setKeyRepeatEnabled(true);
     loadAssets();
