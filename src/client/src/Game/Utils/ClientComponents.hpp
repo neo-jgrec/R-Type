@@ -21,4 +21,12 @@ struct TileComponent {
     bool isDestructible = false;
 };
 
+struct HitAnimationComponent {
+    int blinkCount;
+    int maxBlinks;
+    float blinkTimer;
+    float blinkInterval;
+    bool isTransparent;
+};
+
 #endif /* !CLIENTCOMPONENTS_HPP_ */
