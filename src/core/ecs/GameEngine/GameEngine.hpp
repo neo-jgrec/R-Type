@@ -159,7 +159,7 @@ protected:
                 });
         #else
             registry.add_system<core::ge::DrawableComponent>(
-                [&window = window](core::ecs::Entity, core::ge::DrawableComponent &drawable) {
+                [this, &window = window](core::ecs::Entity, core::ge::DrawableComponent &drawable) {
                     if (!drawable.visible) {
                       drawable.timeSinceLastVisible += sf::seconds(delta_t);
                       if (drawable.timeSinceLastVisible.asSeconds() > 0.5f) {
