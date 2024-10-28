@@ -1,9 +1,13 @@
 {
   "dependencies": [
     "asio",
+    "imgui-sfml",
     "luabridge",
     "nlohmann-json",
+    "sdl2",
+    "sdl2-image",
+    "sdl2-mixer",
     "sfml",
-    "imgui-sfml"
+    "sdl2-ttf"
   ]
 }

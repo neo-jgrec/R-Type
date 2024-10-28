@@ -1,10 +1,14 @@
 #pragma once
-#include <SFML/Audio.hpp>
 #include <iostream>
 #include <unordered_map>
-#include <memory>
 #include <string>
 #include "AssetManager.hpp"
+
+#ifdef GE_USE_SDL
+#include <SDL2/SDL.h>
+#else
+#include <SFML/Audio.hpp>
+#endif
 
 /**
  * @class MusicManager
@@ -30,12 +34,21 @@ public:
      * @param musicName The identifier of the music in the AssetManager.
      * @param assetManager Reference to the AssetManager containing the music.
      */
-    void addMusic(const std::string& state, const std::string& musicName, core::AssetManager& assetManager) {
-        try {
-            _musicMap[state] = &assetManager.getMusic(musicName);
-        } catch (const std::runtime_error& e) {
-            std::cerr << "Failed to get music '" << musicName << "' from AssetManager: " << e.what() << std::endl;
-        }
+    void addMusic(const std::string& state, const std::string& musicName, core::AssetManager& assetManager)
+    {
+        #ifdef GE_USE_SDL
+            try {
+                _musicMap[state] = assetManager.getMusic(musicName);
+            } catch (const std::runtime_error& e) {
+                std::cerr << "Failed to get music '" << musicName << "' from AssetManager: " << e.what() << std::endl;
+            }
+        #else
+            try {
+                _musicMap[state] = &assetManager.getMusic(musicName);
+            } catch (const std::runtime_error& e) {
+                std::cerr << "Failed to get music '" << musicName << "' from AssetManager: " << e.what() << std::endl;
+            }
+        #endif
     }
 
     /**
@@ -47,24 +60,31 @@ public:
      * @param state The string identifier of the game state whose music should be played.
      */
     void playMusic(const std::string& state) {
-        // if (_currentState != state) {
-        //     if (_musicMap.find(state) != _musicMap.end()) {
-        //         stopMusic();  // Stop current music
-        //         _currentState = state;
-        //         _musicMap[state]->play();
-        //     }
-        // }
-        if (_musicMap.find(state) == _musicMap.end()) {
-            std::cerr << "Music for state '" << state << "' is not loaded!" << std::endl;
-            return;
-        }
+        #ifdef GE_USE_SDL
+            if (_musicMap.find(state) == _musicMap.end()) {
+                std::cerr << "Music for state '" << state << "' is not loaded!" << std::endl;
+                return;
+            }
 
-        if (_currentState != state) {
-            stopMusic();
-            _currentState = state;
-            _musicMap[state]->setVolume(_currentVolume);
-            _musicMap[state]->play();
-        }
+            if (_currentState != state) {
+                stopMusic();
+                _currentState = state;
+                Mix_VolumeMusic(_currentVolume);
+                Mix_PlayMusic(_musicMap[state], -1);
+            }
+        #else
+            if (_musicMap.find(state) == _musicMap.end()) {
+                std::cerr << "Music for state '" << state << "' is not loaded!" << std::endl;
+                return;
+            }
+
+            if (_currentState != state) {
+                stopMusic();
+                _currentState = state;
+                _musicMap[state]->setVolume(_currentVolume);
+                _musicMap[state]->play();
+            }
+        #endif
     }
 
     /**
@@ -72,11 +92,19 @@ public:
      * 
      * This method stops the music track associated with the current game state and clears the current state.
      */
-    void stopMusic() {
-        if (_musicMap.find(_currentState) != _musicMap.end()) {
-            _musicMap[_currentState]->stop();
-        }
-        _currentState.clear();
+    void stopMusic()
+    {
+        #ifdef GE_USE_SDL
+            if (!_currentState.empty()) {
+                Mix_HaltMusic();
+                _currentState.clear();
+            }
+        #else
+            if (_musicMap.find(_currentState) != _musicMap.end()) {
+                _musicMap[_currentState]->stop();
+            }
+            _currentState.clear();
+        #endif
     }
 
     /**
@@ -86,11 +114,17 @@ public:
      * 
      * @param volume A float representing the desired volume level (0.0f to 100.0f).
      */
-    void setVolume(float volume) {
-        _currentVolume = volume;
-        for (auto& [state, music] : _musicMap) {
-            music->setVolume(volume);
-        }
+    void setVolume(float volume)
+    {
+        #ifdef GE_USE_SDL
+            _currentVolume = volume;
+            Mix_VolumeMusic(volume);
+        #else
+            _currentVolume = volume;
+            for (auto& [state, music] : _musicMap) {
+                music->setVolume(volume);
+            }
+        #endif
     }
 
     /**
@@ -102,7 +136,11 @@ public:
     }
 
 private:
-    std::unordered_map<std::string, sf::Music*> _musicMap; ///< A map of game state identifiers to music tracks.
+    #ifdef GE_USE_SDL
+        std::unordered_map<std::string, Mix_Music*> _musicMap; ///< A map of game state identifiers to music tracks.
+    #else
+        std::unordered_map<std::string, sf::Music*> _musicMap; ///< A map of game state identifiers to music tracks.
+    #endif
     std::string _currentState; ///< The identifier of the currently playing music state.
     float _currentVolume = 10;
 };

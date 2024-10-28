@@ -1,11 +1,18 @@
 #ifndef GAMEENGINECOMPONENTS_HPP_
 #define GAMEENGINECOMPONENTS_HPP_
 
+#include <functional>
+#include <memory>
+
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <SFML/System/Vector2.hpp>
-#include <functional>
-#include <memory>
+#ifdef GE_USE_SDL
+#include <SDL.h>
+#include <SDL_image.h>
+#include <SDL_mixer.h>
+#include <SDL_ttf.h>
+#endif
 
 #include "../Entity/Entity.hpp"
 
@@ -60,7 +67,12 @@ struct InputStateComponent {
  * This component holds the graphical representation (e.g., a rectangle shape) of the entity that can be rendered on screen.
  */
 struct DrawableComponent {
+#ifndef GE_USE_SDL
     sf::RectangleShape shape;
+#else
+    SDL_Rect shape;
+    SDL_Texture* texture = nullptr;
+#endif
 };
 
 /**
@@ -187,8 +199,15 @@ struct CollisionComponent {
  * This component stores an SFML text object and font, allowing the entity to display text in the game.
  */
 struct TextComponent {
+#ifndef GE_USE_SDL
     sf::Text text;
     sf::Font font;
+#else
+    TTF_Font* font = nullptr;
+    SDL_Texture* textTexture = nullptr;
+    SDL_Color color;
+    SDL_Rect text;
+#endif
 };
 
 /**
@@ -196,11 +215,19 @@ struct TextComponent {
  * @brief Component for text input fields.
  */
 struct TextInputComponent {
+#ifndef GE_USE_SDL
     sf::Text text;
     sf::Font font;
     bool isActive = false;
     size_t cursorPosition = 0;
     size_t maxLength = 20;
+#else
+    TTF_Font* font = nullptr;
+    SDL_Rect text;
+    bool isActive = false;
+    size_t cursorPosition = 0;
+    size_t maxLength = 20;
+#endif
 };
 
 /**
