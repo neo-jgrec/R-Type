@@ -17,13 +17,13 @@ struct PlayerControlComponent {
 };
 
 struct PlayerScoreComponent {
-    size_t score = 0;
+    short score;
 };
 
 // Mask used for collision detection (instead of using non human easy to read numbers)
-struct CollisonMasks {
-    static const int PLAYER = 0b00001;
-    static const int BALL = 0b00010;
+enum CollisonMasks {
+    PLAYER = 0b00001,
+    BALL = 0b00010,
 };
 
 int main()
@@ -38,6 +38,7 @@ int main()
 
     engine.registry.register_component<VelocityComponent>();
     engine.registry.register_component<PlayerControlComponent>();
+    engine.registry.register_component<PlayerScoreComponent>();
 
     engine.registry.add_system<core::ge::TransformComponent, VelocityComponent, core::ge::DrawableComponent>(
         [](core::ecs::Entity, core::ge::TransformComponent &transform, VelocityComponent &velocity, core::ge::DrawableComponent &drawable) {
@@ -45,6 +46,38 @@ int main()
             transform.position.y += static_cast<float>(velocity.vy);
             drawable.shape.x = static_cast<int>(transform.position.x);
             drawable.shape.y = static_cast<int>(transform.position.y);
+        });
+
+    engine.registry.add_system<core::ge::TransformComponent, VelocityComponent, core::ge::DrawableComponent>(
+        [&engine](core::ecs::Entity, core::ge::TransformComponent &transform, VelocityComponent &velocity, core::ge::DrawableComponent &) {
+            if (transform.position.x < 0 || transform.position.x > SCREEN_WIDTH - transform.size.x) {
+                auto players = engine.registry.get_entities<PlayerScoreComponent>();
+                if (transform.position.x < 0) {
+                    for (auto &player : players) {
+                        if (engine.registry.has_component<PlayerControlComponent>(player)) {
+                            auto playerControl = engine.registry.get_component<PlayerControlComponent>(player);
+                            if (playerControl->downKey == SDL_SCANCODE_S) {
+                                engine.registry.get_component<PlayerScoreComponent>(player)->score++;
+                            }
+                        }
+                    }
+                }
+                if (transform.position.x > SCREEN_WIDTH - transform.size.x) {
+                    for (auto &player : players) {
+                        if (engine.registry.has_component<PlayerControlComponent>(player)) {
+                            auto playerControl = engine.registry.get_component<PlayerControlComponent>(player);
+                            if (playerControl->downKey == SDL_SCANCODE_DOWN) {
+                                engine.registry.get_component<PlayerScoreComponent>(player)->score++;
+                            }
+                        }
+                    }
+                }
+                transform.position = {400, 300};
+                velocity.vx = -velocity.vx;
+            }
+            if (transform.position.y < 0 || transform.position.y > SCREEN_HEIGHT - transform.size.y) {
+                velocity.vy = -velocity.vy;
+            }
         });
 
     engine.registry.add_system<core::ge::TransformComponent, PlayerControlComponent, core::ge::DrawableComponent>(
@@ -67,16 +100,12 @@ int main()
         .scale = {1, 1},
         .rotation = 0,
     });
+    engine.registry.add_component<PlayerScoreComponent>(player1, PlayerScoreComponent{0});
     engine.registry.add_component<VelocityComponent>(player1, {0, 0});
     engine.registry.add_component<core::ge::DrawableComponent>(player1, {{10, 10, 20, 100}, engine.assetManager.getTexture("player")});
     engine.registry.add_component<PlayerControlComponent>(player1, {SDL_SCANCODE_W, SDL_SCANCODE_S});
-    engine.registry.add_component(player1, core::ge::CollisionComponent{CollisonMasks::BALL, {sf::FloatRect(10, 10, 20, 100)}, {
-        {0b00001, [&](const core::ecs::Entity self, const core::ecs::Entity) {
-            auto velocity = engine.registry.get_component<VelocityComponent>(self);
-            velocity->vy = 0;
-        }},
-    }});
     engine.registry.add_component(player1, core::ge::SceneComponent{0});
+    engine.registry.add_component<core::ge::CollisionComponent>(player1, {CollisonMasks::PLAYER, {sf::FloatRect(10, 10, 20, 100)}});
 
     core::ecs::Entity player2 = engine.registry.spawn_entity();
     engine.registry.add_component<core::ge::TransformComponent>(player2, {
@@ -85,34 +114,26 @@ int main()
         .scale = {1, 1},
         .rotation = 0,
     });
+    engine.registry.add_component<PlayerScoreComponent>(player2, PlayerScoreComponent{0});
     engine.registry.add_component<VelocityComponent>(player2, {0, 0});
     engine.registry.add_component<core::ge::DrawableComponent>(player2, {{770, 10, 20, 100}, engine.assetManager.getTexture("player")});
     engine.registry.add_component<PlayerControlComponent>(player2, {SDL_SCANCODE_UP, SDL_SCANCODE_DOWN});
-    engine.registry.add_component(player2, core::ge::CollisionComponent{CollisonMasks::BALL, {sf::FloatRect(770, 10, 20, 100)}, {
-        {0b00001, [&](const core::ecs::Entity self, const core::ecs::Entity) {
-            auto velocity = engine.registry.get_component<VelocityComponent>(self);
-            velocity->vy = 0;
-        }},
-    }});
     engine.registry.add_component(player2, core::ge::SceneComponent{0});
+    engine.registry.add_component<core::ge::CollisionComponent>(player2, {CollisonMasks::PLAYER, {sf::FloatRect(770, 10, 20, 100)}});
 
     core::ecs::Entity ball = engine.registry.spawn_entity();
     engine.registry.add_component<core::ge::TransformComponent>(ball, {
         .position = {400, 300},
-        .size = {20, 20},
+        .size = {100, 100},
         .scale = {1, 1},
         .rotation = 0,
     });
     engine.registry.add_component<VelocityComponent>(ball, {2, 2});
     engine.registry.add_component<core::ge::DrawableComponent>(ball, {{400, 300, 100, 100}, engine.assetManager.getTexture("ball")});
-    engine.registry.add_component(ball, core::ge::CollisionComponent{CollisonMasks::PLAYER, {sf::FloatRect(400, 300, 100, 100)}, {
-        {CollisonMasks::BALL, [&](const core::ecs::Entity self, const core::ecs::Entity) {
-            auto velocity = engine.registry.get_component<VelocityComponent>(self);
-            velocity->vx = -velocity->vx;
-        }},
+    engine.registry.add_component(ball, core::ge::CollisionComponent{CollisonMasks::BALL, {sf::FloatRect(400, 300, 100, 100)}, {
         {CollisonMasks::PLAYER, [&](const core::ecs::Entity self, const core::ecs::Entity) {
             auto velocity = engine.registry.get_component<VelocityComponent>(self);
-            velocity->vy = -velocity->vy;
+            velocity->vx = -velocity->vx;
         }},
     }});
     engine.registry.add_component(ball, core::ge::SceneComponent{0});
@@ -131,6 +152,7 @@ int main()
         engine.registry.run_system<core::ge::TransformComponent, VelocityComponent, core::ge::DrawableComponent>();
         engine.registry.run_system<core::ge::TransformComponent, PlayerControlComponent, core::ge::DrawableComponent>();
         engine.registry.run_system<core::ge::DrawableComponent, core::ge::SceneComponent>();
+        engine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent, core::ge::SceneComponent>();
 
         // RENDER
         SDL_SetRenderDrawColor(engine.renderer, 0, 0, 0, 255);
