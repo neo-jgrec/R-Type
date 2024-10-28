@@ -42,6 +42,8 @@ Server::Server()
     _gameEngine.registry.register_component<Enemy>();
     _gameEngine.registry.register_component<Projectile>();
 
+    _configManager.parse("assets/Data/config.json");
+
     Systems::worldSystem(*this);
 
     EventFactory::gameStarted(*this);
