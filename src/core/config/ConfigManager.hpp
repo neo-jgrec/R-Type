@@ -8,11 +8,6 @@
 
 class ConfigManager {
 public:
-    static ConfigManager& getInstance() {
-        static ConfigManager instance;
-        return instance;
-    }
-
     void parse(const std::string& configFilePath) {
         std::ifstream configFile(configFilePath);
         if (!configFile.is_open()) {
@@ -46,9 +41,3 @@ public:
 private:
     nlohmann::json config;
 };
-
-template int ConfigManager::getValue<int>(const std::string&, const int&) const;
-template double ConfigManager::getValue<double>(const std::string&, const double&) const;
-template std::string ConfigManager::getValue<std::string>(const std::string&, const std::string&) const;
-template bool ConfigManager::getValue<bool>(const std::string&, const bool&) const;
-template float ConfigManager::getValue<float>(const std::string&, const float&) const;
