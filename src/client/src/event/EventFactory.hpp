@@ -1,14 +1,5 @@
-/*
-** EPITECH PROJECT, 2024
-** R-Type
-** File description:
-** EventFactory.hpp
-*/
-
-#pragma once
-
 #ifndef EVENTFACTORY_HPP
-#define EVENTFACTORY_HPP
+    #define EVENTFACTORY_HPP
 
 #include "EventPool.hpp"
 #include "../core/network/includes/RequestHeader.hpp"

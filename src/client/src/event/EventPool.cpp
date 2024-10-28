@@ -115,8 +115,7 @@ void setHandlers()
 {
     NetworkingService &networkingService = NetworkingService::getInstance();
 
-    for (int i = 0; i < 256; i++) {
+    for (int i = 0; i < UINT8_MAX; i++) {
         networkingService.addEvent(i, EventPool::handler);
     }
 }
-

@@ -104,7 +104,6 @@ int main()
     engine.registry.add_component<VelocityComponent>(player1, {0, 0});
     engine.registry.add_component<core::ge::DrawableComponent>(player1, {{10, 10, 20, 100}, engine.assetManager.getTexture("player")});
     engine.registry.add_component<PlayerControlComponent>(player1, {SDL_SCANCODE_W, SDL_SCANCODE_S});
-    engine.registry.add_component(player1, core::ge::SceneComponent{0});
     engine.registry.add_component<core::ge::CollisionComponent>(player1, {CollisonMasks::PLAYER, {sf::FloatRect(0.0f, 0.0f, 20, 100)}});
 
     core::ecs::Entity player2 = engine.registry.spawn_entity();
@@ -118,7 +117,6 @@ int main()
     engine.registry.add_component<VelocityComponent>(player2, {0, 0});
     engine.registry.add_component<core::ge::DrawableComponent>(player2, {{770, 10, 20, 100}, engine.assetManager.getTexture("player")});
     engine.registry.add_component<PlayerControlComponent>(player2, {SDL_SCANCODE_UP, SDL_SCANCODE_DOWN});
-    engine.registry.add_component(player2, core::ge::SceneComponent{0});
     engine.registry.add_component<core::ge::CollisionComponent>(player2, {CollisonMasks::PLAYER, {sf::FloatRect(0, 0, 20, 100)}});
 
     core::ecs::Entity ball = engine.registry.spawn_entity();
@@ -138,7 +136,6 @@ int main()
             transform->position.x += static_cast<float>(velocity->vx);
         }},
     }});
-    engine.registry.add_component(ball, core::ge::SceneComponent{0});
 
     bool isRunning = true;
 
@@ -153,14 +150,14 @@ int main()
 
         engine.registry.run_system<core::ge::TransformComponent, VelocityComponent, core::ge::DrawableComponent>();
         engine.registry.run_system<core::ge::TransformComponent, PlayerControlComponent, core::ge::DrawableComponent>();
-        engine.registry.run_system<core::ge::DrawableComponent, core::ge::SceneComponent>();
-        engine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent, core::ge::SceneComponent>();
+        engine.registry.run_system<core::ge::DrawableComponent>();
+        engine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent>();
 
         // RENDER
         SDL_SetRenderDrawColor(engine.renderer, 0, 0, 0, 255);
         SDL_RenderClear(engine.renderer);
 
-        engine.registry.run_system<core::ge::DrawableComponent, core::ge::SceneComponent>();
+        engine.registry.run_system<core::ge::DrawableComponent>();
 
         SDL_RenderPresent(engine.renderer);
         std::this_thread::sleep_for(std::chrono::milliseconds(16));

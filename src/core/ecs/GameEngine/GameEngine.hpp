@@ -11,7 +11,6 @@
 #include <SFML/Main.hpp>
 #include <SFML/System/Clock.hpp>
 #include <SFML/Window/WindowStyle.hpp>
-#include <iostream>
 
 namespace core {
 /**
@@ -43,9 +42,9 @@ public:
         registry.register_component<core::ge::MusicComponent>();
         registry.register_component<core::ge::ClickableComponent>();
         registry.register_component<core::ge::ColorComponent>();
+        registry.register_component<core::ge::VelocityComponent>();
         registry.register_component<core::ge::CollisionComponent>();
         registry.register_component<core::ge::TextComponent>();
-        registry.register_component<core::ge::SceneComponent>();
         registry.register_component<core::ge::TextInputComponent>();
         registry.register_component<core::ge::SliderComponent>();
         registry.register_component<core::ge::DisabledComponent>();
@@ -55,6 +54,7 @@ public:
         renderSystems();
         animationSystem();
         soundSystem();
+        velocitySystem();
         collisionSystem();
         clickableSystem();
         textSystem();
@@ -71,6 +71,17 @@ public:
      * @brief Destructor for the GameEngine class. Defaulted.
      */
     ~GameEngine() = default;
+
+    void run_collision(const uint8_t wantedMask, const ecs::Entity entity)
+    {
+        for (const auto &collisionComponent = registry.get_component<ge::CollisionComponent>(entity);
+            const auto &[mask, onCollision] : collisionComponent->onCollision) {
+            if (wantedMask != mask)
+                continue;
+            onCollision(entity, entity);
+            return;
+        }
+    }
 
     float delta_t = 0.0f;               ///< Time delta between frames, used for animations and movement.
     core::ecs::Registry registry;       ///< The entity-component system (ECS) registry managing all entities and components.
@@ -139,31 +150,33 @@ protected:
     void renderSystems()
     {
         #ifdef GE_USE_SDL
-            registry.add_system<core::ge::DrawableComponent, core::ge::SceneComponent, core::ge::DisabledComponent>(
-                [&renderer = renderer, &currentScene = currentScene](core::ecs::Entity, core::ge::DrawableComponent &drawable, core::ge::SceneComponent &scene, core::ge::DisabledComponent &disabled) {
-                    if (scene.sceneName != currentScene || disabled.disabled)
+            registry.add_system<core::ge::DrawableComponent, core::ge::DisabledComponent>(
+                [&renderer = renderer, &currentScene = currentScene](core::ecs::Entity, core::ge::DrawableComponent &drawable, core::ge::DisabledComponent &disabled) {
+                    if (disabled.disabled)
                         return;
-                    SDL_RenderCopy(renderer, drawable.texture, nullptr, &drawable.shape);
+                    if (drawable.texture) {
+                        SDL_Rect rect = {drawable.shape.x, drawable.shape.y, drawable.shape.w, drawable.shape.h};
+                        SDL_RenderCopy(renderer, drawable.texture, nullptr, &rect);
+                    }
                 });
 
-            registry.add_system<core::ge::DrawableComponent, core::ge::SceneComponent>(
-                [&renderer = renderer, &currentScene = currentScene](core::ecs::Entity, core::ge::DrawableComponent &drawable, core::ge::SceneComponent &scene) {
-                    if (scene.sceneName != currentScene)
-                        return;
-                    SDL_RenderCopy(renderer, drawable.texture, nullptr, &drawable.shape);
+            registry.add_system<core::ge::DrawableComponent>(
+                [&renderer = renderer, &currentScene = currentScene](core::ecs::Entity, core::ge::DrawableComponent &drawable) {
+                    if (drawable.texture) {
+                        SDL_Rect rect = {drawable.shape.x, drawable.shape.y, drawable.shape.w, drawable.shape.h};
+                        SDL_RenderCopy(renderer, drawable.texture, nullptr, &rect);
+                    }
                 });
         #else
-            registry.add_system<core::ge::DrawableComponent, core::ge::SceneComponent, core::ge::DisabledComponent>(
-                [&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::DrawableComponent &drawable, core::ge::SceneComponent &scene, core::ge::DisabledComponent &disabled) {
-                    if (scene.sceneName != currentScene || disabled.disabled)
+            registry.add_system<core::ge::DrawableComponent, core::ge::DisabledComponent>(
+                [&window = window](core::ecs::Entity, core::ge::DrawableComponent &drawable, core::ge::DisabledComponent &disabled) {
+                    if (disabled.disabled)
                         return;
                     window.draw(drawable.shape);
                 });
 
-            registry.add_system<core::ge::DrawableComponent, core::ge::SceneComponent>(
-                [&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::DrawableComponent &drawable, core::ge::SceneComponent &scene) {
-                    if (scene.sceneName != currentScene)
-                        return;
+            registry.add_system<core::ge::DrawableComponent>(
+                [&window = window](core::ecs::Entity, core::ge::DrawableComponent &drawable) {
                     window.draw(drawable.shape);
                 });
         #endif
@@ -246,16 +259,26 @@ protected:
     }
 
     /**
+     * @brief Sets up the velocity system for handling entity movement.
+     *
+     * This system updates the position of entities based on their velocity components.
+     */
+    void velocitySystem() {
+        registry.add_system<ge::TransformComponent, ge::VelocityComponent>(
+            [&](ecs::Entity, ge::TransformComponent &transform, const ge::VelocityComponent &velocity) {
+                transform.position.x += velocity.dx * delta_t;
+                transform.position.y += velocity.dy * delta_t;
+            });
+    }
+
+    /**
      * @brief Sets up the collision detection system for handling interactions between entities.
      * 
      * This system checks for collisions between entities and triggers their `onCollision` callbacks if they intersect.
      */
-    void collisionSystem()
-    {
-        registry.add_system<ge::TransformComponent, ge::CollisionComponent, ge::SceneComponent>(
-            [&](const ecs::Entity entity, const ge::TransformComponent &transform, ge::CollisionComponent &collision, ge::SceneComponent &scene) {
-                if (scene.sceneName != currentScene)
-                    return;
+    void collisionSystem() {
+        registry.add_system<ge::TransformComponent, ge::CollisionComponent>(
+            [&](const ecs::Entity entity, const ge::TransformComponent &transform, ge::CollisionComponent &collision) {
 
                 auto &collisionComponents = registry.get_components<ge::CollisionComponent>();
                 auto &transformComponents = registry.get_components<ge::TransformComponent>();
@@ -306,60 +329,58 @@ protected:
      * 
      * This system handles user interactions with buttons, including hover and click states, and adjusts their size when hovered or clicked.
      */
-    void clickableSystem()
-    {
+    void clickableSystem() {
         #ifdef GE_USE_SDL
-        registry.add_system<core::ge::ClickableComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent, core::ge::TransformComponent>(
-            [&renderer = renderer, &currentScene = currentScene](core::ecs::Entity, core::ge::ClickableComponent &button, core::ge::SceneComponent &scene, core::ge::DrawableComponent &drawable, [[maybe_unused]] core::ge::TextComponent &text, core::ge::TransformComponent &transform) {
-                if (scene.sceneName != currentScene)
-                    return;
+            registry.add_system<core::ge::ClickableComponent, core::ge::DrawableComponent, core::ge::TextComponent, core::ge::TransformComponent>(
+                [&renderer = renderer, &currentScene = currentScene](core::ecs::Entity, core::ge::ClickableComponent &button, core::ge::DrawableComponent &drawable, core::ge::TextComponent &text, core::ge::TransformComponent &transform) {
+                    int x, y;
+                    SDL_GetMouseState(&x, &y);
+                    SDL_Rect rect = {drawable.shape.x, drawable.shape.y, drawable.shape.w, drawable.shape.h};
+                    SDL_Point mousePoint = {x, y};
+                    button.hovered = SDL_PointInRect(&mousePoint, &rect);
+                    button.clicked = button.hovered && SDL_GetMouseState(nullptr, nullptr) & SDL_BUTTON(SDL_BUTTON_LEFT);
 
-                int x, y;
-                SDL_GetMouseState(&x, &y);
-                SDL_Rect rect = {drawable.shape.x, drawable.shape.y, drawable.shape.w, drawable.shape.h};
-                SDL_Point mousePoint = {x, y};
-                button.hovered = SDL_PointInRect(&mousePoint, &rect);
-                button.clicked = button.hovered && SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_LEFT);
-
-                if (button.clicked) {
-                    button.onClick();
-                    drawable.shape.w = transform.size.x * 0.98f;
-                    drawable.shape.h = transform.size.y * 0.98f;
-                    // text.text.scale = {0.98f, 0.98f};
-                } else if (button.hovered) {
-                    drawable.shape.w = transform.size.x * 1.02f;
-                    drawable.shape.h = transform.size.y * 1.02f;
-                    // text.text.scale = {1.02f, 1.02f};
-                } else {
-                    drawable.shape.w = transform.size.x;
-                    drawable.shape.h = transform.size.y;
-                    // text.text.scale = {1.0f, 1.0f};
-                }
-            });
+                    if (button.clicked) {
+                        button.onClick();
+                        drawable.shape.w = transform.size.x * 0.98f;
+                        drawable.shape.h = transform.size.y * 0.98f;
+                        text.text.w = transform.size.x * 0.98f;
+                        text.text.h = transform.size.y * 0.98f;
+                    } else if (button.hovered) {
+                        drawable.shape.w = transform.size.x * 1.02f;
+                        drawable.shape.h = transform.size.y * 1.02f;
+                        text.text.w = transform.size.x * 1.02f;
+                        text.text.h = transform.size.y * 1.02f;
+                    } else {
+                        drawable.shape.w = transform.size.x;
+                        drawable.shape.h = transform.size.y;
+                        text.text.w = transform.size.x;
+                        text.text.h = transform.size.y;
+                    }
+                    SDL_RenderCopy(renderer, text.textTexture, nullptr, &text.text);
+                });
         #else
-        registry.add_system<core::ge::ClickableComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent, core::ge::TransformComponent>(
-            [&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::ClickableComponent &button, core::ge::SceneComponent &scene, core::ge::DrawableComponent &drawable, core::ge::TextComponent &text, core::ge::TransformComponent &transform) {
-                if (scene.sceneName != currentScene)
-                    return;
+            registry.add_system<core::ge::ClickableComponent, core::ge::DrawableComponent, core::ge::TextComponent, core::ge::TransformComponent>(
+                [&window = window](core::ecs::Entity, core::ge::ClickableComponent &button, core::ge::DrawableComponent &drawable, core::ge::TextComponent &text, core::ge::TransformComponent &transform) {
 
-                sf::Vector2i mousePosition = sf::Mouse::getPosition(window);
-                sf::Vector2f worldPos = window.mapPixelToCoords(mousePosition);
+                    sf::Vector2i mousePosition = sf::Mouse::getPosition(window);
+                    sf::Vector2f worldPos = window.mapPixelToCoords(mousePosition);
 
-                button.hovered = drawable.shape.getGlobalBounds().contains(worldPos);
-                button.clicked = button.hovered && sf::Mouse::isButtonPressed(sf::Mouse::Left);
+                    button.hovered = drawable.shape.getGlobalBounds().contains(worldPos);
+                    button.clicked = button.hovered && sf::Mouse::isButtonPressed(sf::Mouse::Left);
 
-                if (button.clicked) {
-                    button.onClick();
-                    drawable.shape.setSize(transform.size * 0.98f);
-                    text.text.setScale(sf::Vector2f(0.98f, 0.98f));
-                } else if (button.hovered) {
-                    drawable.shape.setSize(transform.size * 1.02f);
-                    text.text.setScale(sf::Vector2f(1.02f, 1.02f));
-                } else {
-                    drawable.shape.setSize(transform.size);
-                    text.text.setScale(sf::Vector2f(1.0f, 1.0f));
-                }
-            });
+                    if (button.clicked) {
+                        button.onClick();
+                        drawable.shape.setSize(transform.size * 0.98f);
+                        text.text.setScale(sf::Vector2f(0.98f, 0.98f));
+                    } else if (button.hovered) {
+                        drawable.shape.setSize(transform.size * 1.02f);
+                        text.text.setScale(sf::Vector2f(1.02f, 1.02f));
+                    } else {
+                        drawable.shape.setSize(transform.size);
+                        text.text.setScale(sf::Vector2f(1.0f, 1.0f));
+                    }
+                });
         #endif
     }
 
@@ -371,19 +392,13 @@ protected:
     void textSystem()
     {
         #ifdef GE_USE_SDL
-        registry.add_system<core::ge::TextComponent, core::ge::SceneComponent, core::ge::DrawableComponent>(
-            [&renderer = renderer, &currentScene = currentScene](core::ecs::Entity, core::ge::TextComponent &text, core::ge::SceneComponent &scene, core::ge::DrawableComponent &drawable) {
-                if (scene.sceneName != currentScene)
-                    return;
-
-                SDL_Rect rect = {drawable.shape.x, drawable.shape.y, drawable.shape.w, drawable.shape.h};
-                SDL_RenderCopy(renderer, text.textTexture, nullptr, &rect);
-            });
+            registry.add_system<core::ge::TextComponent>(
+                [&renderer = renderer, &currentScene = currentScene](core::ecs::Entity, core::ge::TextComponent &text) {
+                    SDL_RenderCopy(renderer, text.textTexture, nullptr, &text.text);
+                });
         #else
-            registry.add_system<core::ge::TextComponent, core::ge::SceneComponent>(
-                [&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::TextComponent &text, core::ge::SceneComponent &scene) {
-                    if (scene.sceneName != currentScene)
-                        return;
+            registry.add_system<core::ge::TextComponent>(
+                [&window = window](core::ecs::Entity, core::ge::TextComponent &text) {
 
                     if (text.text.getString().isEmpty()) {
                         std::cerr << "Warning: Attempting to draw empty text" << std::endl;
@@ -402,23 +417,28 @@ protected:
     void textInputSystem()
     {
         #ifdef GE_USE_SDL
-            registry.add_system<core::ge::TextInputComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent>(
-                [&renderer = renderer, &currentScene = currentScene](core::ecs::Entity, core::ge::TextInputComponent &textInput, core::ge::SceneComponent &scene, core::ge::DrawableComponent &drawable, core::ge::TextComponent &text) {
-                    if (scene.sceneName != currentScene)
-                        return;
-                    (void)drawable;
+            registry.add_system<core::ge::TextInputComponent, core::ge::DrawableComponent, core::ge::TextComponent>(
+                [&renderer = renderer, &currentScene = currentScene](core::ecs::Entity, core::ge::TextInputComponent &textInput, core::ge::DrawableComponent &drawable, core::ge::TextComponent &text) {
+                    (void)text;
                     int x, y;
                     SDL_GetMouseState(&x, &y);
-                    SDL_Rect rect = {text.text.x, text.text.y, text.text.w, text.text.h};
+                    SDL_Rect rect = {drawable.shape.x, drawable.shape.y, drawable.shape.w, drawable.shape.h};
                     SDL_Point mousePoint = {x, y};
-                    textInput.isActive = SDL_PointInRect(&mousePoint, &rect);
-                    SDL_RenderCopy(renderer, text.textTexture, nullptr, &text.text);
+                    textInput.isActive = SDL_PointInRect(&mousePoint, &rect) && SDL_GetMouseState(nullptr, nullptr) & SDL_BUTTON(SDL_BUTTON_LEFT);
+                    if (textInput.isActive) {
+                        SDL_StartTextInput();
+                        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+                        SDL_RenderFillRect(renderer, &rect);
+                        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+                        SDL_RenderDrawRect(renderer, &rect);
+                    } else {
+                        SDL_StopTextInput();
+                    }
                 });
         #else
-            registry.add_system<core::ge::TextInputComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent>(
-                [&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::TextInputComponent &textInput, core::ge::SceneComponent &scene, core::ge::DrawableComponent &drawable, core::ge::TextComponent &text) {
-                    if (scene.sceneName != currentScene)
-                        return;
+            registry.add_system<core::ge::TextInputComponent, core::ge::DrawableComponent, core::ge::TextComponent>(
+                [&window = window](core::ecs::Entity, core::ge::TextInputComponent &textInput, core::ge::DrawableComponent &drawable, core::ge::TextComponent &text) {
+                    (void)text;
                     sf::Vector2i mousePosition = sf::Mouse::getPosition(window);
                     sf::Vector2f worldPos = window.mapPixelToCoords(mousePosition);
                     if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
@@ -433,8 +453,8 @@ protected:
                     } else {
                         drawable.shape.setOutlineColor(sf::Color::Black);
                     }
-                    text.text.setFont(textInput.font);
-                    window.draw(text.text);
+                    textInput.text.setFont(textInput.font);
+                    window.draw(textInput.text);
                 });
         #endif
     }
@@ -445,56 +465,29 @@ protected:
     void sliderSystem()
     {
         #ifdef GE_USE_SDL
-            registry.add_system<core::ge::SliderComponent, core::ge::SceneComponent, core::ge::DrawableComponent>(
-                [&renderer = renderer, &currentScene = currentScene](core::ecs::Entity, core::ge::SliderComponent &slider, core::ge::SceneComponent &scene, core::ge::DrawableComponent &drawable) {
-                    if (scene.sceneName != currentScene)
-                        return;
-                    (void)drawable;
+            registry.add_system<core::ge::SliderComponent>(
+                [&renderer = renderer, &currentScene = currentScene](core::ecs::Entity, core::ge::SliderComponent &slider) {
+                    (void)currentScene;
+                    SDL_Rect bar = {static_cast<int>(slider.bar.getPosition().x), static_cast<int>(slider.bar.getPosition().y), static_cast<int>(slider.bar.getSize().x), static_cast<int>(slider.bar.getSize().y)};
+                    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+                    SDL_RenderFillRect(renderer, &bar);
+                    SDL_Rect handle = {static_cast<int>(slider.handle.getPosition().x), static_cast<int>(slider.handle.getPosition().y), static_cast<int>(slider.handle.getRadius() * 2), static_cast<int>(slider.handle.getRadius() * 2)};
+                    SDL_RenderFillRect(renderer, &handle);
                     int x, y;
                     SDL_GetMouseState(&x, &y);
-                    sf::FloatRect barBounds = slider.bar.getGlobalBounds();
-                    SDL_Rect rect = {static_cast<int>(barBounds.left), static_cast<int>(barBounds.top), static_cast<int>(barBounds.width), static_cast<int>(barBounds.height)};
                     SDL_Point mousePoint = {x, y};
-                    bool isHovered = SDL_PointInRect(&mousePoint, &rect);
-                    if (isHovered) {
-                        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-                        SDL_Rect barRect = {static_cast<int>(slider.bar.getPosition().x), static_cast<int>(slider.bar.getPosition().y), static_cast<int>(slider.bar.getSize().x), static_cast<int>(slider.bar.getSize().y)};
-                        SDL_RenderFillRect(renderer, &barRect);
-                        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-                        SDL_Rect handleRect = {
-                            static_cast<int>(slider.handle.getPosition().x),
-                            static_cast<int>(slider.handle.getPosition().y),
-                            static_cast<int>(slider.handle.getRadius() * 2),
-                            static_cast<int>(slider.handle.getRadius() * 2)
-                        };
-                        SDL_RenderFillRect(renderer, &handleRect);
-                    } else {
-                        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-                        SDL_Rect barRect = {static_cast<int>(slider.bar.getPosition().x), static_cast<int>(slider.bar.getPosition().y), static_cast<int>(slider.bar.getSize().x), static_cast<int>(slider.bar.getSize().y)};
-                        SDL_RenderFillRect(renderer, &barRect);
-                        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-                        SDL_Rect handleRect = {
-                            static_cast<int>(slider.handle.getPosition().x),
-                            static_cast<int>(slider.handle.getPosition().y),
-                            static_cast<int>(slider.handle.getRadius() * 2),
-                            static_cast<int>(slider.handle.getRadius() * 2)
-                        };
-                        SDL_RenderFillRect(renderer, &handleRect);
-                    }
-                    if (isHovered && SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_LEFT)) {
-                        float percentage = (x - slider.bar.getPosition().x) / slider.bar.getSize().x;
+                    if (SDL_PointInRect(&mousePoint, &handle) && SDL_GetMouseState(nullptr, nullptr) & SDL_BUTTON(SDL_BUTTON_LEFT)) {
+                        float percentage = (x - slider.bar.getPosition().x) / static_cast<float>(slider.bar.getSize().x);
                         percentage = std::clamp(percentage, 0.0f, 1.0f);
                         slider.currentValue = slider.minValue + (slider.maxValue - slider.minValue) * percentage;
-                        slider.handle.setPosition(slider.bar.getPosition().x + percentage * slider.bar.getSize().x - slider.handle.getRadius(), slider.handle.getPosition().y);
+                        slider.handle.setPosition(slider.bar.getPosition().x + percentage * slider.bar.getSize().x, slider.handle.getPosition().y);
                         if (slider.onChange)
                             slider.onChange(slider.currentValue);
                     }
                 });
         #else
-            registry.add_system<core::ge::SliderComponent, core::ge::SceneComponent>(
-                [&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::SliderComponent &slider, core::ge::SceneComponent &scene) {
-                    if (scene.sceneName != currentScene)
-                        return;
+            registry.add_system<core::ge::SliderComponent>(
+                [&window = window](core::ecs::Entity, core::ge::SliderComponent &slider) {
                     sf::Vector2i mousePosition = sf::Mouse::getPosition(window);
                     sf::Vector2f worldPos = window.mapPixelToCoords(mousePosition);
                     slider.handle.setPosition(
