@@ -28,7 +28,11 @@ namespace core {
  */
 class AssetManager {
 public:
+    #ifdef GE_USE_SDL
+    AssetManager(SDL_Renderer* renderer) : renderer(renderer) {}
+    #else
     AssetManager() = default;
+    #endif
 
     #ifdef GE_USE_SDL
     ~AssetManager() {
@@ -61,10 +65,10 @@ public:
             throw std::runtime_error("Failed to load texture: " + absolutePath + " SDL_image Error: " + IMG_GetError());
         }
         SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-        SDL_FreeSurface(surface);
         if (!texture) {
-            throw std::runtime_error("Failed to create texture from surface for: " + absolutePath);
+            throw std::runtime_error("Failed to create texture: " + absolutePath + " SDL Error: " + SDL_GetError());
         }
+        SDL_FreeSurface(surface);
         textures[name] = texture;
         #endif
     }
@@ -233,7 +237,7 @@ private:
     std::unordered_map<std::string, TTF_Font*> fonts;
     std::unordered_map<std::string, Mix_Chunk*> sounds;
     std::unordered_map<std::string, Mix_Music*> music;
-    SDL_Renderer* renderer = nullptr;  // SDL renderer
+    SDL_Renderer* renderer;
     #endif
 };
 

@@ -64,23 +64,7 @@ public:
         if (!initWindow)
             return;
 
-#ifdef GE_USE_SDL
-        // Initialize SDL window
-        if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-            std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
-            return;
-        }
-        sdlWindow = SDL_CreateWindow("Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1920, 1080, SDL_WINDOW_SHOWN);
-        if (!sdlWindow) {
-            std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
-            SDL_Quit();
-        }
-#else
-        // Initialize SFML window
-        window.create(sf::VideoMode(1920, 1080), "Game", sf::Style::Default);
-        window.setFramerateLimit(60);
-        window.setKeyRepeatEnabled(true);
-#endif
+        this->initWindow({800, 600}, 60, "Game");
     }
 
     /**
@@ -91,25 +75,25 @@ public:
     float delta_t = 0.0f;               ///< Time delta between frames, used for animations and movement.
     core::ecs::Registry registry;       ///< The entity-component system (ECS) registry managing all entities and components.
     MusicManager musicManager;          ///< Manager for background music in the game.
-    AssetManager assetManager;         ///< Manager for loading and managing assets.
     #ifdef GE_USE_SDL
         SDL_Window *sdlWindow;          ///< The SDL window where the game is drawn.
         SDL_Renderer *renderer;         ///< The SDL renderer for rendering graphics.
+        AssetManager assetManager{renderer}; ///< Manager for game assets such as textures and sounds.
     #else
         sf::RenderWindow window;            ///< The SFML render window where the game is drawn.
+        AssetManager assetManager;          ///< Manager for game assets such as textures and sounds.
     #endif
     int currentScene = 0;               ///< The currently active scene, represented by an integer.
     sf::Clock clock;                    ///< SFML clock for tracking time in the game loop.
     core::ge::KeyBinding keyBindingsConfig; ///< The key bindings configuration for the game.
 
     #ifdef GE_USE_SDL
-        void initWindow(sf::VideoMode size, int framerateLimit, const std::string& title, SDL_WindowFlags style = SDL_WINDOW_SHOWN)
+        void initWindow(sf::VideoMode size, [[maybe_unused]] int framerateLimit, const std::string& title, SDL_WindowFlags style = SDL_WINDOW_SHOWN)
     #else
         void initWindow(sf::VideoMode size, [[maybe_unused]] int framerateLimit, const std::string& title , sf::Uint32 style = sf::Style::Default)
     #endif
     {
 #ifdef GE_USE_SDL
-        // Initialize SDL window
         if (SDL_Init(SDL_INIT_VIDEO) < 0) {
             std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
             return;
@@ -124,7 +108,20 @@ public:
             std::cerr << "Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
             SDL_DestroyWindow(sdlWindow);
             SDL_Quit();
+            return;
         }
+
+        if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
+            std::cerr << "SDL_image could not initialize! SDL_image Error: " << IMG_GetError() << std::endl;
+            SDL_DestroyRenderer(renderer);
+            SDL_DestroyWindow(sdlWindow);
+            SDL_Quit();
+            return;
+        }
+
+        // we need to precise this because the sdl create a new pointer for the renderer
+        // do not remove the line please
+        assetManager = AssetManager{renderer};
 #else
         // Initialize SFML window
         window.create(size, title, style);

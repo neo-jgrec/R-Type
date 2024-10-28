@@ -37,6 +37,7 @@ if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
     endif()
 endif()
 
+# Required packages
 find_package(asio REQUIRED)
 find_package(SFML COMPONENTS graphics window system audio network REQUIRED)
 find_package(SDL2 REQUIRED)
@@ -44,12 +45,11 @@ find_package(SDL2_image CONFIG REQUIRED)
 find_package(SDL2_mixer CONFIG REQUIRED)
 find_package(SDL2_ttf CONFIG REQUIRED)
 
+# Source files
 file(GLOB_RECURSE SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp
 )
-
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/includes)
 
 # Add executable
 add_executable(pong ${SOURCES})
@@ -61,11 +61,13 @@ target_include_directories(pong
         ${CMAKE_SOURCE_DIR}/includes
 )
 
+# Link libraries to the target
 target_link_libraries(pong
         PRIVATE
         asio::asio
         sfml-graphics sfml-window sfml-system sfml-audio sfml-network
         SDL2::SDL2
+        $<IF:$<TARGET_EXISTS:SDL2_image::SDL2_image>,SDL2_image::SDL2_image,SDL2_image::SDL2_image-static>
         $<IF:$<TARGET_EXISTS:SDL2_mixer::SDL2_mixer>,SDL2_mixer::SDL2_mixer,SDL2_mixer::SDL2_mixer-static>
         $<IF:$<TARGET_EXISTS:SDL2_ttf::SDL2_ttf>,SDL2_ttf::SDL2_ttf,SDL2_ttf::SDL2_ttf-static>
 )
@@ -74,5 +76,5 @@ target_link_libraries(pong
 install(TARGETS pong DESTINATION . COMPONENT client)
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/assets DESTINATION . COMPONENT client)
 
-# Add subdirectory for tests
+# Optional: Add subdirectory for tests
 # add_subdirectory(tests)
