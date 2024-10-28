@@ -22,7 +22,7 @@ struct PlayerControlComponent {
 
 int main()
 {
-    core::GameEngine engine;
+    core::GameEngine engine{false};
     engine.initWindow({800, 600}, 60, "Pong");
 
     // Register components
