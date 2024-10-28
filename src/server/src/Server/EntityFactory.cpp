@@ -15,14 +15,19 @@ core::ecs::Entity EntityFactory::createWorld(
     Server &server,
     const std::string& filePath)
 {
-    core::GameEngine &gameEngine = server.getGameEngine();
-    NetworkingService &networkingService = server.getNetworkingService();
+    auto &gameEngine = server.getGameEngine();
+    auto &networkingService = server.getNetworkingService();
+    auto &config = server.getConfigManager();
 
     const core::ecs::Entity world = gameEngine.registry.spawn_entity();
 
+    const sf::Vector2f size = {config.getValue<float>("/view/size/x", 1920.0f), config.getValue<float>("/view/size/y", 1080.0f)};
+
     gameEngine.registry.add_component(world, Network{networkingService});
-    gameEngine.registry.add_component(world, core::ge::VelocityComponent{50, 0});
-    gameEngine.registry.add_component(world, core::ge::TransformComponent{sf::Vector2f(0, 0), sf::Vector2f(1920, 1080), sf::Vector2f(1, 1), 0});
+    gameEngine.registry.add_component(world, core::ge::VelocityComponent{
+        config.getValue<float>("/view/speed/x", 50.0f),
+        config.getValue<float>("/view/speed/y", 0)});
+    gameEngine.registry.add_component(world, core::ge::TransformComponent{sf::Vector2f(0, 0), size, sf::Vector2f(1, 1), 0});
     gameEngine.registry.add_component(world, core::ge::CollisionComponent{WORLD, {
         {-1000, 0, 1000, 1080},
         {2250, 0, 1000, 1080}
@@ -38,7 +43,7 @@ core::ecs::Entity EntityFactory::createWorld(
 
     World worldComponent = {
         std::time(nullptr), 1,
-        { 1920, 1080 }, json["cellSize"], {}};
+        { size.x, size.y }, json["cellSize"], {}};
     for (const auto& tile : json["tiles"]) {
         if (tile.contains("tags")) {
             if (std::vector<std::string> tags = tile["tags"]; tags.end() == std::ranges::find(tags, "spawn"))
@@ -68,8 +73,9 @@ core::ecs::Entity EntityFactory::createPlayer(
     Server &server,
     const uint8_t id)
 {
-    core::GameEngine &gameEngine = server.getGameEngine();
-    NetworkingService &networkingService = server.getNetworkingService();
+    auto &gameEngine = server.getGameEngine();
+    auto &networkingService = server.getNetworkingService();
+    const auto &config = server.getConfigManager();
     const auto &playersConnection = server.getPlayersConnection();
     auto &players = server.getPlayers();
 
@@ -106,14 +112,19 @@ core::ecs::Entity EntityFactory::createPlayer(
         }
     };
 
+    const auto size = sf::Vector2f(
+        config.getValue<float>("/player/size/x", 99.0f),
+        config.getValue<float>("/player/size/y", 51.0f)
+    );
+
     const core::ecs::Entity player = gameEngine.registry.spawn_entity();
     const auto [fst, snd] = worldComponent->spawnPoints[rand() % worldComponent->spawnPoints.size()];
-    const core::ge::TransformComponent transformComponent = {sf::Vector2f(static_cast<float>(fst), static_cast<float>(snd)), sf::Vector2f(worldComponent->tileSize, worldComponent->tileSize), sf::Vector2f(1, 1), 0};
+    const core::ge::TransformComponent transformComponent = {sf::Vector2f(static_cast<float>(fst), static_cast<float>(snd)), size, sf::Vector2f(1, 1), 0};
     const Player playerComponent = {id, 3, std::time(nullptr)};
 
     gameEngine.registry.add_component(player, Network{networkingService});
     gameEngine.registry.add_component(player, std::move(transformComponent));
-    gameEngine.registry.add_component(player, core::ge::CollisionComponent{PLAYER, std::vector{sf::FloatRect(0, 0, worldComponent->tileSize, worldComponent->tileSize)},{
+    gameEngine.registry.add_component(player, core::ge::CollisionComponent{PLAYER, std::vector{sf::FloatRect(0, 0, size.x, size.y)},{
         {ENEMY, onCollision},
         {TILE, onCollision},
         {WORLD, [&, id](const core::ecs::Entity &entity, const core::ecs::Entity &otherEntity) {
@@ -191,12 +202,10 @@ core::ecs::Entity EntityFactory::createEnemy(Server &server, const uint32_t x)
     if (id >= 255)
         return core::ecs::Entity{};
 
-    core::GameEngine &gameEngine = server.getGameEngine();
-    NetworkingService &networkingService = server.getNetworkingService();
+    auto &gameEngine = server.getGameEngine();
+    auto &networkingService = server.getNetworkingService();
+    const auto &config = server.getConfigManager();
     const auto &playersConnection = server.getPlayersConnection();
-
-    const core::ecs::Entity world = gameEngine.registry.get_entities<World>()[0];
-    const auto &worldComponent = gameEngine.registry.get_component<World>(world);
 
     const auto currentId = id;
     const std::function onCollision = [&, currentId](const core::ecs::Entity& entity, const core::ecs::Entity& otherEntity) {
@@ -210,11 +219,19 @@ core::ecs::Entity EntityFactory::createEnemy(Server &server, const uint32_t x)
 
     const core::ecs::Entity enemy = gameEngine.registry.spawn_entity();
 
-    const sf::Vector2i position = {static_cast<int>(x), rand() % 880 + 100};
+    const auto size = sf::Vector2f(
+        config.getValue<float>("/enemies/0/size/x", 115.0f),
+        config.getValue<float>("/enemies/0/size/y", 126.0f)
+    );
+
+    const auto height = config.getValue<int>("/view/size/y", 1080.0f);
+    const sf::Vector2i position = {static_cast<int>(x), rand() % (height - (height / 6) + height / 3)};
     gameEngine.registry.add_component(enemy, Network{networkingService});
-    gameEngine.registry.add_component(enemy, core::ge::VelocityComponent{-200, 0});
-    gameEngine.registry.add_component(enemy, core::ge::TransformComponent{sf::Vector2f(position), sf::Vector2f(worldComponent->tileSize, worldComponent->tileSize), sf::Vector2f(1, 1), 0});
-    gameEngine.registry.add_component(enemy, core::ge::CollisionComponent{ENEMY, std::vector{sf::FloatRect(0, 0, worldComponent->tileSize, worldComponent->tileSize)},{
+    gameEngine.registry.add_component(enemy, core::ge::VelocityComponent{
+        -config.getValue<float>("/enemies/0/speed/x", 115.0f),
+        config.getValue<float>("/enemies/0/speed/y", 126.0f)});
+    gameEngine.registry.add_component(enemy, core::ge::TransformComponent{sf::Vector2f(position), size, sf::Vector2f(1, 1), 0});
+    gameEngine.registry.add_component(enemy, core::ge::CollisionComponent{ENEMY, std::vector{sf::FloatRect(0, 0, size.x, size.y)},{
         {PLAYER, onCollision},
         {PLAYER_PROJECTILE, onCollision},
         {TILE, onCollision},
@@ -249,7 +266,8 @@ core::ecs::Entity EntityFactory::createProjectile(
     const core::ecs::Entity &player,
     const uint8_t id)
 {
-    core::GameEngine &gameEngine = server.getGameEngine();
+    auto &gameEngine = server.getGameEngine();
+    auto &config = server.getConfigManager();
 
     const auto onCollision = [&, id](const core::ecs::Entity& entity, const core::ecs::Entity& otherEntity) {
         std::cout << "Projectile " << static_cast<int>(id) << " died" << std::endl;
@@ -262,9 +280,14 @@ core::ecs::Entity EntityFactory::createProjectile(
 
     const auto &playerTransform = gameEngine.registry.get_component<core::ge::TransformComponent>(player);
 
-    gameEngine.registry.add_component(projectile, core::ge::VelocityComponent{500, 0});
-    gameEngine.registry.add_component(projectile, core::ge::TransformComponent{playerTransform->position, sf::Vector2f(8, 8), sf::Vector2f(1, 1), 0});
-    gameEngine.registry.add_component(projectile, core::ge::CollisionComponent{PLAYER_PROJECTILE, std::vector{sf::FloatRect(0, 0, 8, 8)},{
+    const auto size = sf::Vector2f(
+        config.getValue<float>("/player/weapons/0/size/x", 72.0f),
+        config.getValue<float>("/player/weapons/0/size/y", 20.0f)
+    );
+
+    gameEngine.registry.add_component(projectile, core::ge::VelocityComponent{config.getValue<float>("/player/weapons/0/speed/x", 500.0f), config.getValue<float>("/player/weapons/0/speed/y", 0.0f)});
+    gameEngine.registry.add_component(projectile, core::ge::TransformComponent{playerTransform->position, size, sf::Vector2f(1, 1), 0});
+    gameEngine.registry.add_component(projectile, core::ge::CollisionComponent{PLAYER_PROJECTILE, std::vector{sf::FloatRect(0, 0, size.x, size.y)},{
         {ENEMY, onCollision},
         {WORLD, onCollision},
         {TILE, onCollision}}});
