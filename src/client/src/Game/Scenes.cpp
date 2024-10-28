@@ -397,6 +397,7 @@ namespace Scenes {
         gameEngine.registry.run_system<EventComponent>();
 
         gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent>();
+        gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent>();
         gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent, Player>();
         gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent, InputStateComponent, ShootCounterComponent, Player, core::ge::AnimationComponent>();
     }

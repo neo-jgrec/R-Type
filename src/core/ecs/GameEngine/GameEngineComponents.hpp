@@ -61,6 +61,8 @@ struct InputStateComponent {
  */
 struct DrawableComponent {
     sf::RectangleShape shape;
+    bool visible = true;
+    sf::Time timeSinceLastVisible = sf::Time::Zero;
 };
 
 /**

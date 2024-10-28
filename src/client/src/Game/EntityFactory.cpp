@@ -244,6 +244,17 @@ core::ecs::Entity EntityFactory::createEnemy(Game &game, const sf::Vector2f& pos
     registry.add_component(enemy, Enemy{
         .id = enemyId
     });
+    gameEngine.registry.add_component(enemy, core::ge::CollisionComponent{ENEMY, {sf::FloatRect(0.0f, 0.0f, enemySize.x, enemySize.y)}, {
+        { PLAYER_PROJECTILE, [&](const core::ecs::Entity self, [[maybe_unused]] const core::ecs::Entity other) {
+                auto drawable = gameEngine.registry.get_component<core::ge::DrawableComponent>(self);
+                drawable->visible = false;
+                drawable->timeSinceLastVisible = sf::Time::Zero;
+        }}, { PLAYER_MISSILE, [&](const core::ecs::Entity self, [[maybe_unused]] const core::ecs::Entity other) {
+                auto drawable = gameEngine.registry.get_component<core::ge::DrawableComponent>(self);
+                drawable->visible = false;
+                drawable->timeSinceLastVisible = sf::Time::Zero;
+        }},
+    }});
 
     auto texture = gameEngine.assetManager.getTexture("enemie1");
 
