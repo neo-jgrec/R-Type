@@ -1,16 +1,11 @@
-/*
-** EPITECH PROJECT, 2024
-** R-Type
-** File description:
-** EventFactory.cpp
-*/
-
 #include "EventFactory.hpp"
-#include <SFML/System/Vector2.hpp>
+
 #include <cstdint>
-#include <cstring>
-#include "../../../game/RequestType.hpp"
+#include <SFML/System/Vector2.hpp>
+
 #include "src/event/Event.hpp"
+#include "../../../game/RequestType.hpp"
+
 
 const std::unordered_map<uint8_t, EventFactory::EventHandler> EventFactory::handlers = {
     {RequestType::PlayerConnect, handlePlayerConnect},
@@ -31,14 +26,11 @@ const std::unordered_map<uint8_t, EventFactory::EventHandler> EventFactory::hand
 
 Event EventFactory::createEvent(const GDTPHeader& header, const std::vector<uint8_t>& payload)
 {
-    uint8_t type = header.messageType;
-
-    auto it = handlers.find(type);
-    if (it != handlers.end()) {
+    if (const auto it = handlers.find(header.messageType); it != handlers.end()) {
         return it->second(header, payload);
-    } else {
-        throw EventPool::UnknownEvent(header.messageType);
     }
+
+    throw EventPool::UnknownEvent(header.messageType);
 }
 
 Event EventFactory::handleMapScroll([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload)

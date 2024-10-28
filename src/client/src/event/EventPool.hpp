@@ -1,26 +1,16 @@
-/*
-** EPITECH PROJECT, 2024
-** R-Type
-** File description:
-** EventPool
-*/
-
-#pragma once
-
 #ifndef EVENTPOOL_HPP
-#define EVENTPOOL_HPP
+    #define EVENTPOOL_HPP
 
-    #include <asio/ip/udp.hpp>
-    #include <condition_variable>
-    #include <mutex>
-    #include <optional>
-    #include <deque>
-    #include <map>
-    #include <vector>
+#include <asio/ip/udp.hpp>
+#include <condition_variable>
+#include <mutex>
+#include <optional>
+#include <deque>
+#include <vector>
 
-    #include "../../../core/network/NetworkService.hpp"
-    #include "../core/network/includes/RequestHeader.hpp"
-    #include "Event.hpp"
+#include "../../../core/network/NetworkService.hpp"
+#include "../core/network/includes/RequestHeader.hpp"
+#include "Event.hpp"
 
 /**
  * @class EventPool

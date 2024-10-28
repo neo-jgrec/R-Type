@@ -148,7 +148,7 @@ namespace Systems {
 
         registry.add_system<EventComponent>([&](core::ecs::Entity, EventComponent&) {
             for (auto &event : EventPool::getInstance().getAllEvents()) {
-                std::cout << event << "/" << event.getType() << std::endl;
+                std::cout << event << std::endl;
                 switch (event.getType()) {
                     case PlayerConnect: {
                         const auto playerId = std::get<std::uint8_t>(event.getPayload());
