@@ -1,6 +1,7 @@
 #include <SDL_events.h>
 #define GE_USE_SDL
 #include "../../core/ecs/GameEngine/GameEngine.hpp"
+#include <thread>
 
 // Component Definitions
 struct TransformComponent {
@@ -25,13 +26,11 @@ int main()
     core::GameEngine engine{false};
     engine.initWindow({800, 600}, 60, "Pong");
 
-    // Register components
     engine.registry.register_component<TransformComponent>();
     engine.registry.register_component<VelocityComponent>();
     engine.registry.register_component<RenderableComponent>();
     engine.registry.register_component<PlayerControlComponent>();
 
-    // Initialize systems
     engine.registry.add_system<TransformComponent, VelocityComponent>(
         [](core::ecs::Entity, TransformComponent &transform, VelocityComponent &velocity) {
             transform.x += velocity.vx;
@@ -54,7 +53,6 @@ int main()
                 transform.y += 5;
         });
 
-    // Create entities
     core::ecs::Entity player1 = engine.registry.spawn_entity();
     engine.registry.add_component<TransformComponent>(player1, {10, 10, 20, 100});
     engine.registry.add_component<VelocityComponent>(player1, {0, 0});
@@ -70,6 +68,8 @@ int main()
     bool isRunning = true;
 
     while (isRunning) {
+        SDL_SetRenderDrawColor(engine.renderer, 0, 0, 0, 255);
+        SDL_RenderClear(engine.renderer);
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT || (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE)) {
@@ -83,6 +83,7 @@ int main()
         engine.registry.run_system<TransformComponent, PlayerControlComponent>();
 
         SDL_RenderPresent(engine.renderer);
+        std::this_thread::sleep_for(std::chrono::milliseconds(16));
     }
 
     SDL_Quit();
