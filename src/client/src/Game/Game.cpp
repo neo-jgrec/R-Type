@@ -1,14 +1,17 @@
 #include "Game.hpp"
-#include <SFML/System/String.hpp>
-#include <SFML/System/Time.hpp>
-#include <SFML/Window/Keyboard.hpp>
-#include <iostream>
-#include "../../../game/Components.hpp"
-#include "src/Game/Utils/ClientComponents.hpp"
-#include "src/event/EventPool.hpp"
+
 #include <vector>
+#include <iostream>
+#include <SFML/System/Time.hpp>
+#include <SFML/System/String.hpp>
+#include <SFML/Window/Keyboard.hpp>
 
 #include "Scenes.hpp"
+#include "Systems.hpp"
+#include "src/event/EventPool.hpp"
+#include "src/Game/Utils/ClientComponents.hpp"
+#include "../../../game/Components.hpp"
+
 
 std::string Game::keyToString(const sf::Keyboard::Key key)
 {
@@ -96,10 +99,10 @@ void Game::init()
     _gameEngine.registry.register_component<TileComponent>();
 
     loadingProgress(50);
-    inputSystem(*this);
-    playerMovementSystem(_gameEngine.registry);
-    viewSystem(*this);
-    eventSystem(*this);
+    Systems::playerInput(*this);
+    Systems::playerMovement(*this);
+    Systems::gameView(*this);
+    Systems::gameEvent(*this);
 
     loadingProgress(60);
     _viewEntity = _gameEngine.registry.spawn_entity();
@@ -302,21 +305,6 @@ void Game::processEvents()
             keyToUpdate.reset();
         }
     }
-}
-
-int Game::assignColor() {
-    if (availableColors.empty()) {
-        std::cerr << "No available colors left!" << std::endl;
-        return -1;
-    }
-
-    const int color = availableColors.back();
-    availableColors.pop_back();
-    return color;
-}
-
-void Game::releaseColor(const int color) {
-    availableColors.push_back(color);
 }
 
 void Game::run() {

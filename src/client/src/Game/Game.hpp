@@ -80,25 +80,6 @@ private:
      */
     void init();
 
-    /**
-     * @brief Assigns a unique color to a player.
-     * @return The color assigned, or -1 if no colors are available.
-     */
-    int assignColor();
-
-    /**
-     * @brief Handles input system logic for player movement and actions.
-     */
-    void inputSystem(Game &game);
-
-    /**
-     * @brief Updates player movements based on their velocity.
-     * @param registry The entity-component system registry managing game entities.
-     */
-    void playerMovementSystem(core::ecs::Registry& registry) const;
-
-    std::vector<int> availableColors = {0, 1, 2, 3, 4}; ///< Pool of available colors for players.
-
     std::vector<std::vector<Tile>> _tileMap; ///< Represents the game map as a grid of tiles.
     /**
      * @brief Parses a JSON map file and creates the corresponding tiles and entities in the game.
@@ -126,16 +107,6 @@ private:
      */
     void loadingProgress(float progress);
 
-    /**
-     * @brief Handles game events such as player collisions, enemy attacks, and power-ups.
-     */
-    void eventSystem(Game &game);
-
-    /**
-     * @brief Updates the view based on the player's position.
-     */
-    void viewSystem(Game &game);
-
 public:
     /**
      * @brief Constructs a Game object and initializes the game.
@@ -160,17 +131,13 @@ public:
      */
     void run();
 
-    /**
-     * @brief Releases a previously assigned color back into the available pool.
-     * @param color The color identifier to be released.
-     */
-    void releaseColor(int color);
-
     core::GameEngine &getGameEngine() { return _gameEngine; }
     core::ecs::Registry &getRegistry() { return _gameEngine.registry; }
     NetworkingService &getNetworkingService() { return _networkingService; }
     ConfigManager &getConfigManager() { return _configManager; }
     GameState getGameState() const { return _gameState; }
+    sf::Vector2f getGameScale() const { return gameScale; }
+    GDTPHeader &getPlayerConnectionHeader() { return _playerConnectionHeader; }
 
     void setGameState(const GameState state) { _gameState = state; }
     void setPlayerConnectionHeader(const GDTPHeader &header) { _playerConnectionHeader = header; }

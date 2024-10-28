@@ -11,7 +11,7 @@
 #include "../../../core/ecs/GameEngine/GameEngineComponents.hpp"
 #include "Utils/ClientComponents.hpp"
 
-core::ecs::Entity EntityFactory::createPlayer(Game &game, const sf::Vector2f& position, int color, sf::Vector2f gameScale, std::uint16_t playerId, bool self)
+core::ecs::Entity EntityFactory::createPlayer(Game &game, const sf::Vector2f& position, uint8_t id, bool self)
 {
     auto& gameEngine = game.getGameEngine();
     auto& registry = gameEngine.registry;
@@ -52,32 +52,29 @@ core::ecs::Entity EntityFactory::createPlayer(Game &game, const sf::Vector2f& po
         });
 
         registry.add_component(player, core::ge::VelocityComponent{0, 0});
-        registry.add_component(player_anim, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 35.0f), gameScale, 0.0f});
+        registry.add_component(player_anim, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 35.0f), game.getGameScale(), 0.0f});
         registry.add_component(player_anim, core::ge::DrawableComponent{animShape});
         registry.add_component(player_anim, core::ge::TextureComponent{texture});
-        registry.add_component(player_anim, PlayerAnim{static_cast<std::uint8_t>(playerId)});
+        registry.add_component(player_anim, PlayerAnim{id});
     }
 
-    registry.add_component(player, core::ge::TransformComponent{position, playerSize, gameScale, 0.0f});
+    registry.add_component(player, core::ge::TransformComponent{position, playerSize, game.getGameScale(), 0.0f});
     if (self) {
         gameEngine.registry.add_component(player, InputStateComponent{});
     }
     gameEngine.registry.add_component(player, core::ge::KeyBinding{gameEngine.keyBindingsConfig});
     gameEngine.registry.add_component(player, HealthComponent{10});
     gameEngine.registry.add_component(player, ScoreComponent{0});
-    gameEngine.registry.add_component(player, Player{
-        .id = static_cast<uint8_t>(playerId),
-        .self = self
-    });
+    gameEngine.registry.add_component(player, Player{id, self});
     gameEngine.registry.add_component(player, ShootCounterComponent{0, 0, 0, -1});
-    gameEngine.registry.add_component(player, PlayerColorComponent{color});
+    gameEngine.registry.add_component(player, PlayerColorComponent{id});
 
     auto texture = gameEngine.assetManager.getTexture("player");
 
     sf::RectangleShape playerShape(playerSize);
     playerShape.setTexture(texture.get());
 
-    int row = color * 17;
+    int row = id * 17;
     playerShape.setTextureRect(sf::IntRect(0, row, 33, 17));
 
     registry.add_component(player, core::ge::DrawableComponent{playerShape});
@@ -102,7 +99,7 @@ core::ecs::Entity EntityFactory::createPlayer(Game &game, const sf::Vector2f& po
     return player;
 }
 
-core::ecs::Entity EntityFactory::createPlayerProjectile(Game &game, core::ge::TransformComponent& playerTransform, sf::Vector2f gameScale)
+core::ecs::Entity EntityFactory::createPlayerProjectile(Game &game, core::ge::TransformComponent& playerTransform)
 {
     auto& gameEngine = game.getGameEngine();
     auto& registry = gameEngine.registry;
@@ -129,7 +126,7 @@ core::ecs::Entity EntityFactory::createPlayerProjectile(Game &game, core::ge::Tr
     startPosition.x += playerWidth;
     startPosition.y += (playerHeight / 2.0f) - (projectileSize.y / 2.0f);
 
-    registry.add_component(projectile, core::ge::TransformComponent{startPosition, projectileSize, gameScale, 0.0f});
+    registry.add_component(projectile, core::ge::TransformComponent{startPosition, projectileSize, game.getGameScale(), 0.0f});
     registry.add_component(projectile, core::ge::CollisionComponent{PLAYER_PROJECTILE, {sf::FloatRect(0.0f, 0.0f, 18.0f, 5.0f)}});
     registry.add_component(projectile, core::ge::VelocityComponent{projectileSpeed.x, projectileSpeed.y});
     registry.add_component(projectile, DamageComponent{damage});
@@ -152,7 +149,7 @@ core::ecs::Entity EntityFactory::createPlayerProjectile(Game &game, core::ge::Tr
     return projectile;
 }
 
-core::ecs::Entity EntityFactory::createPlayerMissile(Game &game, core::ge::TransformComponent &playerTransform, sf::Vector2f gameScale)
+core::ecs::Entity EntityFactory::createPlayerMissile(Game &game, core::ge::TransformComponent &playerTransform)
 {
     auto& gameEngine = game.getGameEngine();
     auto& registry = gameEngine.registry;
@@ -178,9 +175,9 @@ core::ecs::Entity EntityFactory::createPlayerMissile(Game &game, core::ge::Trans
     float playerWidth = playerTransform.size.x * playerTransform.scale.x;
     float playerHeight = playerTransform.size.y * playerTransform.scale.y;
     startPosition.x += playerWidth;
-    startPosition.y += (playerHeight / 2.0f) - ((missileSize.y / 2.0f) * gameScale.y);
+    startPosition.y += (playerHeight / 2.0f) - ((missileSize.y / 2.0f) * game.getGameScale().y);
 
-    registry.add_component(missile, core::ge::TransformComponent{startPosition, missileSize, gameScale, 0.0f});
+    registry.add_component(missile, core::ge::TransformComponent{startPosition, missileSize, game.getGameScale(), 0.0f});
     registry.add_component(missile, core::ge::CollisionComponent{PLAYER_MISSILE, {sf::FloatRect(0.0f, 0.0f, missileSize.x, missileSize.y)}});
     registry.add_component(missile, core::ge::VelocityComponent{missileSpeed.x, missileSpeed.y});
     registry.add_component(missile, DamageComponent{damage});
@@ -219,7 +216,7 @@ core::ecs::Entity EntityFactory::createPlayerMissile(Game &game, core::ge::Trans
     return missile;
 }
 
-core::ecs::Entity EntityFactory::createEnemy(Game &game, const sf::Vector2f& position, sf::Vector2f gameScale, std::uint8_t enemyId)
+core::ecs::Entity EntityFactory::createEnemy(Game &game, const sf::Vector2f& position, std::uint8_t enemyId)
 {
     auto& gameEngine = game.getGameEngine();
     auto& registry = gameEngine.registry;
@@ -240,7 +237,7 @@ core::ecs::Entity EntityFactory::createEnemy(Game &game, const sf::Vector2f& pos
     int enemyHealth = config.getValue<int>("/enemies/0/health");
     int enemyDamage = config.getValue<int>("/enemies/0/damage");
 
-    registry.add_component(enemy, core::ge::TransformComponent{position, enemySize, gameScale, 0.0f});
+    registry.add_component(enemy, core::ge::TransformComponent{position, enemySize, game.getGameScale(), 0.0f});
     registry.add_component(enemy, core::ge::VelocityComponent{-enemySpeed.x, enemySpeed.y});
     registry.add_component(enemy, HealthComponent{enemyHealth});
     registry.add_component(enemy, DamageComponent{enemyDamage});
