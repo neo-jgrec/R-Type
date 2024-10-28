@@ -1,4 +1,5 @@
 #include "Scenes.hpp"
+#include <SFML/System/Vector2.hpp>
 
 #include "Game.hpp"
 #include "EntityFactory.hpp"
@@ -367,6 +368,24 @@ namespace Scenes {
                 game.keyToUpdate = "Shoot";
             }
         ));
+        startY += buttonSpacing + buttonSize.y * 2 + labelSpacing;
+
+        core::ecs::Entity autoFireButtonEntity = EntityFactory::createButton(
+        game,
+        sf::Vector2f(buttonSize.y, startY),
+        sf::Vector2f(300.0f, 50.0f),
+        std::string("Auto-fire Mode: ") + (game._autoFire ? "On" : "Off"),
+        nullptr
+        );
+
+        auto clickable = game.getGameEngine().registry.get_component<core::ge::ClickableComponent>(autoFireButtonEntity);
+        clickable->onClick = [&game, autoFireButtonEntity]() {
+            game._autoFire = !game._autoFire;
+            auto text = game.getGameEngine().registry.get_component<core::ge::TextComponent>(autoFireButtonEntity);
+            text->text.setString(std::string("Auto-fire Mode: ") + (game._autoFire ? "On" : "Off"));
+        };
+
+        game.addToScene(autoFireButtonEntity);
     }
 
     void updateSettingsMenu(Game &game)
