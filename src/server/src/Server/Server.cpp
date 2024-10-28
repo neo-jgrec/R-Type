@@ -74,6 +74,7 @@ void Server::start()
         _players[i] = EntityFactory::createPlayer(*this, i);
     }
 
+    _gameEngine.clock.restart();
     _gameState = GAME;
 }
 
