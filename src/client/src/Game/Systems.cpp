@@ -31,6 +31,9 @@ namespace Systems {
         const auto& config = game.getConfigManager();
         auto &networkingService = game.getNetworkingService();
 
+        static float autoFireTimer = 0.0f;
+        static int autoFireCount = 0;
+
         registry.add_system<core::ge::TransformComponent, core::ge::VelocityComponent, InputStateComponent, ShootCounterComponent, Player, core::ge::AnimationComponent>(
             [&](core::ecs::Entity, core::ge::TransformComponent &transform, core::ge::VelocityComponent &vel, const InputStateComponent &input, ShootCounterComponent &shootCounter, Player &player, core::ge::AnimationComponent &animation) {
 
@@ -56,35 +59,9 @@ namespace Systems {
                     config.getValue<float>("/player/speed/y", 350.0f) * static_cast<float>(input.down - input.up)
                 );
 
-                if (input.fire) {
-                    shootCounter.notChargingTime = 0.0f;
-                    shootCounter.chargeTime += gameEngine.delta_t;
-                    if (shootCounter.chargeTime >= 1.0f) {
-                        shootCounter.nextShotType = 1;
-                    } else {
-                        if (shootCounter.chargeTime >= 0.05f) {
-                            playerAnim->currentFrame = 0;
-                            if (shootCounter.chargeTime >= 0.1f)
-                                playerAnim->currentFrame = 1;
-                            if (shootCounter.chargeTime >= 0.2f)
-                                playerAnim->currentFrame = 2;
-                            if (shootCounter.chargeTime >= 0.35f)
-                                playerAnim->currentFrame = 3;
-                            if (shootCounter.chargeTime >= 0.5f)
-                                playerAnim->currentFrame = 4;
-                            if (shootCounter.chargeTime >= 0.65f)
-                                playerAnim->currentFrame = 5;
-                            if (shootCounter.chargeTime >= 0.7f)
-                                playerAnim->currentFrame = 6;
-                            if (shootCounter.chargeTime >= 0.8f)
-                                playerAnim->currentFrame = 7;
-                            if (shootCounter.chargeTime >= 1.0f)
-                                playerAnim->currentFrame = 8;
-                        }
-                        shootCounter.nextShotType = 0;
-                    }
-                } else {
-                    if (shootCounter.nextShotType == 0) {
+                if (game._autoFire) {
+                    autoFireTimer += gameEngine.delta_t;
+                    if (autoFireTimer >= 0.3f && autoFireCount < 10) {
                         game.addToScene(EntityFactory::createPlayerProjectile(game, transform));
                         networkingService.sendRequest(
                             "127.0.0.1",
@@ -92,8 +69,9 @@ namespace Systems {
                             PlayerShoot,
                             {player.id}
                         );
-                    }
-                    if (shootCounter.nextShotType == 1) {
+                        autoFireTimer = 0.0f;
+                        autoFireCount += 1;
+                    } else if (autoFireTimer >= 0.3 && autoFireCount >= 10) {
                         game.addToScene(EntityFactory::createPlayerMissile(game, transform));
                         networkingService.sendRequest(
                             "127.0.0.1",
@@ -101,12 +79,62 @@ namespace Systems {
                             PlayerShoot,
                             {player.id}
                         );
+                        autoFireTimer = 0.0f;
+                        autoFireCount = 0;
                     }
-                    shootCounter.notChargingTime += gameEngine.delta_t;
-                    if (shootCounter.notChargingTime > 0.05f)
-                        shootCounter.chargeTime = 0.0f;
-                    playerAnim->currentFrame = 0;
-                    shootCounter.nextShotType = -1;
+                } else {
+                    if (input.fire) {
+                        shootCounter.notChargingTime = 0.0f;
+                        shootCounter.chargeTime += gameEngine.delta_t;
+                        if (shootCounter.chargeTime >= 1.0f) {
+                            shootCounter.nextShotType = 1;
+                        } else {
+                            if (shootCounter.chargeTime >= 0.05f) {
+                                playerAnim->currentFrame = 0;
+                                if (shootCounter.chargeTime >= 0.1f)
+                                    playerAnim->currentFrame = 1;
+                                if (shootCounter.chargeTime >= 0.2f)
+                                    playerAnim->currentFrame = 2;
+                                if (shootCounter.chargeTime >= 0.35f)
+                                    playerAnim->currentFrame = 3;
+                                if (shootCounter.chargeTime >= 0.5f)
+                                    playerAnim->currentFrame = 4;
+                                if (shootCounter.chargeTime >= 0.65f)
+                                    playerAnim->currentFrame = 5;
+                                if (shootCounter.chargeTime >= 0.7f)
+                                    playerAnim->currentFrame = 6;
+                                if (shootCounter.chargeTime >= 0.8f)
+                                    playerAnim->currentFrame = 7;
+                                if (shootCounter.chargeTime >= 1.0f)
+                                    playerAnim->currentFrame = 8;
+                            }
+                            shootCounter.nextShotType = 0;
+                        }
+                    } else {
+                        if (shootCounter.nextShotType == 0) {
+                            game.addToScene(EntityFactory::createPlayerProjectile(game, transform));
+                            networkingService.sendRequest(
+                                "127.0.0.1",
+                                1111,
+                                PlayerShoot,
+                                {player.id}
+                            );
+                        }
+                        if (shootCounter.nextShotType == 1) {
+                            game.addToScene(EntityFactory::createPlayerMissile(game, transform));
+                            networkingService.sendRequest(
+                                "127.0.0.1",
+                                1111,
+                                PlayerShoot,
+                                {player.id}
+                            );
+                        }
+                        shootCounter.notChargingTime += gameEngine.delta_t;
+                        if (shootCounter.notChargingTime > 0.05f)
+                            shootCounter.chargeTime = 0.0f;
+                        playerAnim->currentFrame = 0;
+                        shootCounter.nextShotType = -1;
+                    }
                 }
             });
     }
