@@ -44,7 +44,7 @@ int main()
         [](core::ecs::Entity, core::ge::TransformComponent &transform, VelocityComponent &velocity, core::ge::DrawableComponent &drawable) {
             transform.position.x += static_cast<float>(velocity.vx);
             transform.position.y += static_cast<float>(velocity.vy);
-            drawable.shape.x = static_cast<int>(transform.position.x);
+            drawable.shape.x = static_cast<int>(transform.position.x); // we need to update the shape because the SDL need to store the shape size alongside the texture
             drawable.shape.y = static_cast<int>(transform.position.y);
         });
 
@@ -105,7 +105,7 @@ int main()
     engine.registry.add_component<core::ge::DrawableComponent>(player1, {{10, 10, 20, 100}, engine.assetManager.getTexture("player")});
     engine.registry.add_component<PlayerControlComponent>(player1, {SDL_SCANCODE_W, SDL_SCANCODE_S});
     engine.registry.add_component(player1, core::ge::SceneComponent{0});
-    engine.registry.add_component<core::ge::CollisionComponent>(player1, {CollisonMasks::PLAYER, {sf::FloatRect(10, 10, 20, 100)}});
+    engine.registry.add_component<core::ge::CollisionComponent>(player1, {CollisonMasks::PLAYER, {sf::FloatRect(0.0f, 0.0f, 20, 100)}});
 
     core::ecs::Entity player2 = engine.registry.spawn_entity();
     engine.registry.add_component<core::ge::TransformComponent>(player2, {
@@ -119,7 +119,7 @@ int main()
     engine.registry.add_component<core::ge::DrawableComponent>(player2, {{770, 10, 20, 100}, engine.assetManager.getTexture("player")});
     engine.registry.add_component<PlayerControlComponent>(player2, {SDL_SCANCODE_UP, SDL_SCANCODE_DOWN});
     engine.registry.add_component(player2, core::ge::SceneComponent{0});
-    engine.registry.add_component<core::ge::CollisionComponent>(player2, {CollisonMasks::PLAYER, {sf::FloatRect(770, 10, 20, 100)}});
+    engine.registry.add_component<core::ge::CollisionComponent>(player2, {CollisonMasks::PLAYER, {sf::FloatRect(0, 0, 20, 100)}});
 
     core::ecs::Entity ball = engine.registry.spawn_entity();
     engine.registry.add_component<core::ge::TransformComponent>(ball, {
@@ -130,10 +130,12 @@ int main()
     });
     engine.registry.add_component<VelocityComponent>(ball, {2, 2});
     engine.registry.add_component<core::ge::DrawableComponent>(ball, {{400, 300, 100, 100}, engine.assetManager.getTexture("ball")});
-    engine.registry.add_component(ball, core::ge::CollisionComponent{CollisonMasks::BALL, {sf::FloatRect(400, 300, 100, 100)}, {
+    engine.registry.add_component(ball, core::ge::CollisionComponent{CollisonMasks::BALL, {sf::FloatRect(0, 0, 100, 100)}, {
         {CollisonMasks::PLAYER, [&](const core::ecs::Entity self, const core::ecs::Entity) {
             auto velocity = engine.registry.get_component<VelocityComponent>(self);
+            auto transform = engine.registry.get_component<core::ge::TransformComponent>(self);
             velocity->vx = -velocity->vx;
+            transform->position.x += static_cast<float>(velocity->vx);
         }},
     }});
     engine.registry.add_component(ball, core::ge::SceneComponent{0});
