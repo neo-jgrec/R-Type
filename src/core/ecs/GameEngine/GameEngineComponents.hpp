@@ -69,6 +69,8 @@ struct InputStateComponent {
 struct DrawableComponent {
 #ifndef GE_USE_SDL
     sf::RectangleShape shape;
+    bool visible = true;
+    sf::Time timeSinceLastVisible = sf::Time::Zero;
 #else
     SDL_Rect shape;
     SDL_Texture* texture = nullptr;

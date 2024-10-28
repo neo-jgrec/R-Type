@@ -195,8 +195,6 @@ namespace Systems {
                     case PlayerMove: {
                         auto [id, position] = std::get<std::pair<std::uint8_t, sf::Vector2u>>(event.getPayload());
                         for (auto playerEntity : registry.get_entities<Player>()) {
-                            if (const auto disabledComponent = registry.get_component<core::ge::DisabledComponent>(playerEntity))
-                                disabledComponent->disabled = false;
 
                             const auto playerTransform = registry.get_component<core::ge::TransformComponent>(playerEntity);
                             playerTransform->position = sf::Vector2f(static_cast<float>(position.x), static_cast<float>(position.y));

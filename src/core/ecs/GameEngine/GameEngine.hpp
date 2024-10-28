@@ -150,16 +150,6 @@ protected:
     void renderSystems()
     {
         #ifdef GE_USE_SDL
-            registry.add_system<core::ge::DrawableComponent, core::ge::DisabledComponent>(
-                [&renderer = renderer, &currentScene = currentScene](core::ecs::Entity, core::ge::DrawableComponent &drawable, core::ge::DisabledComponent &disabled) {
-                    if (disabled.disabled)
-                        return;
-                    if (drawable.texture) {
-                        SDL_Rect rect = {drawable.shape.x, drawable.shape.y, drawable.shape.w, drawable.shape.h};
-                        SDL_RenderCopy(renderer, drawable.texture, nullptr, &rect);
-                    }
-                });
-
             registry.add_system<core::ge::DrawableComponent>(
                 [&renderer = renderer, &currentScene = currentScene](core::ecs::Entity, core::ge::DrawableComponent &drawable) {
                     if (drawable.texture) {
@@ -168,15 +158,16 @@ protected:
                     }
                 });
         #else
-            registry.add_system<core::ge::DrawableComponent, core::ge::DisabledComponent>(
-                [&window = window](core::ecs::Entity, core::ge::DrawableComponent &drawable, core::ge::DisabledComponent &disabled) {
-                    if (disabled.disabled)
-                        return;
-                    window.draw(drawable.shape);
-                });
-
             registry.add_system<core::ge::DrawableComponent>(
                 [&window = window](core::ecs::Entity, core::ge::DrawableComponent &drawable) {
+                    if (!drawable.visible) {
+                      drawable.timeSinceLastVisible += sf::seconds(delta_t);
+                      if (drawable.timeSinceLastVisible.asSeconds() > 0.5f) {
+                        drawable.visible = true;
+                        drawable.timeSinceLastVisible = sf::Time::Zero;
+                      }
+                      return;
+                    }
                     window.draw(drawable.shape);
                 });
         #endif
