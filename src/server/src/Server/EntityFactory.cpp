@@ -282,8 +282,8 @@ core::ecs::Entity EntityFactory::createTile(
 {
     core::GameEngine &gameEngine = server.getGameEngine();
 
-    const auto onCollision = [&](const core::ecs::Entity& entity, const core::ecs::Entity& otherEntity) {
-        std::cout << "Tile collided" << std::endl;
+    const auto onCollision = [&gameEngine, &server, x, y](const core::ecs::Entity& entity, const core::ecs::Entity& otherEntity) {
+        std::cout << "Tile collided at " << x << ", " << y << std::endl;
 
         gameEngine.run_collision(TILE, otherEntity);
         server.sendRequestToPlayers(TileDestroy, {
@@ -301,7 +301,7 @@ core::ecs::Entity EntityFactory::createTile(
 
     const core::ecs::Entity tile = gameEngine.registry.spawn_entity();
 
-    gameEngine.registry.add_component(tile, core::ge::TransformComponent{sf::Vector2f(static_cast<float>(x * size.first), static_cast<float>(y * size.second)), sf::Vector2f(static_cast<float>(size.first), static_cast<float>(size.second)), sf::Vector2f(1, 1), 0});
+    gameEngine.registry.add_component(tile, core::ge::TransformComponent{sf::Vector2f(static_cast<float>(x), static_cast<float>(y)), sf::Vector2f(static_cast<float>(size.first), static_cast<float>(size.second)), sf::Vector2f(1, 1), 0});
     gameEngine.registry.add_component(tile, core::ge::CollisionComponent{TILE, std::vector{sf::FloatRect(0, 0, static_cast<float>(size.first), static_cast<float>(size.second))}, {
         {PLAYER_PROJECTILE, onCollision},
         {ENEMY, onCollision},

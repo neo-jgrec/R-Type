@@ -18,7 +18,8 @@ struct EventComponent {
 };
 
 struct TileComponent {
-    bool isDestructible = false;
+    bool isDestructible;
+    sf::Vector2u pos;
 };
 
 #endif /* !CLIENTCOMPONENTS_HPP_ */

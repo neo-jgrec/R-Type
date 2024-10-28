@@ -9,16 +9,6 @@
 #include "../../../core/config/ConfigManager.hpp"
 
 /**
- * @struct Tile
- * @brief Defines the properties of a tile in the game world, including its entity, position, and whether it is destructible.
- */
-struct Tile {
-    core::ecs::Entity entity;   ///< The entity associated with this tile.
-    sf::Vector2f position;      ///< The position of the tile in the game world.
-    bool isDestructible;        ///< Indicates if the tile can be destroyed.
-};
-
-/**
  * @class Game
  * @brief Manages the game logic, including initialization, event handling, rendering, and updating game state.
  *
@@ -80,7 +70,6 @@ private:
      */
     void init();
 
-    std::vector<std::vector<Tile>> _tileMap; ///< Represents the game map as a grid of tiles.
     /**
      * @brief Parses a JSON map file and creates the corresponding tiles and entities in the game.
      * @param mapFilePath The file path to the JSON map.

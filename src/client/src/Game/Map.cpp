@@ -4,7 +4,6 @@
 
 #include "../../../core/ecs/GameEngine/GameEngine.hpp"
 #include "../../../game/Components.hpp"
-#include "../../../game/CollisionMask.hpp"
 #include "src/Game/Utils/ClientComponents.hpp"
 #include "Game.hpp"
 
@@ -74,11 +73,8 @@ void Game::parseMap(Game &game, const std::string& mapFilePath, sf::RenderWindow
 {
     auto& gameEngine = game.getGameEngine();
     auto& registry = gameEngine.registry;
-    auto& config = game.getConfigManager();
 
     std::ifstream mapFile(mapFilePath);
-
-    int tileDamage = config.getValue<int>("/map/tiles/health", 10);
 
     if (!mapFile) {
         std::cerr << "Error: Could not open map file: " << mapFilePath << std::endl;
@@ -133,16 +129,6 @@ void Game::parseMap(Game &game, const std::string& mapFilePath, sf::RenderWindow
         return;
     }
 
-    try {
-        _tileMap.resize(mapData["height"]);
-        for (auto& row : _tileMap) {
-            row.resize(mapData["width"]);
-        }
-    } catch (const std::exception& e) {
-        std::cerr << "Error: Exception while resizing tile map: " << e.what() << std::endl;
-        return;
-    }
-
     float mapHeight = mapData["height"].get<float>() * mapData["cellSize"].get<float>();
     float scale = static_cast<float>(window.getSize().y) / mapHeight;
 
@@ -161,64 +147,23 @@ void Game::parseMap(Game &game, const std::string& mapFilePath, sf::RenderWindow
             int tileIdx = tile["tileIndex"].get<int>() - 1;
             if (tileIdx < 0)
                 continue;
-            bool isDestructible = tile["isDestructible"].get<bool>();
-            sf::Vector2f tilePos(tile["x"].get<float>() * mapData["cellSize"].get<float>() * gameScale.x,
-                                 tile["y"].get<float>() * mapData["cellSize"].get<float>() * gameScale.y);
 
-            sf::RectangleShape tileShape(sf::Vector2f(mapData["cellSize"].get<float>() * gameScale.x, mapData["cellSize"].get<float>() * gameScale.y));
+            bool isDestructible = tile["isDestructible"].get<bool>();
+            const sf::Vector2f size{mapData["cellSize"].get<float>() * gameScale.x, mapData["cellSize"].get<float>() * gameScale.y};
+
+            sf::RectangleShape tileShape(size);
             tileShape.setTexture(tileTextures[tileIdx].get());
             tileShape.setTextureRect(tileRects[tileIdx]);
 
-            registry.add_component(tileEntity, core::ge::TransformComponent{tilePos, {mapData["cellSize"].get<float>() * gameScale.x, mapData["cellSize"].get<float>() * gameScale.y}, {1.0f, 1.0f}, 0.0f});
+            registry.add_component(tileEntity, core::ge::TransformComponent{{tile["x"].get<float>() * size.x, tile["y"].get<float>() * size.y}, size, {1.0f, 1.0f}, 0.0f});
             registry.add_component(tileEntity, core::ge::DrawableComponent{tileShape});
             registry.add_component(tileEntity, core::ge::TextureComponent{tileTextures[tileIdx]});
-            registry.add_component(tileEntity, TileComponent{isDestructible});
-
-            gameEngine.registry.add_component(tileEntity, core::ge::CollisionComponent{
-                WORLD, {sf::FloatRect(0.0f, 0.0f, mapData["cellSize"].get<float>() * gameScale.x, mapData["cellSize"].get<float>() * gameScale.y)},
-                {
-                    {PLAYER_PROJECTILE, [&](const core::ecs::Entity self, const core::ecs::Entity other) {
-                        const auto& tileOpt = gameEngine.registry.get_components<TileComponent>()[self];
-                        if (tileOpt.has_value()) {
-                            const auto& tile = tileOpt.value();
-                            if (tile->isDestructible)
-                                gameEngine.registry.remove_component<core::ge::DrawableComponent>(self);
-                        } else {
-                            std::cerr << "Error: TileComponent not found for entity." << std::endl;
-                        }
-                        gameEngine.registry.remove_component<core::ge::DrawableComponent>(other);
-                    }},
-                    {PLAYER_MISSILE, [&](const core::ecs::Entity self, [[maybe_unused]] const core::ecs::Entity other) {
-                        const auto& tileOpt = gameEngine.registry.get_components<TileComponent>()[self];
-                        if (tileOpt.has_value()) {
-                            const auto& tile = tileOpt.value();
-                            if (tile->isDestructible)
-                                gameEngine.registry.remove_component<core::ge::DrawableComponent>(self);
-                        } else {
-                            std::cerr << "Error: TileComponent not found for entity." << std::endl;
-                        }
-
-                        const auto& healthOpt = gameEngine.registry.get_components<HealthComponent>()[other];
-                        if (healthOpt.has_value()) {
-                            auto& health = healthOpt.value();
-                            health->health -= tileDamage;
-                            if (health->health <= 0)
-                                gameEngine.registry.remove_component<core::ge::DrawableComponent>(other);
-                        } else {
-                            std::cerr << "Error: HealthComponent not found for entity." << std::endl;
-                        }
-                    }},
-                    {PLAYER, [&](const core::ecs::Entity, const core::ecs::Entity other) {
-                        auto disabled = gameEngine.registry.get_component<core::ge::DisabledComponent>(other);
-                        disabled->disabled = true;
-                    }},
-                }
-            });
-
-            _tileMap[tile["y"]][tile["x"]] = Tile{tileEntity, tilePos, isDestructible};
+            registry.add_component(tileEntity, TileComponent{isDestructible, {
+                static_cast<uint32_t>(tile["x"].get<float>()) * static_cast<uint32_t>(mapData["cellSize"].get<float>()),
+                static_cast<uint32_t>(tile["y"].get<float>()) * static_cast<uint32_t>(mapData["cellSize"].get<float>())
+            }});
         } catch (const std::exception& e) {
             std::cerr << "Error: Exception while parsing tile data: " << e.what() << std::endl;
-            continue;
         }
     }
 

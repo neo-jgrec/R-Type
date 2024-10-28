@@ -202,12 +202,14 @@ namespace Systems {
                     }
 
                     case TileDestroy: {
-                        auto tileDestroyPayload = std::get<sf::Vector2u>(event.getPayload());
-                        for (auto tileEntity : registry.get_entities<Tile>()) {
-                            if (const auto tileComponent = registry.get_component<Tile>(tileEntity);
-                                tileComponent->position == sf::Vector2f(tileDestroyPayload)) {
-                                registry.kill_entity(tileEntity);
-                            }
+                        auto position = std::get<sf::Vector2u>(event.getPayload());
+                        std::cout << "Tile destroyed at " << position.x << ", " << position.y << std::endl;
+                        for (auto tileEntity : registry.get_entities<TileComponent>()) {
+                            if (registry.get_component<TileComponent>(tileEntity)->pos != position)
+                                continue;
+
+                            std::cout << "Tile destroyed" << std::endl;
+                            registry.kill_entity(tileEntity);
                         }
                         break;
                     }
