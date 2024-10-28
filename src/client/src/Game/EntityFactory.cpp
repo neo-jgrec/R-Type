@@ -20,8 +20,8 @@ core::ecs::Entity EntityFactory::createPlayer(Game &game, const sf::Vector2f& po
     core::ecs::Entity player = registry.spawn_entity();
 
     sf::Vector2f playerSize = sf::Vector2f(
-        config.getValue<float>("/player/size/x"),
-        config.getValue<float>("/player/size/y")
+        config.getValue<float>("/player/size/x", 99.0f),
+        config.getValue<float>("/player/size/y", 51.0f)
     );
 
     if (self) {
@@ -108,16 +108,16 @@ core::ecs::Entity EntityFactory::createPlayerProjectile(Game &game, core::ge::Tr
     core::ecs::Entity projectile = registry.spawn_entity();
 
     sf::Vector2f projectileSize = sf::Vector2f(
-        config.getValue<float>("/player/weapons/0/size/x"),
-        config.getValue<float>("/player/weapons/0/size/y")
+        config.getValue<float>("/player/weapons/0/size/x", 72.0f),
+        config.getValue<float>("/player/weapons/0/size/y", 20.0f)
     );
 
     sf::Vector2f projectileSpeed = sf::Vector2f(
-        config.getValue<float>("/player/weapons/0/speed/x"),
-        config.getValue<float>("/player/weapons/0/speed/y")
+        config.getValue<float>("/player/weapons/0/speed/x", 500.0f),
+        config.getValue<float>("/player/weapons/0/speed/y", 0.0f)
     );
 
-    int damage = config.getValue<int>("/player/weapons/0/damage");
+    int damage = config.getValue<int>("/player/weapons/0/damage", 10);
 
     sf::Vector2f startPosition = playerTransform.position;
 
@@ -158,18 +158,18 @@ core::ecs::Entity EntityFactory::createPlayerMissile(Game &game, core::ge::Trans
     core::ecs::Entity missile = registry.spawn_entity();
 
     sf::Vector2f missileSize = sf::Vector2f(
-        config.getValue<float>("/player/weapons/1/size/x"),
-        config.getValue<float>("/player/weapons/1/size/y")
+        config.getValue<float>("/player/weapons/1/size/x", 136.0f),
+        config.getValue<float>("/player/weapons/1/size/y", 48.0f)
     );
 
     sf::Vector2f missileSpeed = sf::Vector2f(
-        config.getValue<float>("/player/weapons/1/speed/x"),
-        config.getValue<float>("/player/weapons/1/speed/y")
+        config.getValue<float>("/player/weapons/1/speed/x", 500.0f),
+        config.getValue<float>("/player/weapons/1/speed/y", 0.0f)
     );
 
-    int damage = config.getValue<int>("/player/weapons/1/damage");
+    int damage = config.getValue<int>("/player/weapons/1/damage", 50);
 
-    int health = config.getValue<int>("/player/weapons/1/health");
+    int health = config.getValue<int>("/player/weapons/1/health", 100);
 
     sf::Vector2f startPosition = playerTransform.position;
     float playerWidth = playerTransform.size.x * playerTransform.scale.x;
@@ -225,17 +225,17 @@ core::ecs::Entity EntityFactory::createEnemy(Game &game, const sf::Vector2f& pos
     core::ecs::Entity enemy = registry.spawn_entity();
 
     sf::Vector2f enemySize = sf::Vector2f(
-        config.getValue<float>("/enemies/0/size/x"),
-        config.getValue<float>("/enemies/0/size/y")
+        config.getValue<float>("/enemies/0/size/x", 115.0f),
+        config.getValue<float>("/enemies/0/size/y", 126.0f)
     );
 
     sf::Vector2f enemySpeed = sf::Vector2f(
-        config.getValue<float>("/enemies/0/speed/x"),
-        config.getValue<float>("/enemies/0/speed/y")
+        config.getValue<float>("/enemies/0/speed/x", 200.0f),
+        config.getValue<float>("/enemies/0/speed/y", 0.0f)
     );
 
-    int enemyHealth = config.getValue<int>("/enemies/0/health");
-    int enemyDamage = config.getValue<int>("/enemies/0/damage");
+    int enemyHealth = config.getValue<int>("/enemies/0/health", 10.0f);
+    int enemyDamage = config.getValue<int>("/enemies/0/damage", 10.0f);
 
     registry.add_component(enemy, core::ge::TransformComponent{position, enemySize, game.getGameScale(), 0.0f});
     registry.add_component(enemy, core::ge::VelocityComponent{-enemySpeed.x, enemySpeed.y});

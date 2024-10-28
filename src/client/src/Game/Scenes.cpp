@@ -15,8 +15,8 @@ namespace Scenes {
         gameEngine.currentScene = Game::GameState::MainMenu;
 
         const auto windowSize = sf::Vector2u(
-            config.getValue<uint32_t>("/view/size/x"),
-            config.getValue<uint32_t>("/view/size/y")
+            config.getValue<uint32_t>("/view/size/x", 1920.0f),
+            config.getValue<uint32_t>("/view/size/y", 1080.0f)
         );
         const float centerX = static_cast<float>(windowSize.x) / 2.0f;
         const float centerY = static_cast<float>(windowSize.y) / 2.0f;
@@ -97,8 +97,8 @@ namespace Scenes {
         game.setGameState(Game::GameState::RoomMenu);
 
         auto windowSize = sf::Vector2u(
-            config.getValue<uint32_t>("/view/size/x"),
-            config.getValue<uint32_t>("/view/size/y")
+            config.getValue<uint32_t>("/view/size/x", 1920.0f),
+            config.getValue<uint32_t>("/view/size/y", 1080.0f)
         );
         float centerX = static_cast<float>(windowSize.x) / 2.0f;
 
@@ -237,8 +237,8 @@ namespace Scenes {
         game.setGameState(Game::GameState::Settings);
 
         auto windowSize = sf::Vector2u(
-            config.getValue<uint32_t>("/view/size/x"),
-            config.getValue<uint32_t>("/view/size/y")
+            config.getValue<uint32_t>("/view/size/x", 1920.0f),
+            config.getValue<uint32_t>("/view/size/y", 1080.0f)
         );
         float centerX = static_cast<float>(windowSize.x) / 2.0f;
 

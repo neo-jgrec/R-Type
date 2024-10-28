@@ -52,8 +52,8 @@ namespace Systems {
                 }
 
                 vel = core::ge::VelocityComponent(
-                    config.getValue<float>("/player/speed/x") * static_cast<float>(input.right - input.left),
-                    config.getValue<float>("/player/speed/y") * static_cast<float>(input.down - input.up)
+                    config.getValue<float>("/player/speed/x", 350.0f) * static_cast<float>(input.right - input.left),
+                    config.getValue<float>("/player/speed/y", 350.0f) * static_cast<float>(input.down - input.up)
                 );
 
                 if (input.fire) {
@@ -293,8 +293,8 @@ namespace Systems {
                     return;
 
                 view.view.move(
-                    config.getValue<float>("/view/speed/x") * gameEngine.delta_t,
-                    config.getValue<float>("/view/speed/y") * gameEngine.delta_t);
+                    config.getValue<float>("/view/speed/x", 50.0f) * gameEngine.delta_t,
+                    config.getValue<float>("/view/speed/y", 50.0f) * gameEngine.delta_t);
                 gameEngine.window.setView(view.view);
             });
     }
