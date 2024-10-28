@@ -40,9 +40,9 @@ public:
         registry.register_component<core::ge::MusicComponent>();
         registry.register_component<core::ge::ClickableComponent>();
         registry.register_component<core::ge::ColorComponent>();
+        registry.register_component<core::ge::VelocityComponent>();
         registry.register_component<core::ge::CollisionComponent>();
         registry.register_component<core::ge::TextComponent>();
-        registry.register_component<core::ge::SceneComponent>();
         registry.register_component<core::ge::TextInputComponent>();
         registry.register_component<core::ge::SliderComponent>();
         registry.register_component<core::ge::DisabledComponent>();
@@ -52,6 +52,7 @@ public:
         renderSystems();
         animationSystem();
         soundSystem();
+        velocitySystem();
         collisionSystem();
         clickableSystem();
         textSystem();
@@ -71,6 +72,17 @@ public:
      * @brief Destructor for the GameEngine class. Defaulted.
      */
     ~GameEngine() = default;
+
+    void run_collision(const uint8_t wantedMask, const ecs::Entity entity)
+    {
+        for (const auto &collisionComponent = registry.get_component<ge::CollisionComponent>(entity);
+            const auto &[mask, onCollision] : collisionComponent->onCollision) {
+            if (wantedMask != mask)
+                continue;
+            onCollision(entity, entity);
+            return;
+        }
+    }
 
     float delta_t = 0.0f;               ///< Time delta between frames, used for animations and movement.
     core::ecs::Registry registry;       ///< The entity-component system (ECS) registry managing all entities and components.
@@ -95,17 +107,15 @@ protected:
      * This system renders entities' `DrawableComponent` if they belong to the active scene.
      */
     void renderSystems() {
-        registry.add_system<core::ge::DrawableComponent, core::ge::SceneComponent, core::ge::DisabledComponent>(
-            [&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::DrawableComponent &drawable, core::ge::SceneComponent &scene, core::ge::DisabledComponent &disabled) {
-                if (scene.sceneName != currentScene || disabled.disabled)
+        registry.add_system<core::ge::DrawableComponent, core::ge::DisabledComponent>(
+            [&window = window](core::ecs::Entity, core::ge::DrawableComponent &drawable, core::ge::DisabledComponent &disabled) {
+                if (disabled.disabled)
                     return;
                 window.draw(drawable.shape);
             });
 
-        registry.add_system<core::ge::DrawableComponent, core::ge::SceneComponent>(
-            [&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::DrawableComponent &drawable, core::ge::SceneComponent &scene) {
-                if (scene.sceneName != currentScene)
-                    return;
+        registry.add_system<core::ge::DrawableComponent>(
+            [&window = window](core::ecs::Entity, core::ge::DrawableComponent &drawable) {
                 window.draw(drawable.shape);
             });
     }
@@ -171,15 +181,26 @@ protected:
     }
 
     /**
+     * @brief Sets up the velocity system for handling entity movement.
+     *
+     * This system updates the position of entities based on their velocity components.
+     */
+    void velocitySystem() {
+        registry.add_system<ge::TransformComponent, ge::VelocityComponent>(
+            [&](ecs::Entity, ge::TransformComponent &transform, const ge::VelocityComponent &velocity) {
+                transform.position.x += velocity.dx * delta_t;
+                transform.position.y += velocity.dy * delta_t;
+            });
+    }
+
+    /**
      * @brief Sets up the collision detection system for handling interactions between entities.
      * 
      * This system checks for collisions between entities and triggers their `onCollision` callbacks if they intersect.
      */
     void collisionSystem() {
-        registry.add_system<ge::TransformComponent, ge::CollisionComponent, ge::SceneComponent>(
-            [&](const ecs::Entity entity, const ge::TransformComponent &transform, ge::CollisionComponent &collision, ge::SceneComponent &scene) {
-                if (scene.sceneName != currentScene)
-                    return;
+        registry.add_system<ge::TransformComponent, ge::CollisionComponent>(
+            [&](const ecs::Entity entity, const ge::TransformComponent &transform, ge::CollisionComponent &collision) {
 
                 auto &collisionComponents = registry.get_components<ge::CollisionComponent>();
                 auto &transformComponents = registry.get_components<ge::TransformComponent>();
@@ -231,10 +252,8 @@ protected:
      * This system handles user interactions with buttons, including hover and click states, and adjusts their size when hovered or clicked.
      */
     void clickableSystem() {
-        registry.add_system<core::ge::ClickableComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent, core::ge::TransformComponent>(
-            [&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::ClickableComponent &button, core::ge::SceneComponent &scene, core::ge::DrawableComponent &drawable, core::ge::TextComponent &text, core::ge::TransformComponent &transform) {
-                if (scene.sceneName != currentScene)
-                    return;
+        registry.add_system<core::ge::ClickableComponent, core::ge::DrawableComponent, core::ge::TextComponent, core::ge::TransformComponent>(
+            [&window = window](core::ecs::Entity, core::ge::ClickableComponent &button, core::ge::DrawableComponent &drawable, core::ge::TextComponent &text, core::ge::TransformComponent &transform) {
 
                 sf::Vector2i mousePosition = sf::Mouse::getPosition(window);
                 sf::Vector2f worldPos = window.mapPixelToCoords(mousePosition);
@@ -262,10 +281,8 @@ protected:
      * This system handles the rendering of `TextComponent` entities that belong to the active scene.
      */
     void textSystem() {
-        registry.add_system<core::ge::TextComponent, core::ge::SceneComponent>(
-            [&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::TextComponent &text, core::ge::SceneComponent &scene) {
-                if (scene.sceneName != currentScene)
-                    return;
+        registry.add_system<core::ge::TextComponent>(
+            [&window = window](core::ecs::Entity, core::ge::TextComponent &text) {
 
                 if (text.text.getString().isEmpty()) {
                     std::cerr << "Warning: Attempting to draw empty text" << std::endl;
@@ -282,10 +299,8 @@ protected:
      */
     void textInputSystem()
     {
-        registry.add_system<core::ge::TextInputComponent, core::ge::SceneComponent, core::ge::DrawableComponent, core::ge::TextComponent>(
-            [&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::TextInputComponent &textInput, core::ge::SceneComponent &scene, core::ge::DrawableComponent &drawable, core::ge::TextComponent &text) {
-                if (scene.sceneName != currentScene)
-                    return;
+        registry.add_system<core::ge::TextInputComponent, core::ge::DrawableComponent, core::ge::TextComponent>(
+            [&window = window](core::ecs::Entity, core::ge::TextInputComponent &textInput, core::ge::DrawableComponent &drawable, core::ge::TextComponent &text) {
                 (void)text;
                 sf::Vector2i mousePosition = sf::Mouse::getPosition(window);
                 sf::Vector2f worldPos = window.mapPixelToCoords(mousePosition);
@@ -311,10 +326,8 @@ protected:
      */
     void sliderSystem()
     {
-        registry.add_system<core::ge::SliderComponent, core::ge::SceneComponent>(
-            [&window = window, &currentScene = currentScene](core::ecs::Entity, core::ge::SliderComponent &slider, core::ge::SceneComponent &scene) {
-                if (scene.sceneName != currentScene)
-                    return;
+        registry.add_system<core::ge::SliderComponent>(
+            [&window = window](core::ecs::Entity, core::ge::SliderComponent &slider) {
                 sf::Vector2i mousePosition = sf::Mouse::getPosition(window);
                 sf::Vector2f worldPos = window.mapPixelToCoords(mousePosition);
                 slider.handle.setPosition(

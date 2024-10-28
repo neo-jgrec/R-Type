@@ -8,14 +8,15 @@ struct Network {
 };
 
 struct World {
-    uint8_t speed = 0;
-    uint32_t scroll = 0;
+    time_t lastTimeEnemySpawned;
+    time_t enemySpawnRate;
 
     std::pair<uint32_t, uint32_t> size;
+    uint8_t tileSize;
+    std::vector<std::pair<uint32_t, uint32_t>> spawnPoints;
 };
 
 struct Player {
-    std::shared_ptr<asio::ip::udp::endpoint> endpoint;
     uint8_t id;
     uint8_t health;
     time_t lastTimePacketReceived;

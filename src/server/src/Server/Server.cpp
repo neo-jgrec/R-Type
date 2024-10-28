@@ -1,8 +1,38 @@
 #include "Server.hpp"
 #include "Components.hpp"
-#include "Systems.hpp"
 #include "EntityFactory.hpp"
-#include "../../../game/RequestType.hpp"
+#include "Systems.hpp"
+#include "EventFactory.hpp"
+
+bool Server::asPlayerConnected()
+{
+    return std::ranges::any_of(_playersConnection, [](const auto &player) { return player.has_value(); });
+}
+
+void Server::sendRequestToPlayers(const uint8_t requestType, const std::vector<uint8_t> &payload)
+{
+    for (const auto &playerEntity : _playersConnection) {
+        if (!playerEntity.has_value())
+            continue;
+        _networkingService.sendRequest(
+            *playerEntity.value(),
+            requestType,
+            payload);
+    }
+}
+
+void Server::sendRequestToPlayers(const uint8_t requestType, const std::vector<uint8_t> &payload, const uint8_t selfPlayer)
+{
+    for (uint8_t i = 0; i < 4; i++) {
+        if (!_playersConnection[i].has_value() || i == selfPlayer)
+            continue;
+        _networkingService.sendRequest(
+            *_playersConnection[i].value(),
+            requestType,
+            payload);
+    }
+}
+
 
 Server::Server()
 {
@@ -12,195 +42,76 @@ Server::Server()
     _gameEngine.registry.register_component<Enemy>();
     _gameEngine.registry.register_component<Projectile>();
 
-    Systems::worldSystem(_gameEngine.registry, _players);
-    Systems::playerSystem(_gameEngine.registry, _networkingService, _players);
-    Systems::enemySystem(_gameEngine.registry, _players);
-    Systems::projectileSystem(_gameEngine.registry);
+    Systems::worldSystem(*this);
 
-    _networkingService.addEvent(PlayerConnect, [&](const GDTPHeader &header, const std::vector<uint8_t> &, const asio::ip::udp::endpoint &endpoint) {
-        std::cout << "New connection from " << endpoint << std::endl;
+    EventFactory::gameStarted(*this);
+    EventFactory::playerConnected(*this);
+    EventFactory::playerDisconnected(*this);
+    EventFactory::playerMove(*this);
+    EventFactory::playerShoot(*this);
+}
 
-        uint8_t i = 0;
-        for (; i < 4; i++) {
-            if (_players[i].has_value()) {
-                continue;
-            }
-            _players[i].emplace(EntityFactory::createPlayer(_gameEngine.registry, _networkingService, _players, endpoint, i));
-            _networkingService.sendRequestResponse(endpoint, header, {i});
-            break;
-        }
-        if (i == 4)
-            return;
+void Server::start()
+{
+    static bool asGameStarted = false;
+    if (asGameStarted)
+        return;
+    asGameStarted = true;
 
-        for (const auto &playerEntity : _players) {
-            if (!playerEntity.has_value())
-                continue;
-            const auto &playerComponent = _gameEngine.registry.get_component<Player>(playerEntity.value());
-            // send all players to the new player
-            if (playerComponent->id != i)
-                _networkingService.sendRequest(
-                    endpoint,
-                    PlayerConnect,
-                    {playerComponent->id});
-            // send the new player to all players
-            _networkingService.sendRequest(
-                *playerComponent->endpoint,
-                PlayerConnect,
-                {i});
-        }
-        for (const auto &playerEntity : _players) {
-            if (!playerEntity.has_value())
-                continue;
-            const auto &playerComponent = _gameEngine.registry.get_component<Player>(playerEntity.value());
+    std::cout << "Game starting" << std::endl;
 
-        }
+    const core::ecs::Entity world = EntityFactory::createWorld(*this, "JY_map.json");
+    if (const auto spawnPoints = _gameEngine.registry.get_component<World>(world)->spawnPoints; spawnPoints.empty()) {
+        std::cerr << "Error: No spawn points available." << std::endl;
+        return;
+    }
 
-    });
-    _networkingService.addEvent(GameStart, [&](const GDTPHeader &, const std::vector<uint8_t> &, const asio::ip::udp::endpoint &) {
-        if (!asPlayerConnected())
-            return;
-        if (_asGameStarted)
-            return;
-        std::cout << "Game started" << std::endl;
-        _world = EntityFactory::createWorld(_gameEngine.registry, _networkingService, _players, "JY_map.json");
-        for (uint8_t i = 0; i < 4; i++) {
-            if (!_players[i].has_value())
-                continue;
-            const auto &playerComponent = _gameEngine.registry.get_component<Player>(_players[i].value());
-            _networkingService.sendRequest(
-                *playerComponent->endpoint,
-                GameStart,
-                {});
-            _networkingService.sendRequest(
-                *playerComponent->endpoint,
-                MapScroll,
-                {0, 0, 0, 0});
-            const std::vector payload = {
-                playerComponent->id,
-                static_cast<uint8_t>(100 >> 24),
-                static_cast<uint8_t>(100 >> 16),
-                static_cast<uint8_t>(100 >> 8),
-                static_cast<uint8_t>(100),
-                static_cast<uint8_t>(100 >> 24),
-                static_cast<uint8_t>(100 >> 16),
-                static_cast<uint8_t>(100 >> 8),
-                static_cast<uint8_t>(100),
-            };
-            _networkingService.sendRequest(
-                *playerComponent->endpoint,
-                PlayerMove,
-                payload);
-            playerComponent->lastTimePacketReceived = std::time(nullptr);
-            playerComponent->health = 3;
-        }
-        _asGameStarted = true;
-    });
-    _networkingService.addEvent(PlayerDisconnect, [&](const GDTPHeader &, const std::vector<uint8_t> &payload, const asio::ip::udp::endpoint &)
-    {
-        const uint8_t id = payload[0];
-        if (id >= 4 || !_players[id].has_value())
-            return;
+    for (uint8_t i = 0; i < 4; i++) {
+        if (!_playersConnection[i].has_value())
+            continue;
+        _players[i] = EntityFactory::createPlayer(*this, i);
+    }
 
-        std::cout << "Player " << static_cast<int>(id) << " disconnected" << std::endl;
-        _gameEngine.registry.kill_entity(_players[id].value());
-        _players[id].reset();
-    });
+    _gameState = GAME;
 }
 
 void Server::update()
 {
-    std::cout << "↻ Updating server" << std::endl;
-    _gameEngine.registry.run_system<Network, World>();
-    _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent>();
-    _gameEngine.registry.run_system<Network, Player>();
-    _gameEngine.registry.run_system<Network, Enemy>();
-    _gameEngine.registry.run_system<Projectile>();
-}
+    std::lock_guard lock(registry_mutex);
 
-bool Server::asPlayerConnected()
-{
-    return std::ranges::any_of(_players, [](const auto &entity) { return entity.has_value(); });
+    _gameEngine.registry.run_system<core::ge::TransformComponent, World>();
+    _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent>();
+    _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent>();
 }
 
 void Server::run()
 {
-    _networkingService.run();
+    sf::Time elapsed;
 
-    std::cout << "Server started" << std::endl;
-    while (!asPlayerConnected()) {
-        #ifdef _WIN32
-            _sleep(1000);
-        #else
-            sleep(1);
-        #endif
-    }
-    std::cout << "Players connected" << std::endl;
-    while (!_asGameStarted) {
-        #ifdef _WIN32
-            _sleep(1000);
-        #else
-            sleep(1);
-        #endif
-    }
-    _networkingService.addEvent(PlayerMove, [&](const GDTPHeader &, const std::vector<uint8_t> &payload, const asio::ip::udp::endpoint &) {
-        if (!asPlayerConnected())
-            return;
-        const uint8_t id = payload[0];
-        if (id >= 4 || !_players[id].has_value())
-            return;
-
-        {
-            const auto &transformComponent = _gameEngine.registry.get_component<core::ge::TransformComponent>(_players[id].value());
-            const uint32_t x = (payload[1] << 24) | (payload[2] << 16) | (payload[3] << 8) | payload[4];
-            const uint32_t y = (payload[5] << 24) | (payload[6] << 16) | (payload[7] << 8) | payload[8];
-            transformComponent->position = {static_cast<float>(x), static_cast<float>(y)};
-        }
-
-        for (const auto &playerEntity : _players) {
-            if (!playerEntity.has_value())
+    while (true) {
+        switch (_gameState) {
+            case STARTING:
+                std::cout << "Server started" << std::endl;
+                _networkingService.run();
+                _gameState = WAITING_CONNECTION;
                 continue;
-            const auto &playerComponent = _gameEngine.registry.get_component<Player>(playerEntity.value());
-            std::cout << "Sending player move to " << static_cast<int>(playerComponent->id) << std::endl;
-            _networkingService.sendRequest(
-                *playerComponent->endpoint,
-                PlayerMove,
-                payload);
-            if (playerComponent->id == id)
-                playerComponent->lastTimePacketReceived = std::time(nullptr);
-        }
-    });
-    _networkingService.addEvent(PlayerShoot, [&](const GDTPHeader &, const std::vector<uint8_t> &payload, const asio::ip::udp::endpoint &)
-    {
-        if (!asPlayerConnected())
-            return;
-        const uint8_t id = payload[0];
-        if (id >= 4 || !_players[id].has_value())
-            return;
 
-        static uint8_t projectileId = 0;
-        EntityFactory::createProjectile(_gameEngine.registry, _players[id].value(), projectileId++);
-        std::cout << "Player " << static_cast<int>(id) << " shot" << std::endl;
+            case WAITING_CONNECTION:
+            case LOBBY:
+                break;
 
-        for (const auto &playerEntity : _players) {
-            if (!playerEntity.has_value())
-                continue;
-            const auto &playerComponent = _gameEngine.registry.get_component<Player>(playerEntity.value());
-            _networkingService.sendRequest(
-                *playerComponent->endpoint,
-                PlayerShoot,
-                payload);
+            case GAME:
+                elapsed = _gameEngine.clock.restart();
+                _gameEngine.delta_t = elapsed.asSeconds();
+
+                update();
+                break;
+
+            case STOPPING:
+                std::cout << "Server stopped" << std::endl;
+                _networkingService.stop();
+                return;
         }
-    });
-    std::cout << "Game started" << std::endl;
-    while (asPlayerConnected()) {
-        update();
-        #ifdef _WIN32
-            _sleep(1000);
-        #else
-            sleep(1);
-        #endif
+        usleep(1);
     }
-
-    std::cout << "Server stopped" << std::endl;
-    _networkingService.stop();
 }

@@ -367,7 +367,6 @@ public:
             asio::buffer(recv_buffer_), remote_endpoint_,
             [this](const std::error_code ec, const std::size_t bytes_recvd) {
                 if (!ec && bytes_recvd > 0) {
-                    std::cout << "Received " << bytes_recvd << " bytes from " << remote_endpoint_ << std::endl;
                     handleReceivedPacket(recv_buffer_, bytes_recvd, remote_endpoint_);
                 }
                 startReceive(); // Continue listening for more packets.
@@ -457,7 +456,6 @@ public:
         init();
         thread = std::jthread([this] {
             io_context_.run();
-            std::cout << "Networking service thread started" << std::endl;
         });
 
     }

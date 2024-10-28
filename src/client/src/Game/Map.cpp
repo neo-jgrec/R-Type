@@ -67,15 +67,18 @@ void Game::initBackground(core::ecs::Registry& registry, nlohmann::json& mapData
         });
         registry.add_component(backgroundEntity, core::ge::DrawableComponent{backgroundShape});
         registry.add_component(backgroundEntity, core::ge::TextureComponent{backgroundTexture});
-        registry.add_component(backgroundEntity, core::ge::SceneComponent{static_cast<int>(GameState::Playing)});
     }
 }
 
-void Game::parseMap(core::GameEngine& gameEngine, ConfigManager& config, const std::string& mapFilePath, sf::RenderWindow& window)
+void Game::parseMap(Game &game, const std::string& mapFilePath, sf::RenderWindow& window)
 {
+    auto& gameEngine = game.getGameEngine();
+    auto& registry = gameEngine.registry;
+    auto& config = game.getConfigManager();
+
     std::ifstream mapFile(mapFilePath);
 
-    int tileDamage = config.getValue<int>("/map/tiles/health");
+    int tileDamage = config.getValue<int>("/map/tiles/health", 10);
 
     if (!mapFile) {
         std::cerr << "Error: Could not open map file: " << mapFilePath << std::endl;
@@ -166,11 +169,10 @@ void Game::parseMap(core::GameEngine& gameEngine, ConfigManager& config, const s
             tileShape.setTexture(tileTextures[tileIdx].get());
             tileShape.setTextureRect(tileRects[tileIdx]);
 
-            gameEngine.registry.add_component(tileEntity, core::ge::TransformComponent{tilePos, {mapData["cellSize"].get<float>() * gameScale.x, mapData["cellSize"].get<float>() * gameScale.y}, {1.0f, 1.0f}, 0.0f});
-            gameEngine.registry.add_component(tileEntity, core::ge::DrawableComponent{tileShape});
-            gameEngine.registry.add_component(tileEntity, core::ge::TextureComponent{tileTextures[tileIdx]});
-            gameEngine.registry.add_component(tileEntity, core::ge::SceneComponent{static_cast<int>(GameState::Playing)});
-            gameEngine.registry.add_component(tileEntity, TileComponent{isDestructible});
+            registry.add_component(tileEntity, core::ge::TransformComponent{tilePos, {mapData["cellSize"].get<float>() * gameScale.x, mapData["cellSize"].get<float>() * gameScale.y}, {1.0f, 1.0f}, 0.0f});
+            registry.add_component(tileEntity, core::ge::DrawableComponent{tileShape});
+            registry.add_component(tileEntity, core::ge::TextureComponent{tileTextures[tileIdx]});
+            registry.add_component(tileEntity, TileComponent{isDestructible});
 
             gameEngine.registry.add_component(tileEntity, core::ge::CollisionComponent{
                 WORLD, {sf::FloatRect(0.0f, 0.0f, mapData["cellSize"].get<float>() * gameScale.x, mapData["cellSize"].get<float>() * gameScale.y)},

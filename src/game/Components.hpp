@@ -22,18 +22,6 @@ struct InputStateComponent {
 };
 
 /**
- * @struct VelocityComponent
- * @brief Holds velocity data for an entity's movement.
- * 
- * The velocity component stores the change in position (dx, dy) for an entity per update cycle.
- * This is typically used for movement systems to modify an entity's position.
- */
-struct VelocityComponent {
-    float dx; ///< The change in the X-axis position.
-    float dy; ///< The change in the Y-axis position.
-};
-
-/**
  * @struct HealthComponent
  * @brief Stores the health of an entity.
  * 
