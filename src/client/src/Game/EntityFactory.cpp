@@ -52,7 +52,7 @@ core::ecs::Entity EntityFactory::createPlayer(Game &game, const sf::Vector2f& po
         });
 
         registry.add_component(player, core::ge::VelocityComponent{0, 0});
-        registry.add_component(player_anim, core::ge::TransformComponent{position, sf::Vector2f(33.0f, 35.0f), game.getGameScale(), 0.0f});
+        registry.add_component(player_anim, core::ge::TransformComponent{position, sf::Vector2f(33.0f * 3, 35.0f * 3), game.getGameScale(), 0.0f});
         registry.add_component(player_anim, core::ge::DrawableComponent{animShape});
         registry.add_component(player_anim, core::ge::TextureComponent{texture});
         registry.add_component(player_anim, PlayerAnim{id});

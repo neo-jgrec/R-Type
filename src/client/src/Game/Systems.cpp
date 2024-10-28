@@ -35,9 +35,13 @@ namespace Systems {
             [&](core::ecs::Entity, core::ge::TransformComponent &transform, core::ge::VelocityComponent &vel, const InputStateComponent &input, ShootCounterComponent &shootCounter, Player &player, core::ge::AnimationComponent &animation) {
 
                 const auto [playerAnimTransform, playerAnim] = getPlayerAnimComponents(registry);
+                auto playerSize = sf::Vector2f(
+                    config.getValue<float>("/player/size/x", 99.0f),
+                    config.getValue<float>("/player/size/y", 51.0f)
+                );
                 {
                     if (playerAnimTransform && playerAnim) {
-                        playerAnimTransform->position = transform.position + sf::Vector2f(115.0f, 10.0f);
+                        playerAnimTransform->position = transform.position + sf::Vector2f(playerSize.x, -15.0f);
                         if (input.up) {
                             if (animation.currentFrame == 3) {
                                 animation.elapsedTime += gameEngine.delta_t;
