@@ -49,6 +49,7 @@ public:
         registry.register_component<core::ge::TextInputComponent>();
         registry.register_component<core::ge::SliderComponent>();
         registry.register_component<core::ge::DisabledComponent>();
+        registry.register_component<core::ge::MetricsComponent>();
 
         // Initialize systems
         positionSystem();
@@ -167,6 +168,10 @@ public:
 
         #ifdef GE_USE_SDL
             auto font = assetManager.getFont("_ARIAL");
+            if (!font) {
+                std::cerr << "Failed to load font for metrics!" << std::endl;
+                return;
+            }
             SDL_Color White = {255, 255, 255, 255};
             SDL_Surface* cpuSurface = TTF_RenderText_Solid(font, "CPU: 0.0%", White);
             SDL_Surface* ramSurface = TTF_RenderText_Solid(font, "RAM: 0.0%", White);
@@ -189,6 +194,10 @@ public:
             registry.add_component<core::ge::MetricsComponent>(ramEntity, core::ge::MetricsComponent{});
             registry.add_component<core::ge::MetricsComponent>(fpsEntity, core::ge::MetricsComponent{});
         #else
+            if (assetManager.getFont("_ARIAL").getInfo().family.empty()) {
+                std::cerr << "Failed to load font for metrics!" << std::endl;
+                return;
+            }
             sf::Text cpuText;
             cpuText.setFont(assetManager.getFont("_ARIAL"));
             cpuText.setCharacterSize(24);
@@ -217,26 +226,25 @@ public:
 
     void disableMetrics()
     {
-        auto metricsComponents = registry.get_components<core::ge::MetricsComponent>();
-        for (size_t i = 0; i < metricsComponents.size(); ++i) {
-            if (!metricsComponents[i].has_value())
-                continue;
-            registry.add_component<core::ge::DisabledComponent>(ecs::Entity{i}, core::ge::DisabledComponent{true});
-        }
+        if (registry.has_component<core::ge::DrawableComponent>(cpuEntity))
+            registry.remove_component<core::ge::DrawableComponent>(cpuEntity);
+        if (registry.has_component<core::ge::DrawableComponent>(ramEntity))
+            registry.remove_component<core::ge::DrawableComponent>(ramEntity);
+        if (registry.has_component<core::ge::DrawableComponent>(fpsEntity))
+            registry.remove_component<core::ge::DrawableComponent>(fpsEntity);
     }
 
     void reEnableMetrics()
     {
-        auto metricsComponents = registry.get_components<core::ge::MetricsComponent>();
-        for (size_t i = 0; i < metricsComponents.size(); ++i) {
-            if (!metricsComponents[i].has_value())
-                continue;
-            registry.add_component<core::ge::DisabledComponent>(ecs::Entity{i}, core::ge::DisabledComponent{false});
-        }
+        initGameMetrics();
     }
 
     void updateMetrics()
     {
+        if (!registry.has_component<core::ge::DrawableComponent>(cpuEntity) ||
+            !registry.has_component<core::ge::DrawableComponent>(ramEntity) ||
+            !registry.has_component<core::ge::DrawableComponent>(fpsEntity))
+            return;
         delta_t = clock.restart().asSeconds();
         fps = 1.0f / delta_t;
 
