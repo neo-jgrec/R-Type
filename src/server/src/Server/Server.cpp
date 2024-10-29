@@ -74,6 +74,7 @@ void Server::start()
         _players[i] = EntityFactory::createPlayer(*this, i);
     }
 
+    _gameEngine.clock.restart();
     _gameState = GAME;
 }
 
@@ -114,6 +115,10 @@ void Server::run()
                 _networkingService.stop();
                 return;
         }
-        usleep(1);
+        #ifdef __linux__
+            usleep(1);
+        #elif _WIN32
+            _sleep(1);
+        #endif
     }
 }

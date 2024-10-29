@@ -38,7 +38,6 @@ if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 # Required packages
-find_package(asio REQUIRED)
 find_package(SFML COMPONENTS graphics window system audio network REQUIRED)
 find_package(SDL2 REQUIRED)
 find_package(SDL2_image CONFIG REQUIRED)
@@ -64,7 +63,6 @@ target_include_directories(pong
 # Link libraries to the target
 target_link_libraries(pong
         PRIVATE
-        asio::asio
         sfml-graphics sfml-window sfml-system sfml-audio sfml-network
         SDL2::SDL2
         $<IF:$<TARGET_EXISTS:SDL2_image::SDL2_image>,SDL2_image::SDL2_image,SDL2_image::SDL2_image-static>
@@ -73,8 +71,12 @@ target_link_libraries(pong
 )
 
 # Install the target
-install(TARGETS pong DESTINATION . COMPONENT client)
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/assets DESTINATION . COMPONENT client)
+install(TARGETS pong DESTINATION . COMPONENT pong)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/assets DESTINATION . COMPONENT pong)
+cpack_add_component(pong
+        DISPLAY_NAME "Pong"
+        DESCRIPTION "Pong game here to show a simple POC using our engine"
+)
 
 # Optional: Add subdirectory for tests
 # add_subdirectory(tests)

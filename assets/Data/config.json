@@ -15,6 +15,7 @@
         }
     },
     "player": {
+	"afterHitShieldTime": 3,
         "speed": {
             "x": 350,
             "y": 350

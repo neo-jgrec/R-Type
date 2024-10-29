@@ -86,9 +86,15 @@ core::ecs::Entity EntityFactory::createPlayer(Game &game, const sf::Vector2f& po
     for (int i = 0; i < 5; i++) {
         moveFrames.emplace_back(i * 33, row, 33, 17);
     }
+    std::vector<sf::IntRect> dieFrames;
+    dieFrames.reserve(4);
+    for (int i = 0; i < 4; i++) {
+        dieFrames.emplace_back(i * 33, 5 * 17, 36, 36);
+    }
     gameEngine.registry.add_component(player, core::ge::AnimationComponent{
         .animations = {
-            {core::ge::AnimationState::Moving, moveFrames}
+            {core::ge::AnimationState::Moving, moveFrames},
+            {core::ge::AnimationState::Dying, dieFrames}
         },
         .frameTime = 0.1f,
         .elapsedTime = 0.0f,

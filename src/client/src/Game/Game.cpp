@@ -73,6 +73,11 @@ std::string Game::keyToString(const sf::Keyboard::Key key)
 
 void Game::init()
 {
+    sf::VideoMode videoMode(
+        _configManager.getValue<int>("/view/size/x", 1920),
+        _configManager.getValue<int>("/view/size/y", 1080)
+    );
+    _gameEngine.initWindow(videoMode, 60, "R-Type");
     _gameEngine.window.setFramerateLimit(60);
     _gameEngine.window.setKeyRepeatEnabled(true);
     loadAssets();
@@ -97,12 +102,14 @@ void Game::init()
     _gameEngine.registry.register_component<ViewComponent>();
     _gameEngine.registry.register_component<EventComponent>();
     _gameEngine.registry.register_component<TileComponent>();
+    _gameEngine.registry.register_component<HitAnimationComponent>();
 
     loadingProgress(50);
     Systems::playerInput(*this);
     Systems::playerMovement(*this);
     Systems::gameView(*this);
     Systems::gameEvent(*this);
+    Systems::hitAnimation(*this);
 
     loadingProgress(60);
     _viewEntity = _gameEngine.registry.spawn_entity();
@@ -140,7 +147,7 @@ void Game::loadAssets()
 
     std::list <std::pair<std::string, std::string>> textures = {
         {"enemie1", "assets/Enemies/enemie1.png"},
-        {"player", "assets/player_sprite.png"},
+        {"player", "assets/Player/player.png"},
         {"player_projectile", "assets/player_projectile.png"},
         {"player_missile", "assets/player_missile.png"},
         {"background", "assets/background.png"},
@@ -202,6 +209,7 @@ void Game::render()
     _gameEngine.window.clear();
     _gameEngine.registry.run_system<ViewComponent>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent>();
+    _gameEngine.registry.run_system<core::ge::DrawableComponent, HitAnimationComponent>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::DisabledComponent>();
     _gameEngine.registry.run_system<core::ge::TextComponent>();
     _gameEngine.registry.run_system<core::ge::SliderComponent>();
@@ -384,3 +392,5 @@ void Game::loadingProgress(const float progress)
     _gameEngine.window.draw(loadingText);
     _gameEngine.window.display();
 }
+
+
