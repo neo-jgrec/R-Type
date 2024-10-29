@@ -103,6 +103,7 @@ void Game::init()
     _gameEngine.registry.register_component<EventComponent>();
     _gameEngine.registry.register_component<TileComponent>();
     _gameEngine.registry.register_component<HitAnimationComponent>();
+    _gameEngine.registry.register_component<IndicatorComponent>();
 
     loadingProgress(50);
     Systems::playerInput(*this);

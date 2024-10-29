@@ -2,6 +2,7 @@
 
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
+#include <SFML/Graphics/CircleShape.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <cstdint>
 
@@ -122,3 +123,15 @@ struct Projectile {};
  * This tag is applied to missile entities, which may differ from regular projectiles in terms of behavior and damage.
  */
 struct Missile {};
+
+/**
+ * @struct IndicatorComponent
+ * @brief Tag component used to identify an entity as an indicator component.
+ * 
+ * This tag is applied to enemy entites to display visual clues about them.
+ */
+struct IndicatorComponent {
+    sf::Vector2f pos;
+    bool isEnemyOffscreen = true;
+    sf::CircleShape shape;
+};
