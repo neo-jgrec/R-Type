@@ -3,6 +3,8 @@
 
 #include <SFML/Graphics.hpp>
 
+#include <SFML/Graphics/CircleShape.hpp>
+#include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/Text.hpp>
 #include <SFML/System/Vector2.hpp>
 
@@ -288,6 +290,14 @@ core::ecs::Entity EntityFactory::createEnemy(Game &game, const sf::Vector2f& pos
         .currentFrame = 0,
         .loop = true
     });
+
+    IndicatorComponent indicator;
+    indicator.isEnemyOffscreen = true;
+    indicator.pos = { static_cast<float>(gameEngine.window.getSize().x) - 20.0f, position.y };
+    indicator.shape = sf::CircleShape(10.0f, 3);
+    indicator.shape.setFillColor(sf::Color::Green);
+    indicator.shape.setRotation(90.0f);
+    registry.add_component(enemy, indicator);
 
     return enemy;
 }

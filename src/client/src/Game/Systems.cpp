@@ -389,5 +389,36 @@ namespace Systems {
                 }
             });
     }
+
+    void enemyIndicatorSystem(Game &game)
+    {
+        auto &gameEngine = game.getGameEngine();
+        auto &registry = gameEngine.registry;
+        auto windowSize = gameEngine.window.getSize();
+
+        registry.add_system<core::ge::TransformComponent, IndicatorComponent, Enemy>(
+            [&](core::ecs::Entity, core::ge::TransformComponent &enemyTransform, IndicatorComponent &indicator, Enemy) {
+                if (enemyTransform.position.x > static_cast<float>(windowSize.x)) {
+                    indicator.isEnemyOffscreen = true;
+                    indicator.pos.y = enemyTransform.position.y;
+                } else {
+                    indicator.isEnemyOffscreen = false;
+                }
+            });
+    }
+
+    void enemyIndicatorRenderSystem(Game &game)
+    {
+        auto &gameEngine = game.getGameEngine();
+        auto &registry = gameEngine.registry;
+
+        registry.add_system<IndicatorComponent>(
+            [&](core::ecs::Entity, IndicatorComponent &indicator) {
+                if (indicator.isEnemyOffscreen) {
+                    indicator.shape.setPosition(indicator.pos);
+                    gameEngine.window.draw(indicator.shape);
+                }
+            });
+    }
 };
 

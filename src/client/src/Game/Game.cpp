@@ -111,6 +111,8 @@ void Game::init()
     Systems::gameView(*this);
     Systems::gameEvent(*this);
     Systems::hitAnimation(*this);
+    Systems::enemyIndicatorSystem(*this);
+    Systems::enemyIndicatorRenderSystem(*this);
 
     loadingProgress(60);
     _viewEntity = _gameEngine.registry.spawn_entity();
@@ -215,6 +217,7 @@ void Game::render()
     _gameEngine.registry.run_system<core::ge::TextComponent>();
     _gameEngine.registry.run_system<core::ge::SliderComponent>();
     _gameEngine.registry.run_system<core::ge::TextInputComponent, core::ge::DrawableComponent, core::ge::TextComponent>();
+
     _gameEngine.window.display();
 }
 

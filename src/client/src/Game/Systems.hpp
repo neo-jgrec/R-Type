@@ -9,6 +9,8 @@ namespace Systems {
     void gameEvent(Game &game);
     void gameView(Game &game);
     void hitAnimation(Game &game);
+    void enemyIndicatorSystem(Game &game);
+    void enemyIndicatorRenderSystem(Game &game);
 };
 
 #endif //SYSTEMS_HPP
