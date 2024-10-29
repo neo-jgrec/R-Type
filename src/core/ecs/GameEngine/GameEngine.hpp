@@ -1,6 +1,7 @@
 #ifndef GAMEENGINE_HPP_
 #define GAMEENGINE_HPP_
 
+#include <SFML/Graphics/Text.hpp>
 #include "../Registry/Registry.hpp"
 #include "./GameEngineComponents.hpp"
 #include "MusicManager.hpp"
@@ -11,6 +12,15 @@
 #include <SFML/Main.hpp>
 #include <SFML/System/Clock.hpp>
 #include <SFML/Window/WindowStyle.hpp>
+
+#ifdef _WIN32
+    #include <windows.h>
+    #include <psapi.h>
+#elif __linux__
+    #include <sys/times.h>
+    #include <unistd.h>
+    #include <sys/sysinfo.h>
+#endif
 
 namespace core {
 /**
@@ -130,6 +140,14 @@ public:
             return;
         }
 
+        if (TTF_Init() == -1) {
+            std::cerr << "SDL_ttf could not initialize! SDL_ttf Error: " << TTF_GetError() << std::endl;
+            SDL_DestroyRenderer(renderer);
+            SDL_DestroyWindow(sdlWindow);
+            SDL_Quit();
+            return;
+        }
+
         // we need to precise this because the sdl create a new pointer for the renderer
         // do not remove the line please
         assetManager = AssetManager{renderer};
@@ -140,6 +158,135 @@ public:
         window.setKeyRepeatEnabled(true);
 #endif
     }
+
+    float cpuUsage = 0.0f;
+    float ramUsage = 0.0f;
+    float fps = 0.0f;
+    ecs::Entity cpuEntity;
+    ecs::Entity ramEntity;
+    ecs::Entity fpsEntity;
+
+    void initGameMetrics()
+    {
+        assetManager.loadFont("_ARIAL", "assets/Fonts/Arial.ttf");
+
+        cpuEntity = registry.spawn_entity();
+        ramEntity = registry.spawn_entity();
+        fpsEntity = registry.spawn_entity();
+
+        #ifdef GE_USE_SDL
+            auto font = assetManager.getFont("_ARIAL");
+            SDL_Color White = {255, 255, 255, 255};
+            SDL_Surface* cpuSurface = TTF_RenderText_Solid(font, "CPU: 0.0%", White);
+            SDL_Surface* ramSurface = TTF_RenderText_Solid(font, "RAM: 0.0%", White);
+            SDL_Surface* fpsSurface = TTF_RenderText_Solid(font, "FPS: 0.0", White);
+            SDL_Texture* cpuTexture = SDL_CreateTextureFromSurface(renderer, cpuSurface);
+            SDL_Texture* ramTexture = SDL_CreateTextureFromSurface(renderer, ramSurface);
+            SDL_Texture* fpsTexture = SDL_CreateTextureFromSurface(renderer, fpsSurface);
+            SDL_FreeSurface(cpuSurface);
+            SDL_FreeSurface(ramSurface);
+            SDL_FreeSurface(fpsSurface);
+
+            SDL_Rect cpuRect = {10, 10, 100, 50};
+            SDL_Rect ramRect = {10, 70, 100, 50};
+            SDL_Rect fpsRect = {10, 130, 100, 50};
+
+            registry.add_component<core::ge::DrawableComponent>(cpuEntity, core::ge::DrawableComponent{cpuRect, cpuTexture});
+            registry.add_component<core::ge::DrawableComponent>(ramEntity, core::ge::DrawableComponent{ramRect, ramTexture});
+            registry.add_component<core::ge::DrawableComponent>(fpsEntity, core::ge::DrawableComponent{fpsRect, fpsTexture});
+            registry.add_component<core::ge::MetricsComponent>(cpuEntity, core::ge::MetricsComponent{});
+            registry.add_component<core::ge::MetricsComponent>(ramEntity, core::ge::MetricsComponent{});
+            registry.add_component<core::ge::MetricsComponent>(fpsEntity, core::ge::MetricsComponent{});
+        #else
+            sf::Text cpuText;
+            cpuText.setFont(assetManager.getFont("_ARIAL"));
+            cpuText.setCharacterSize(24);
+            cpuText.setFillColor(sf::Color::White);
+
+            sf::Text ramText;
+            ramText.setFont(assetManager.getFont("_ARIAL"));
+            ramText.setCharacterSize(24);
+            ramText.setFillColor(sf::Color::White);
+
+            sf::Text fpsText;
+            fpsText.setFont(assetManager.getFont("_ARIAL"));
+            fpsText.setCharacterSize(24);
+            fpsText.setFillColor(sf::Color::White);
+
+            auto font = assetManager.getFont("_ARIAL");
+
+            registry.add_component<core::ge::TextComponent>(cpuEntity, core::ge::TextComponent{cpuText, font});
+            registry.add_component<core::ge::TextComponent>(ramEntity, core::ge::TextComponent{ramText, font});
+            registry.add_component<core::ge::TextComponent>(fpsEntity, core::ge::TextComponent{fpsText, font});
+            registry.add_component<core::ge::MetricsComponent>(cpuEntity, core::ge::MetricsComponent{});
+            registry.add_component<core::ge::MetricsComponent>(ramEntity, core::ge::MetricsComponent{});
+            registry.add_component<core::ge::MetricsComponent>(fpsEntity, core::ge::MetricsComponent{});
+        #endif
+    }
+
+    void disableMetrics()
+    {
+        auto metricsComponents = registry.get_components<core::ge::MetricsComponent>();
+        for (size_t i = 0; i < metricsComponents.size(); ++i) {
+            if (!metricsComponents[i].has_value())
+                continue;
+            registry.add_component<core::ge::DisabledComponent>(ecs::Entity{i}, core::ge::DisabledComponent{true});
+        }
+    }
+
+    void reEnableMetrics()
+    {
+        auto metricsComponents = registry.get_components<core::ge::MetricsComponent>();
+        for (size_t i = 0; i < metricsComponents.size(); ++i) {
+            if (!metricsComponents[i].has_value())
+                continue;
+            registry.add_component<core::ge::DisabledComponent>(ecs::Entity{i}, core::ge::DisabledComponent{false});
+        }
+    }
+
+    void updateMetrics()
+    {
+        delta_t = clock.restart().asSeconds();
+        fps = 1.0f / delta_t;
+
+        #ifdef GE_USE_SDL
+            cpuUsage = getCPUUsage();
+            ramUsage = getRAMUsage();
+
+            SDL_Color White = {255, 255, 255, 255};
+            auto font = assetManager.getFont("_ARIAL");
+
+            SDL_Surface* cpuSurface = TTF_RenderText_Solid(font, ("CPU: " + std::to_string(cpuUsage) + "%").c_str(), White);
+            SDL_Surface* ramSurface = TTF_RenderText_Solid(font, ("RAM: " + std::to_string(ramUsage) + "%").c_str(), White);
+            SDL_Surface* fpsSurface = TTF_RenderText_Solid(font, ("FPS: " + std::to_string(fps)).c_str(), White);
+
+            auto updateTexture = [&](ecs::Entity entity, SDL_Surface* surface) {
+                SDL_Texture* newTexture = SDL_CreateTextureFromSurface(renderer, surface);
+                auto drawable = registry.get_component<core::ge::DrawableComponent>(entity);
+                SDL_DestroyTexture(drawable->texture);
+                drawable->texture = newTexture;
+                SDL_FreeSurface(surface);
+            };
+
+            updateTexture(cpuEntity, cpuSurface);
+            updateTexture(ramEntity, ramSurface);
+            updateTexture(fpsEntity, fpsSurface);
+
+        #else
+            cpuUsage = getCPUUsage();
+            ramUsage = getRAMUsage();
+
+            auto updateText = [&](ecs::Entity entity, const std::string& text) {
+                auto textComp = registry.get_component<core::ge::TextComponent>(entity);
+                textComp->text.setString(text);
+            };
+
+            updateText(cpuEntity, "CPU: " + std::to_string(cpuUsage) + "%");
+            updateText(ramEntity, "RAM: " + std::to_string(ramUsage) + "%");
+            updateText(fpsEntity, "FPS: " + std::to_string(fps));
+        #endif
+    }
+
 
 protected:
     /**
@@ -508,6 +655,87 @@ protected:
                 });
         #endif
     }
+    private:
+        static float getCPUUsage()
+        {
+            #ifdef __linux__
+                static clock_t lastCPU, lastSysCPU, lastUserCPU;
+                static long numProcessors = sysconf(_SC_NPROCESSORS_ONLN);
+
+                struct tms timeSample{};
+                clock_t now = times(&timeSample);
+
+                if (lastCPU == 0) {
+                    lastCPU = now;
+                    lastSysCPU = timeSample.tms_stime;
+                    lastUserCPU = timeSample.tms_utime;
+                    return 0.0f;
+                }
+
+                double percent;
+                percent = static_cast<double>(timeSample.tms_stime - lastSysCPU) + static_cast<double>(timeSample.tms_utime - lastUserCPU);
+                percent /= static_cast<double>(now - lastCPU);
+                percent /= static_cast<double>(numProcessors);
+                percent *= 100;
+
+                lastCPU = now;
+                lastSysCPU = timeSample.tms_stime;
+                lastUserCPU = timeSample.tms_utime;
+
+                return static_cast<float>(percent);
+            #elif _WIN32
+                static ULARGE_INTEGER lastCPU, lastSysCPU, lastUserCPU;
+                static int numProcessors;
+                static HANDLE self;
+
+                SYSTEM_INFO sysInfo;
+                FILETIME ftime, fsys, fuser;
+                ULARGE_INTEGER now, sys, user;
+                double percent;
+
+                GetSystemInfo(&sysInfo);
+                numProcessors = sysInfo.dwNumberOfProcessors;
+
+                GetSystemTimeAsFileTime(&ftime);
+                memcpy(&now, &ftime, sizeof(FILETIME));
+
+                self = GetCurrentProcess();
+                GetProcessTimes(self, &ftime, &ftime, &fsys, &fuser);
+                memcpy(&sys, &fsys, sizeof(FILETIME));
+                memcpy(&user, &fuser, sizeof(FILETIME));
+
+                percent = static_cast<double>((sys.QuadPart - lastSysCPU.QuadPart) + (user.QuadPart - lastUserCPU.QuadPart));
+                percent /= static_cast<double>(now.QuadPart - lastCPU.QuadPart);
+                percent /= static_cast<double>(numProcessors);
+                percent *= 100;
+
+                lastCPU = now;
+                lastSysCPU = sys;
+                lastUserCPU = user;
+
+                return static_cast<float>(percent);
+            #endif
+        }
+
+        static float getRAMUsage()
+        {
+            #ifdef __linux__
+                struct sysinfo memInfo{};
+                sysinfo(&memInfo);
+                long long totalPhysMem = memInfo.totalram;
+                totalPhysMem += memInfo.totalswap;
+                totalPhysMem *= memInfo.mem_unit;
+                long long physMemUsed = memInfo.totalram - memInfo.freeram;
+                physMemUsed += memInfo.totalswap - memInfo.freeswap;
+                physMemUsed *= memInfo.mem_unit;
+                return static_cast<float>(physMemUsed) / static_cast<float>(totalPhysMem) * 100.0f;
+            #elif _WIN32
+                MEMORYSTATUSEX statex;
+                statex.dwLength = sizeof(statex);
+                GlobalMemoryStatusEx(&statex);
+                return statex.dwMemoryLoad;
+            #endif
+        }
     };
 }
 

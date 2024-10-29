@@ -30,6 +30,7 @@ int main()
 {
     core::GameEngine engine{false};
     engine.initWindow({SCREEN_WIDTH, SCREEN_HEIGHT}, 60, "Pong");
+    engine.initGameMetrics();
 
     engine.currentScene = 0;
 
