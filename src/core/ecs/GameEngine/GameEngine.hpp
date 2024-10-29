@@ -13,20 +13,11 @@
 #include <SFML/System/Clock.hpp>
 #include <SFML/Window/WindowStyle.hpp>
 
-#ifdef _WIN32
-    #include <windows.h>
-    #include <psapi.h>
-#elif __linux__
-    #include <sys/times.h>
-    #include <unistd.h>
-    #include <sys/sysinfo.h>
-#endif
-
 namespace core {
 /**
  * @class GameEngine
  * @brief Manages the core game loop, systems, and rendering operations.
- * 
+ *
  * The `GameEngine` class is responsible for initializing and managing the game components, such as the entity registry, systems,
  * rendering, and sound. It also manages the SFML window and the scene switching logic.
  */
@@ -34,10 +25,10 @@ class GameEngine {
 public:
     /**
      * @brief Constructs a GameEngine object and initializes components and systems.
-     * 
+     *
      * The constructor initializes the component registry and sets up various game systems such as rendering, animations, and collisions.
      * Optionally, it can initialize an SFML window for rendering.
-     * 
+     *
      * @param initWindow A boolean flag that indicates whether to initialize the SFML window. Default is true.
      */
     GameEngine(bool initWindow = true) {
@@ -291,7 +282,7 @@ public:
 protected:
     /**
      * @brief Sets up the system for rendering drawable components.
-     * 
+     *
      * This system renders entities' `DrawableComponent` if they belong to the active scene.
      */
     void renderSystems()
@@ -322,7 +313,7 @@ protected:
 
     /**
      * @brief Initializes the system that handles entity positions, sizes, scales, and rotations.
-     * 
+     *
      * This system updates the `DrawableComponent` of entities based on their `TransformComponent` (position, size, rotation, and scale).
      */
     void positionSystem()
@@ -345,7 +336,7 @@ protected:
 
     /**
      * @brief Sets up the system for handling animations.
-     * 
+     *
      * This system updates the current frame of an entity's animation based on the elapsed time and frame duration.
      */
     void animationSystem()
@@ -383,7 +374,7 @@ protected:
 
     /**
      * @brief Initializes the sound system for playing sound effects.
-     * 
+     *
      * This system ensures that sound effects are played once when triggered, and sets `isPlaying` to prevent repeated playback.
      */
     void soundSystem()
@@ -411,7 +402,7 @@ protected:
 
     /**
      * @brief Sets up the collision detection system for handling interactions between entities.
-     * 
+     *
      * This system checks for collisions between entities and triggers their `onCollision` callbacks if they intersect.
      */
     void collisionSystem() {
@@ -464,7 +455,7 @@ protected:
 
     /**
      * @brief Sets up the clicable interaction system.
-     * 
+     *
      * This system handles user interactions with buttons, including hover and click states, and adjusts their size when hovered or clicked.
      */
     void clickableSystem() {
@@ -524,7 +515,7 @@ protected:
 
     /**
      * @brief Initializes the text rendering system.
-     * 
+     *
      * This system handles the rendering of `TextComponent` entities that belong to the active scene.
      */
     void textSystem()
@@ -658,83 +649,11 @@ protected:
     private:
         static float getCPUUsage()
         {
-            #ifdef __linux__
-                static clock_t lastCPU, lastSysCPU, lastUserCPU;
-                static long numProcessors = sysconf(_SC_NPROCESSORS_ONLN);
-
-                struct tms timeSample{};
-                clock_t now = times(&timeSample);
-
-                if (lastCPU == 0) {
-                    lastCPU = now;
-                    lastSysCPU = timeSample.tms_stime;
-                    lastUserCPU = timeSample.tms_utime;
-                    return 0.0f;
-                }
-
-                double percent;
-                percent = static_cast<double>(timeSample.tms_stime - lastSysCPU) + static_cast<double>(timeSample.tms_utime - lastUserCPU);
-                percent /= static_cast<double>(now - lastCPU);
-                percent /= static_cast<double>(numProcessors);
-                percent *= 100;
-
-                lastCPU = now;
-                lastSysCPU = timeSample.tms_stime;
-                lastUserCPU = timeSample.tms_utime;
-
-                return static_cast<float>(percent);
-            #elif _WIN32
-                static ULARGE_INTEGER lastCPU, lastSysCPU, lastUserCPU;
-                static int numProcessors;
-                static HANDLE self;
-
-                SYSTEM_INFO sysInfo;
-                FILETIME ftime, fsys, fuser;
-                ULARGE_INTEGER now, sys, user;
-                double percent;
-
-                GetSystemInfo(&sysInfo);
-                numProcessors = sysInfo.dwNumberOfProcessors;
-
-                GetSystemTimeAsFileTime(&ftime);
-                memcpy(&now, &ftime, sizeof(FILETIME));
-
-                self = GetCurrentProcess();
-                GetProcessTimes(self, &ftime, &ftime, &fsys, &fuser);
-                memcpy(&sys, &fsys, sizeof(FILETIME));
-                memcpy(&user, &fuser, sizeof(FILETIME));
-
-                percent = static_cast<double>((sys.QuadPart - lastSysCPU.QuadPart) + (user.QuadPart - lastUserCPU.QuadPart));
-                percent /= static_cast<double>(now.QuadPart - lastCPU.QuadPart);
-                percent /= static_cast<double>(numProcessors);
-                percent *= 100;
-
-                lastCPU = now;
-                lastSysCPU = sys;
-                lastUserCPU = user;
-
-                return static_cast<float>(percent);
-            #endif
+            return 0.0f;
         }
-
         static float getRAMUsage()
         {
-            #ifdef __linux__
-                struct sysinfo memInfo{};
-                sysinfo(&memInfo);
-                long long totalPhysMem = memInfo.totalram;
-                totalPhysMem += memInfo.totalswap;
-                totalPhysMem *= memInfo.mem_unit;
-                long long physMemUsed = memInfo.totalram - memInfo.freeram;
-                physMemUsed += memInfo.totalswap - memInfo.freeswap;
-                physMemUsed *= memInfo.mem_unit;
-                return static_cast<float>(physMemUsed) / static_cast<float>(totalPhysMem) * 100.0f;
-            #elif _WIN32
-                MEMORYSTATUSEX statex;
-                statex.dwLength = sizeof(statex);
-                GlobalMemoryStatusEx(&statex);
-                return statex.dwMemoryLoad;
-            #endif
+            return 0.0f;
         }
     };
 }
