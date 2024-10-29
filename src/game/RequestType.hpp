@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 enum RequestType: uint8_t {
     PlayerConnect = 0,
     PlayerDisconnect = 1,
