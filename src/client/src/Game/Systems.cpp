@@ -1,6 +1,7 @@
 #include "Systems.hpp"
 
 #include <SFML/System/Vector2.hpp>
+#include <ostream>
 
 #include "Utils/ClientComponents.hpp"
 #include "EntityFactory.hpp"
@@ -266,9 +267,9 @@ namespace Systems {
 
                     case TileDestroy: {
                         auto tileDestroyPayload = std::get<sf::Vector2u>(event.getPayload());
-                        for (auto tileEntity : registry.get_entities<Tile>()) {
-                            if (const auto tileComponent = registry.get_component<Tile>(tileEntity);
-                                tileComponent->position == sf::Vector2f(tileDestroyPayload)) {
+                        for (auto tileEntity : registry.get_entities<TileComponent>()) {
+                            const auto tileComponent = registry.get_component<TileComponent>(tileEntity);
+                            if (tileComponent->position == sf::Vector2f(tileDestroyPayload)) {
                                 registry.kill_entity(tileEntity);
                             }
                         }
