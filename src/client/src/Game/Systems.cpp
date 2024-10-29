@@ -177,6 +177,7 @@ namespace Systems {
     {
         auto &gameEngine = game.getGameEngine();
         auto &registry = gameEngine.registry;
+        const auto &config = game.getConfigManager();
 
         registry.add_system<EventComponent>([&](core::ecs::Entity, EventComponent&) {
             for (auto &event : EventPool::getInstance().getAllEvents()) {
@@ -332,7 +333,7 @@ namespace Systems {
                         const auto mapScrollPayload = static_cast<float>(std::get<std::uint32_t>(event.getPayload()));
                         auto &view = registry.get_component<ViewComponent>(registry.get_entities<ViewComponent>()[0])->view;
 
-                        view.move(mapScrollPayload, 0.0f);
+                        view.setCenter(mapScrollPayload + config.getValue<float>("/view/size/x", 1920.0f) / 2, view.getCenter().y);
                         gameEngine.window.setView(view);
                         break;
                     }
@@ -357,7 +358,7 @@ namespace Systems {
 
                 view.view.move(
                     config.getValue<float>("/view/speed/x", 50.0f) * gameEngine.delta_t,
-                    config.getValue<float>("/view/speed/y", 50.0f) * gameEngine.delta_t);
+                    config.getValue<float>("/view/speed/y", 0) * gameEngine.delta_t);
                 gameEngine.window.setView(view.view);
             });
     }
@@ -390,4 +391,3 @@ namespace Systems {
             });
     }
 };
-
