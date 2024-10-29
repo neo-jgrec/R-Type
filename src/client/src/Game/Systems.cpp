@@ -207,15 +207,48 @@ namespace Systems {
                         for (auto playerEntity : registry.get_entities<Player>()) {
                             if (const auto playerComponent = registry.get_component<Player>(playerEntity);
                                 playerComponent->id == playerId) {
-                                registry.kill_entity(playerEntity);
+                                const auto drawableComp = registry.get_component<core::ge::DrawableComponent>(playerEntity);
+                                const auto transformComp = registry.get_component<core::ge::TransformComponent>(playerEntity);
+                                drawableComp->shape.setSize(sf::Vector2f(36.0f * 3, 36.0f * 3));
+                                transformComp->size = sf::Vector2f(36.0f * 3, 36.0f * 3);
+                                transformComp->position = sf::Vector2f(transformComp->position.x, transformComp->position.y);
+                                registry.remove_component<core::ge::VelocityComponent>(playerEntity);
+                                registry.remove_component<core::ge::TransformComponent>(playerEntity);
+                                registry.remove_component<core::ge::CollisionComponent>(playerEntity);
+                                const auto animComp = registry.get_component<core::ge::AnimationComponent>(playerEntity);
+                                animComp->currentState = core::ge::AnimationState::Dying;
+                                animComp->currentFrame = 0;
+                                animComp->frameTime = 0.2f;
+                                animComp->elapsedTime = 0.0f;
+                                animComp->recurrence_max = 1;
+                                animComp->recurrence_count = 0;
+                                animComp->loop = true;
+                                animComp->isPlaying = true;
                             }
                         }
                         break;
                     }
 
                     case PlayerHit: {
-                        std::cout << "Player hit" << std::endl;
-                        // TODO: Handle player hit
+                        const auto playerId = std::get<std::uint8_t>(event.getPayload());
+                        for (auto playerEntity : registry.get_entities<Player>()) {
+                            if (const auto playerComponent = registry.get_component<Player>(playerEntity); playerComponent->id == playerId) {
+
+                                auto drawableComponent = registry.get_component<core::ge::DrawableComponent>(playerEntity);
+                                if (!drawableComponent)
+                                    continue;
+
+                                drawableComponent->shape.setFillColor(sf::Color(255, 255, 255, 128));
+
+                                auto hitAnim = registry.add_component<HitAnimationComponent>(playerEntity, HitAnimationComponent{
+                                    .blinkCount = 0,
+                                    .maxBlinks = 3,
+                                    .blinkTimer = 0.0f,
+                                    .blinkInterval = 0.2f,
+                                    .isTransparent = true
+                                });
+                            }
+                        }
                         break;
                     }
 
@@ -328,4 +361,33 @@ namespace Systems {
                 gameEngine.window.setView(view.view);
             });
     }
+
+    void hitAnimation(Game &game)
+    {
+        auto &gameEngine = game.getGameEngine();
+        auto &registry = gameEngine.registry;
+
+        registry.add_system<core::ge::DrawableComponent, HitAnimationComponent>(
+            [&](core::ecs::Entity entity, core::ge::DrawableComponent &drawable, HitAnimationComponent &hitAnim) {
+                hitAnim.blinkTimer += gameEngine.delta_t;
+
+                if (hitAnim.blinkTimer >= hitAnim.blinkInterval) {
+                    hitAnim.blinkTimer = 0.0f;
+                    hitAnim.isTransparent = !hitAnim.isTransparent;
+
+                    if (!hitAnim.isTransparent)
+                        hitAnim.blinkCount++;
+
+                    sf::Color color = drawable.shape.getFillColor();
+                    color.a = hitAnim.isTransparent ? 128 : 255;
+                    drawable.shape.setFillColor(color);
+
+                    if (hitAnim.blinkCount >= hitAnim.maxBlinks) {
+                        drawable.shape.setFillColor(sf::Color(255, 255, 255, 255));
+                        registry.remove_component<HitAnimationComponent>(entity);
+                    }
+                }
+            });
+    }
 };
+

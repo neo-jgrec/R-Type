@@ -8,6 +8,7 @@ namespace Systems {
     void playerMovement(Game &game);
     void gameEvent(Game &game);
     void gameView(Game &game);
+    void hitAnimation(Game &game);
 };
 
 #endif //SYSTEMS_HPP
