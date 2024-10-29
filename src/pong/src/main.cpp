@@ -1,3 +1,6 @@
+#ifdef _WIN32
+    #define SDL_MAIN_HANDLED
+#endif
 #include <SDL_events.h>
 #define GE_USE_SDL
 #include "../../core/ecs/GameEngine/GameEngine.hpp"
