@@ -163,7 +163,8 @@ core::ecs::Entity EntityFactory::createPlayer(
         GameStart,
         {});
     {
-        const auto scroll = static_cast<uint32_t>(transformComponent.position.x);
+        const auto &worldTransformComponent = gameEngine.registry.get_component<core::ge::TransformComponent>(world);
+        const auto &scroll = static_cast<uint32_t>(worldTransformComponent->position.x);
 
         networkingService.sendRequest(
             *playersConnection[id].value(),
