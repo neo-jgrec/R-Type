@@ -22,6 +22,7 @@ void EventFactory::playerConnected(Server &server)
 {
     NetworkingService &networkingService = server.getNetworkingService();
     auto &playersConnection = server.getPlayersConnection();
+    auto &players = server.getPlayers();
 
     networkingService.addEvent(PlayerConnect, [&](const GDTPHeader &header, const std::vector<uint8_t> &payload, const asio::ip::udp::endpoint &endpoint) {
         if (!payload.empty())
@@ -35,6 +36,8 @@ void EventFactory::playerConnected(Server &server)
                 continue;
             std::cout << "New connection from " << endpoint << std::endl;
             playersConnection[id] = std::make_shared<asio::ip::udp::endpoint>(endpoint);
+            if (server.getGameState() == GAME)
+                players[id] = EntityFactory::createPlayer(server, id);
             break;
         }
         if (id == 4)

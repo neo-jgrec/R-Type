@@ -41,6 +41,7 @@ public:
     std::array<std::optional<std::shared_ptr<asio::ip::udp::endpoint>>, 4> &getPlayersConnection() { return _playersConnection; }
     std::array<std::optional<core::ecs::Entity>, 4> &getPlayers() { return _players; }
     std::shared_mutex &getRegistryMutex() const { return registry_mutex; }
+    GameState getGameState() const { return _gameState; }
 
     void setGameState(const GameState gameState) { _gameState = gameState; }
 
