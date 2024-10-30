@@ -162,10 +162,10 @@ core::ecs::Entity EntityFactory::createPlayer(
         *playersConnection[id].value(),
         GameStart,
         {});
-    {
-        const auto &worldTransformComponent = gameEngine.registry.get_component<core::ge::TransformComponent>(world);
-        const auto &scroll = static_cast<uint32_t>(worldTransformComponent->position.x);
 
+    const auto &worldTransformComponent = gameEngine.registry.get_component<core::ge::TransformComponent>(world);
+    const auto &scroll = static_cast<uint32_t>(worldTransformComponent->position.x);
+    {
         networkingService.sendRequest(
             *playersConnection[id].value(),
             MapScroll,
@@ -177,8 +177,19 @@ core::ecs::Entity EntityFactory::createPlayer(
             });
     }
     {
-        const auto x = static_cast<uint32_t>(fst);
-        const auto y = static_cast<uint32_t>(snd);
+        auto x = static_cast<uint32_t>(fst);
+        auto y = static_cast<uint32_t>(snd);
+
+        if (scroll > x) {
+            for (const auto &otherPlayer : gameEngine.registry.get_entities<Player>()) {
+                if (otherPlayer == player)
+                    continue;
+                const auto &otherPlayerTransformComponent = gameEngine.registry.get_component<core::ge::TransformComponent>(otherPlayer);
+                x = static_cast<uint32_t>(otherPlayerTransformComponent->position.x);
+                y = static_cast<uint32_t>(otherPlayerTransformComponent->position.y);
+                break;
+            }
+        }
 
         server.sendRequestToPlayers(PlayerMove, {
             id,
