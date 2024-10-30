@@ -67,6 +67,30 @@
                 "x": 115,
                 "y": 126
             }
+        },
+        {
+            "type": "shooter",
+            "projectile": {
+                "speed": {
+                    "x": 200,
+                    "y": 0
+                },
+                "size": {
+                    "x": 35,
+                    "y": 30
+                },
+                "damage": 10
+            },
+            "speed": {
+                "x": 200,
+                "y": 0
+            },
+            "health": 10,
+            "damage": 10,
+            "size": {
+                "x": 132,
+                "y": 88
+            }
         }
     ],
     "map": {

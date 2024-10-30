@@ -40,6 +40,7 @@ public:
         std::string,
         sf::Vector2u,
         std::pair<std::uint8_t, sf::Vector2u>,
+        std::tuple<std::uint8_t, std::uint8_t, sf::Vector2u>,
         std::uint32_t,
         std::uint8_t> payload_t;
 
@@ -139,6 +140,8 @@ public:
                 os << "Vector2u{x=" << payload.x << ", y=" << payload.y << "}";
             } else if constexpr (std::is_same_v<T, std::pair<std::uint8_t, sf::Vector2u>>) {
                 os << "pair{first=" << static_cast<int>(payload.first) << ", second={x=" << payload.second.x << ", y=" << payload.second.y << "}}";
+            } else if constexpr (std::is_same_v<T, std::tuple<std::uint8_t, std::uint8_t, sf::Vector2u>>) {
+                os << "tuple{first=" << static_cast<int>(std::get<0>(payload)) << ", second=" << static_cast<int>(std::get<1>(payload)) << ", third={x=" << std::get<2>(payload).x << ", y=" << std::get<2>(payload).y << "}}";
             } else if constexpr (std::is_same_v<T, std::uint32_t>) {
                 os << "uint32_t{" << payload << "}";
             } else if constexpr (std::is_same_v<T, std::uint8_t>) {

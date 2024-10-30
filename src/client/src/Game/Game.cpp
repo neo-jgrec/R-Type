@@ -152,6 +152,7 @@ void Game::loadAssets()
         {"player_missile", "assets/player_missile.png"},
         {"background", "assets/background.png"},
         {"logo", "assets/logo.png"},
+        {"shooter_enemy", "assets/Enemies/shooter.png"},
         {"player_anim", "assets/Player/missile_charging.png"}
     };
 
