@@ -6,6 +6,7 @@
 #include "../../../game/RequestType.hpp"
 #include "../../../game/Components.hpp"
 #include "Utils/ClientComponents.hpp"
+#include "../../../game/CollisionMask.hpp"
 
 namespace Scenes {
     void loadMainMenu(Game &game)
@@ -81,6 +82,11 @@ namespace Scenes {
                 game.closeWindow();
             }
         ));
+
+        game.addToScene(EntityFactory::createBall(game, sf::Vector2f(100, 100)));
+
+        for (const auto& border : createWorldBorders(gameEngine))
+            game.addToScene(border);
     }
 
     void updateMainMenu(Game &game)
@@ -415,9 +421,52 @@ namespace Scenes {
 
         gameEngine.registry.run_system<EventComponent>();
 
-        gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent>();
-        gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent>();
         gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent, Player>();
         gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent, InputStateComponent, ShootCounterComponent, Player, core::ge::AnimationComponent>();
     }
+
+    std::vector<core::ecs::Entity> createWorldBorders(core::GameEngine& engine) {
+        const float BORDER_THICKNESS = 1.0f;
+        const auto windowSize = engine.window.getSize();
+        std::vector<core::ecs::Entity> borders;
+
+        auto topBorder = engine.registry.spawn_entity();
+        engine.registry.add_component(topBorder, core::ge::TransformComponent{
+            {0, 20}, {static_cast<float>(windowSize.x), BORDER_THICKNESS}, {1, 1}, 0
+        });
+        engine.registry.add_component(topBorder, core::ge::CollisionComponent{
+            WORLD_BORDER, {sf::FloatRect(0, 0, static_cast<float>(windowSize.x), BORDER_THICKNESS)}
+        });
+        borders.push_back(topBorder);
+
+        auto bottomBorder = engine.registry.spawn_entity();
+        engine.registry.add_component(bottomBorder, core::ge::TransformComponent{
+            {0, static_cast<float>(windowSize.y) - BORDER_THICKNESS}, {static_cast<float>(windowSize.x), BORDER_THICKNESS}, {1, 1}, 0
+        });
+        engine.registry.add_component(bottomBorder, core::ge::CollisionComponent{
+            WORLD_BORDER, {sf::FloatRect(0, 0, static_cast<float>(windowSize.x), BORDER_THICKNESS)}
+        });
+        borders.push_back(bottomBorder);
+
+        auto leftBorder = engine.registry.spawn_entity();
+        engine.registry.add_component(leftBorder, core::ge::TransformComponent{
+            {-BORDER_THICKNESS, 0}, {BORDER_THICKNESS, static_cast<float>(windowSize.y)}, {1, 1}, 0
+        });
+        engine.registry.add_component(leftBorder, core::ge::CollisionComponent{
+            WORLD_BORDER, {sf::FloatRect(0, 0, BORDER_THICKNESS, static_cast<float>(windowSize.y))}
+        });
+        borders.push_back(leftBorder);
+
+        auto rightBorder = engine.registry.spawn_entity();
+        engine.registry.add_component(rightBorder, core::ge::TransformComponent{
+            {static_cast<float>(windowSize.x), 0}, {BORDER_THICKNESS, static_cast<float>(windowSize.y)}, {1, 1}, 0
+        });
+        engine.registry.add_component(rightBorder, core::ge::CollisionComponent{
+            WORLD_BORDER, {sf::FloatRect(0, 0, BORDER_THICKNESS, static_cast<float>(windowSize.y))}
+        });
+        borders.push_back(rightBorder);
+
+        return borders;
+    }
+
 };
