@@ -321,7 +321,7 @@ void Game::run() {
     _networkingService.run();
 
     // TODO: implement a way to load maps at runtimes dynamically
-    parseMap(*this, "./JY_map.json", _gameEngine.window);
+    parseMap(*this, "./assets/JY_map.json", _gameEngine.window);
     Scenes::loadMainMenu(*this);
     while (_windowOpen) {
         sf::Time elapsed = _gameEngine.clock.restart();

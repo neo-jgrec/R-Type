@@ -62,7 +62,7 @@ void Server::start()
 
     std::cout << "Game starting" << std::endl;
 
-    const core::ecs::Entity world = EntityFactory::createWorld(*this, "JY_map.json");
+    const core::ecs::Entity world = EntityFactory::createWorld(*this, "assets/JY_map.json");
     if (const auto spawnPoints = _gameEngine.registry.get_component<World>(world)->spawnPoints; spawnPoints.empty()) {
         std::cerr << "Error: No spawn points available." << std::endl;
         return;
