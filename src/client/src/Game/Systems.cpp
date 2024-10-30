@@ -1,6 +1,7 @@
 #include "Systems.hpp"
 
 #include <SFML/System/Vector2.hpp>
+#include <ostream>
 
 #include "Utils/ClientComponents.hpp"
 #include "EntityFactory.hpp"
@@ -266,9 +267,9 @@ namespace Systems {
 
                     case TileDestroy: {
                         auto tileDestroyPayload = std::get<sf::Vector2u>(event.getPayload());
-                        for (auto tileEntity : registry.get_entities<Tile>()) {
-                            if (const auto tileComponent = registry.get_component<Tile>(tileEntity);
-                                tileComponent->position == sf::Vector2f(tileDestroyPayload)) {
+                        for (auto tileEntity : registry.get_entities<TileComponent>()) {
+                            const auto tileComponent = registry.get_component<TileComponent>(tileEntity);
+                            if (tileComponent->position == sf::Vector2f(tileDestroyPayload)) {
                                 registry.kill_entity(tileEntity);
                             }
                         }
@@ -288,13 +289,24 @@ namespace Systems {
                     }
 
                     case EnemySpawn: {
-                        auto [id, position] = std::get<std::pair<std::uint8_t, sf::Vector2u>>(event.getPayload());
-                        game.addToScene(EntityFactory::createEnemy(game, sf::Vector2f(position), id));
+                        auto [id, enemyType, position] = std::get<std::tuple<std::uint8_t, std::uint8_t, sf::Vector2u>>(event.getPayload());
+                        switch (enemyType) {
+                            case 0:
+                                game.addToScene(EntityFactory::createShooterEnemy(game, sf::Vector2f(position), id));
+                                break;
+                            case 1:
+                                game.addToScene(EntityFactory::createEnemy(game, sf::Vector2f(position), id));
+                                break;
+                            default:
+                                std::cerr << "Unknown enemy type: " << static_cast<int>(enemyType) << std::endl;
+                                break;
+                        }
                         break;
                     }
 
                     case EnemyMove: {
                         auto [id, position] = std::get<std::pair<std::uint8_t, sf::Vector2u>>(event.getPayload());
+                        std::cout << "EnemyMove payload: id = " << static_cast<int>(id) << ", position = (" << position.x << ", " << position.y << ")" << std::endl;
                         for (auto enemyEntity : registry.get_entities<Enemy>()) {
                             if (registry.get_component<Enemy>(enemyEntity)->id == id)
                                 return;

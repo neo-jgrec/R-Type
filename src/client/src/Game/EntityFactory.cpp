@@ -302,6 +302,73 @@ core::ecs::Entity EntityFactory::createEnemy(Game &game, const sf::Vector2f& pos
     return enemy;
 }
 
+core::ecs::Entity EntityFactory::createShooterEnemy(Game &game, const sf::Vector2f& position, std::uint8_t enemyId)
+{
+    auto& gameEngine = game.getGameEngine();
+    auto& registry = gameEngine.registry;
+    auto& config = game.getConfigManager();
+
+    core::ecs::Entity enemy = gameEngine.registry.spawn_entity();
+    sf::Vector2f enemySize = sf::Vector2f(
+        config.getValue<float>("/enemies/1/size/x"),
+        config.getValue<float>("/enemies/1/size/y")
+    );
+
+    sf::Vector2f enemySpeed = sf::Vector2f(
+        config.getValue<float>("/enemies/1/speed/x"),
+        config.getValue<float>("/enemies/1/speed/y")
+    );
+
+    int enemyHealth = config.getValue<int>("/enemies/1/health");
+    int enemyDamage = config.getValue<int>("/enemies/1/damage");
+
+    registry.add_component(enemy, core::ge::TransformComponent{position, enemySize, game.getGameScale(), 0.0f});
+    registry.add_component(enemy, core::ge::VelocityComponent{-enemySpeed.x, enemySpeed.y});
+    registry.add_component(enemy, HealthComponent{enemyHealth});
+    registry.add_component(enemy, DamageComponent{enemyDamage});
+    registry.add_component(enemy, Enemy{
+        .id = enemyId
+    });
+    gameEngine.registry.add_component(enemy, core::ge::CollisionComponent{ENEMY, {sf::FloatRect(0.0f, 0.0f, enemySize.x, enemySize.y)}, {
+        { PLAYER_PROJECTILE, [&](const core::ecs::Entity self, [[maybe_unused]] const core::ecs::Entity other) {
+                auto drawable = gameEngine.registry.get_component<core::ge::DrawableComponent>(self);
+                drawable->visible = false;
+                drawable->timeSinceLastVisible = sf::Time::Zero;
+        }}, { PLAYER_MISSILE, [&](const core::ecs::Entity self, [[maybe_unused]] const core::ecs::Entity other) {
+                auto drawable = gameEngine.registry.get_component<core::ge::DrawableComponent>(self);
+                drawable->visible = false;
+                drawable->timeSinceLastVisible = sf::Time::Zero;
+        }},
+    }});
+
+    auto texture = gameEngine.assetManager.getTexture("shooter_enemy");
+
+    sf::RectangleShape enemyShape(enemySize);
+    enemyShape.setTexture(texture.get());
+    enemyShape.setTextureRect(sf::IntRect(0, 0, 33, 22));
+    gameEngine.registry.add_component(enemy, core::ge::DrawableComponent{enemyShape});
+    gameEngine.registry.add_component(enemy, core::ge::TextureComponent{texture});
+    std::vector<sf::IntRect> moveFrames;
+    moveFrames.reserve(8);
+    for (int i = 0; i < 8; i++)
+        moveFrames.emplace_back(i * 33, 0, 33, 22);
+    std::vector<sf::IntRect> dieFrames;
+    dieFrames.reserve(6);
+    for (int i = 0; i < 6; i++)
+        dieFrames.emplace_back(i * 33, 22, 33, 22);
+    gameEngine.registry.add_component(enemy, core::ge::AnimationComponent{
+        .animations = {
+            {core::ge::AnimationState::Moving, moveFrames},
+            {core::ge::AnimationState::Dying, dieFrames}
+        },
+        .frameTime = 0.1f,
+        .elapsedTime = 0.0f,
+        .currentFrame = 0,
+        .loop = true
+    });
+    return enemy;
+}
+
 core::ecs::Entity EntityFactory::createButton(Game &game, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void()>& onClick)
 {
     auto& gameEngine = game.getGameEngine();

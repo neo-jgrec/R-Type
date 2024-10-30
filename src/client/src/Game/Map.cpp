@@ -172,7 +172,7 @@ void Game::parseMap(Game &game, const std::string& mapFilePath, sf::RenderWindow
             registry.add_component(tileEntity, core::ge::TransformComponent{tilePos, {mapData["cellSize"].get<float>() * gameScale.x, mapData["cellSize"].get<float>() * gameScale.y}, {1.0f, 1.0f}, 0.0f});
             registry.add_component(tileEntity, core::ge::DrawableComponent{tileShape});
             registry.add_component(tileEntity, core::ge::TextureComponent{tileTextures[tileIdx]});
-            registry.add_component(tileEntity, TileComponent{isDestructible});
+            registry.add_component(tileEntity, TileComponent{isDestructible, tilePos});
 
             gameEngine.registry.add_component(tileEntity, core::ge::CollisionComponent{
                 WORLD, {sf::FloatRect(0.0f, 0.0f, mapData["cellSize"].get<float>() * gameScale.x, mapData["cellSize"].get<float>() * gameScale.y)},
@@ -186,7 +186,7 @@ void Game::parseMap(Game &game, const std::string& mapFilePath, sf::RenderWindow
                         } else {
                             std::cerr << "Error: TileComponent not found for entity." << std::endl;
                         }
-                        gameEngine.registry.remove_component<core::ge::DrawableComponent>(other);
+                        //gameEngine.registry.remove_component<core::ge::DrawableComponent>(other);
                     }},
                     {PLAYER_MISSILE, [&](const core::ecs::Entity self, [[maybe_unused]] const core::ecs::Entity other) {
                         const auto& tileOpt = gameEngine.registry.get_components<TileComponent>()[self];
@@ -198,19 +198,19 @@ void Game::parseMap(Game &game, const std::string& mapFilePath, sf::RenderWindow
                             std::cerr << "Error: TileComponent not found for entity." << std::endl;
                         }
 
-                        const auto& healthOpt = gameEngine.registry.get_components<HealthComponent>()[other];
-                        if (healthOpt.has_value()) {
-                            auto& health = healthOpt.value();
-                            health->health -= tileDamage;
-                            if (health->health <= 0)
-                                gameEngine.registry.remove_component<core::ge::DrawableComponent>(other);
-                        } else {
-                            std::cerr << "Error: HealthComponent not found for entity." << std::endl;
-                        }
+                        //const auto& healthOpt = gameEngine.registry.get_components<HealthComponent>()[other];
+                        //if (healthOpt.has_value()) {
+                        //    auto& health = healthOpt.value();
+                        //    health->health -= tileDamage;
+                        //    if (health->health <= 0)
+                        //        gameEngine.registry.remove_component<core::ge::DrawableComponent>(other);
+                        //} else {
+                        //    std::cerr << "Error: HealthComponent not found for entity." << std::endl;
+                        //}
                     }},
                     {PLAYER, [&](const core::ecs::Entity, const core::ecs::Entity other) {
-                        auto disabled = gameEngine.registry.get_component<core::ge::DisabledComponent>(other);
-                        disabled->disabled = true;
+                        auto drawable = gameEngine.registry.get_component<core::ge::DrawableComponent>(other);
+                        drawable->visible = false;
                     }},
                 }
             });

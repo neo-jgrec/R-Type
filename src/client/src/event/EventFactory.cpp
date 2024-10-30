@@ -103,13 +103,14 @@ Event EventFactory::handlePlayerDie([[maybe_unused]] const GDTPHeader& header, c
 
 Event EventFactory::handleEnemySpawn([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload)
 {
-    if (payload.size() != 9) {
+    if (payload.size() != 10) {
         throw std::runtime_error("Invalid payload size for EnemySpawn event");
     }
     std::uint8_t enemyId = payload[0];
-    std::uint32_t x = (payload[1] << 24) | (payload[2] << 16) | (payload[3] << 8) | payload[4];
-    std::uint32_t y = (payload[5] << 24) | (payload[6] << 16) | (payload[7] << 8) | payload[8];
-    return {RequestType::EnemySpawn, header, std::make_pair(enemyId, sf::Vector2u{x, y})};
+    std::uint8_t enemyType = payload[1];
+    std::uint32_t x = (payload[2] << 24) | (payload[3] << 16) | (payload[4] << 8) | payload[5];
+    std::uint32_t y = (payload[6] << 24) | (payload[7] << 16) | (payload[8] << 8) | payload[9];
+    return {RequestType::EnemySpawn, header, std::make_tuple(enemyId, enemyType, sf::Vector2u{x, y})};
 }
 
 Event EventFactory::handleEnemyMove([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload)

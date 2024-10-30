@@ -2,6 +2,7 @@
 #define CLIENTCOMPONENTS_HPP_
 
 #include <SFML/Graphics.hpp>
+#include <SFML/System/Vector2.hpp>
 
 /**
  * @struct ViewComponent
@@ -19,6 +20,7 @@ struct EventComponent {
 
 struct TileComponent {
     bool isDestructible = false;
+    sf::Vector2f position;
 };
 
 struct HitAnimationComponent {

@@ -196,7 +196,7 @@ core::ecs::Entity EntityFactory::createPlayer(
     return player;
 }
 
-core::ecs::Entity EntityFactory::createEnemy(Server &server, const uint32_t x)
+core::ecs::Entity EntityFactory::createEnemy(Server &server, const uint32_t x, uint8_t enemyType)
 {
     static uint8_t id = 0;
     if (id >= 255)
@@ -219,17 +219,18 @@ core::ecs::Entity EntityFactory::createEnemy(Server &server, const uint32_t x)
 
     const core::ecs::Entity enemy = gameEngine.registry.spawn_entity();
 
+    const std::string enemyConfigPath = "/enemies/" + std::to_string(enemyType);
     const auto size = sf::Vector2f(
-        config.getValue<float>("/enemies/0/size/x", 115.0f),
-        config.getValue<float>("/enemies/0/size/y", 126.0f)
+        config.getValue<float>(enemyConfigPath + "/size/x", 115.0f),
+        config.getValue<float>(enemyConfigPath + "/size/y", 126.0f)
     );
 
     const auto height = config.getValue<int>("/view/size/y", 1080.0f);
     const sf::Vector2i position = {static_cast<int>(x), rand() % (height - (height / 6) + height / 3)};
     gameEngine.registry.add_component(enemy, Network{networkingService});
     gameEngine.registry.add_component(enemy, core::ge::VelocityComponent{
-        -config.getValue<float>("/enemies/0/speed/x", 115.0f),
-        config.getValue<float>("/enemies/0/speed/y", 126.0f)});
+        -config.getValue<float>(enemyConfigPath + "/speed/x", 115.0f),
+        config.getValue<float>(enemyConfigPath + "/speed/y", 126.0f)});
     gameEngine.registry.add_component(enemy, core::ge::TransformComponent{sf::Vector2f(position), size, sf::Vector2f(1, 1), 0});
     gameEngine.registry.add_component(enemy, core::ge::CollisionComponent{ENEMY, std::vector{sf::FloatRect(0, 0, size.x, size.y)},{
         {PLAYER, onCollision},
@@ -240,6 +241,7 @@ core::ecs::Entity EntityFactory::createEnemy(Server &server, const uint32_t x)
 
     const std::vector payload = {
         id,
+        enemyType,
         static_cast<uint8_t>(position.x >> 24),
         static_cast<uint8_t>(position.x >> 16),
         static_cast<uint8_t>(position.x >> 8),
