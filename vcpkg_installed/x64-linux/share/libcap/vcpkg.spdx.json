@@ -1,0 +1,133 @@
+{
+  "$schema": "https://raw.githubusercontent.com/spdx/spdx-spec/v2.2.1/schemas/spdx-schema.json",
+  "spdxVersion": "SPDX-2.2",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "documentNamespace": "https://spdx.org/spdxdocs/libcap-x64-linux-2.70-e1528629-0b74-4e2a-8cab-fb81e5c8cd40",
+  "name": "libcap:x64-linux@2.70 16095ebc17b482d3978fd56224a258e053eaff2a79f4190b0d2b1ba1cecc720b",
+  "creationInfo": {
+    "creators": [
+      "Tool: vcpkg-2024-08-01-fd884a0d390d12783076341bd43d77c3a6a15658"
+    ],
+    "created": "2024-10-29T15:49:54Z"
+  },
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-port",
+      "relationshipType": "GENERATES",
+      "relatedSpdxElement": "SPDXRef-binary"
+    },
+    {
+      "spdxElementId": "SPDXRef-port",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-file-0"
+    },
+    {
+      "spdxElementId": "SPDXRef-port",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-file-1"
+    },
+    {
+      "spdxElementId": "SPDXRef-port",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-file-2"
+    },
+    {
+      "spdxElementId": "SPDXRef-binary",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-port"
+    },
+    {
+      "spdxElementId": "SPDXRef-file-0",
+      "relationshipType": "CONTAINED_BY",
+      "relatedSpdxElement": "SPDXRef-port"
+    },
+    {
+      "spdxElementId": "SPDXRef-file-1",
+      "relationshipType": "CONTAINED_BY",
+      "relatedSpdxElement": "SPDXRef-port"
+    },
+    {
+      "spdxElementId": "SPDXRef-file-2",
+      "relationshipType": "CONTAINED_BY",
+      "relatedSpdxElement": "SPDXRef-port"
+    }
+  ],
+  "packages": [
+    {
+      "name": "libcap",
+      "SPDXID": "SPDXRef-port",
+      "versionInfo": "2.70",
+      "downloadLocation": "git+https://github.com/microsoft/vcpkg@c7a0cc03982a375c59205880aea11305d37464c0",
+      "homepage": "https://sites.google.com/site/fullycapable/",
+      "licenseConcluded": "BSD-3-Clause OR GPL-2.0-only",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "description": "A library for getting and setting POSIX.1e (formerly POSIX 6) draft 15 capabilities.",
+      "comment": "This is the port (recipe) consumed by vcpkg."
+    },
+    {
+      "name": "libcap:x64-linux",
+      "SPDXID": "SPDXRef-binary",
+      "versionInfo": "16095ebc17b482d3978fd56224a258e053eaff2a79f4190b0d2b1ba1cecc720b",
+      "downloadLocation": "NONE",
+      "licenseConcluded": "BSD-3-Clause OR GPL-2.0-only",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "comment": "This is a binary package built by vcpkg."
+    },
+    {
+      "SPDXID": "SPDXRef-resource-1",
+      "name": "libcap-${VERSION}.tar.xz",
+      "packageFileName": "libcap-${VERSION}.tar.xz",
+      "downloadLocation": "https://www.kernel.org/pub/linux/libs/security/linux-privs/libcap2/libcap-${VERSION}.tar.xz",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA512",
+          "checksumValue": "4e0bf0efeccb654c409afe9727b2b53c1d4da8190d7a0a9848fc52550ff3e13502add3eacde04a68a5b7bec09e91df487f64c5746ba987f873236a9e53b3d4e8"
+        }
+      ]
+    }
+  ],
+  "files": [
+    {
+      "fileName": ".//home/justine/.cache/vcpkg/registries/git-trees/c7a0cc03982a375c59205880aea11305d37464c0/portfile.cmake",
+      "SPDXID": "SPDXRef-file-0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "9d322230faaee6105e70e0795e02490b21eb137f2ecd4ed72c51279d63b30418"
+        }
+      ],
+      "licenseConcluded": "NOASSERTION",
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "fileName": ".//home/justine/.cache/vcpkg/registries/git-trees/c7a0cc03982a375c59205880aea11305d37464c0/configure",
+      "SPDXID": "SPDXRef-file-1",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "f08fa36d1a3e69697e26993b00324531b1584009bb3c608d21e07307d6c62f37"
+        }
+      ],
+      "licenseConcluded": "NOASSERTION",
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "fileName": ".//home/justine/.cache/vcpkg/registries/git-trees/c7a0cc03982a375c59205880aea11305d37464c0/vcpkg.json",
+      "SPDXID": "SPDXRef-file-2",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "887df4fe418db11778e901a15a284b26cc5ed8bc614103b8e4dfb4697a761cdb"
+        }
+      ],
+      "licenseConcluded": "NOASSERTION",
+      "copyrightText": "NOASSERTION"
+    }
+  ]
+}

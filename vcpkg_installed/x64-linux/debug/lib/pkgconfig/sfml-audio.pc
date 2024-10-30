@@ -1,0 +1,14 @@
+prefix=${pcfiledir}/../..
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/../include
+
+Name: SFML-audio
+Description: The Simple and Fast Multimedia Library, audio module.
+URL: http://www.sfml-dev.org
+Version: 2.6.1
+# openal may be a system framework
+
+Libs: "-L${libdir}" -lsfml-audio ${prefix}/lib/libopenal.a
+Requires: sfml-system openal, vorbisenc, vorbisfile, vorbis, ogg, flac
+Cflags: "-I${includedir}"

@@ -1,0 +1,14 @@
+prefix=${pcfiledir}/../..
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: SFML-graphics
+Description: The Simple and Fast Multimedia Library, graphics module.
+URL: http://www.sfml-dev.org
+Version: 2.6.1
+# gl may not be in pkg-config
+
+Libs: "-L${libdir}" -lsfml-graphics /usr/lib/libGL.so /usr/lib/libGLU.so
+Requires: sfml-window sfml-system, freetype2
+Cflags: "-I${includedir}"

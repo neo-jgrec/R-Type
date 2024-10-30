@@ -1,0 +1,14 @@
+prefix=${pcfiledir}/../..
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: SFML-window
+Description: The Simple and Fast Multimedia Library, window module.
+URL: http://www.sfml-dev.org
+Version: 2.6.1
+# gl may not be in pkg-config
+
+Libs: "-L${libdir}" -lsfml-window /usr/lib/libGL.so /usr/lib/libGLU.so
+Requires: sfml-system
+Cflags: "-I${includedir}"

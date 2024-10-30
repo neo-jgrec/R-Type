@@ -1,0 +1,13 @@
+prefix=${pcfiledir}/../..
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: SFML-network
+Description: The Simple and Fast Multimedia Library, network module.
+URL: http://www.sfml-dev.org
+Version: 2.6.1
+
+Libs: "-L${libdir}" -lsfml-network
+Requires: sfml-system
+Cflags: "-I${includedir}"

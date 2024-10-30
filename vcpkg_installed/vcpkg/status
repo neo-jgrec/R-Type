@@ -1,0 +1,330 @@
+Package: vcpkg-cmake-config
+Version: 2024-05-23
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 08070b4f0fa5b4bf0808ef569ae6c086457c98b2649aee2962f1b321b7bb5861
+Status: install ok installed
+
+Package: vcpkg-cmake
+Version: 2024-04-23
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 6b24894520931afb4d2e34a4515191e70af4af202300bda2212499665034107a
+Status: install ok installed
+
+Package: asio
+Version: 1.31.0
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-linux
+Multi-Arch: same
+Abi: ae80769f5ca8bb3c87ed3f0deb57bb7b5c1be928d77dd86590b11e8eef225d20
+Description: Asio is a cross-platform C++ library for network and low-level I/O programming that provides developers with a consistent asynchronous model using a modern C++ approach.
+Status: install ok installed
+
+Package: stb
+Version: 2024-07-29
+Port-Version: 1
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 406012516dd523e26707a27e6d02c2d359cdfc245f567a4e0fdf93a9d51a0113
+Description: public domain header-only libraries
+Status: install ok installed
+
+Package: egl-registry
+Version: 2024-01-25
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 849ef5912f8aaa74b832ba6f5e46ef034ba8c3fb671814f6eb44af3076b1491f
+Description: EGL API and Extension Registry
+Status: install ok installed
+
+Package: opengl-registry
+Version: 2024-02-10
+Port-Version: 1
+Depends: egl-registry
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 621acfe62a8f48fb60d7d350518498efb8147dde4491e3a2c0698b745c4c7a91
+Description: OpenGL, OpenGL ES, and OpenGL ES-SC API and Extension Registry
+Status: install ok installed
+
+Package: opengl
+Version: 2022-12-04
+Port-Version: 3
+Depends: opengl-registry
+Architecture: x64-linux
+Multi-Arch: same
+Abi: ec89e86896700f72a0bb9ca7e27f9d8a318883f5f53cb03bfa09619db5e76c2f
+Description: Open Graphics Library (OpenGL)[3][4][5] is a cross-language, cross-platform application programming interface (API) for rendering 2D and 3D vector graphics.
+Status: install ok installed
+
+Package: alsa
+Version: 1.2.11
+Port-Version: 2
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 4d9bf77efd9f87650e12d6128e0bb99d99c2ff34aee03d73e5400e36f250f300
+Description: The Advanced Linux Sound Architecture (ALSA) - library
+Status: install ok installed
+
+Package: openal-soft
+Version: 1.23.1
+Port-Version: 2
+Depends: alsa, vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 187085fe02ee9227f4077682c1ff1748717ca26dde67ba9f6a47d9cb94a46353
+Description: OpenAL Soft is an LGPL-licensed, cross-platform, software implementation of the OpenAL 3D audio API.
+Status: install ok installed
+
+Package: libogg
+Version: 1.3.5
+Port-Version: 1
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 9415929801e5ae0366d6b39b578e3aa606d060bec00909437e2d0770d4b189d9
+Description: Ogg is a multimedia container format, and the native file and stream format for the Xiph.org multimedia codecs.
+Status: install ok installed
+
+Package: libvorbis
+Version: 1.3.7
+Port-Version: 3
+Depends: libogg, vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 18050baa52131879119797986fadbcadfb39f606698df2ba6ae22e5477f69408
+Description: Ogg Vorbis is a fully open, non-proprietary, patent-and-royalty-free, general-purpose compressed audio format
+Status: install ok installed
+
+Package: libflac
+Version: 1.4.3
+Port-Version: 2
+Depends: libogg, vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 9ae8dc6b91a2aab39fa87da4b3c34ef66a2c105be7d87c7ecb7ed3892e9babe5
+Description: Library for manipulating FLAC files
+Default-Features: stack-protector
+Status: install ok installed
+
+Package: libflac
+Feature: stack-protector
+Architecture: x64-linux
+Multi-Arch: same
+Description: Build with stack smashing protection
+Status: install ok installed
+
+Package: zlib
+Version: 1.3.1
+Depends: vcpkg-cmake
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 0ec529347f99e33bc9f34657a1f33d63649627f63d8617bb18707fe1d4538a16
+Description: A compression library
+Status: install ok installed
+
+Package: libpng
+Version: 1.6.43
+Port-Version: 3
+Depends: vcpkg-cmake, vcpkg-cmake-config, zlib
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 2a55c4cac142be77e7a81d20f815a840a5b580dccc3063ab1899a487822ba33b
+Description: libpng is a library implementing an interface for reading and writing PNG (Portable Network Graphics) format files
+Status: install ok installed
+
+Package: bzip2
+Version: 1.0.8
+Port-Version: 6
+Depends: vcpkg-cmake
+Architecture: x64-linux
+Multi-Arch: same
+Abi: fdd04c3f7638c2e3a15ff0afbee35da673e3a81fdb6a9bc6f56ab13c42dc7e00
+Description: bzip2 is a freely available, patent free, high-quality data compressor. It typically compresses files to within 10% to 15% of the best available techniques (the PPM family of statistical compressors), whilst being around twice as fast at compression and six times faster at decompression.
+Default-Features: tool
+Status: install ok installed
+
+Package: bzip2
+Feature: tool
+Architecture: x64-linux
+Multi-Arch: same
+Description: Builds bzip2 executable
+Status: install ok installed
+
+Package: brotli
+Version: 1.1.0
+Port-Version: 1
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 333db8d75757cecf1d569dcef32433a0f7ffdcb560166a14cc99ba2a8f114ae5
+Description: a generic-purpose lossless compression algorithm that compresses data using a combination of a modern variant of the LZ77 algorithm, Huffman coding and 2nd order context modeling.
+Status: install ok installed
+
+Package: freetype
+Version: 2.13.3
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 123a7fa269802a38baf7d64d90c0db99c3b2c71cc9d8a0ce48a18b68c0e03e81
+Description: A library to render fonts.
+Default-Features: brotli, bzip2, png, zlib
+Status: install ok installed
+
+Package: freetype
+Feature: brotli
+Depends: brotli
+Architecture: x64-linux
+Multi-Arch: same
+Description: Support decompression of WOFF2 streams
+Status: install ok installed
+
+Package: freetype
+Feature: bzip2
+Depends: bzip2
+Architecture: x64-linux
+Multi-Arch: same
+Description: Support bzip2 compressed fonts.
+Status: install ok installed
+
+Package: freetype
+Feature: png
+Depends: libpng
+Architecture: x64-linux
+Multi-Arch: same
+Description: Support PNG compressed OpenType embedded bitmaps.
+Status: install ok installed
+
+Package: freetype
+Feature: zlib
+Depends: zlib
+Architecture: x64-linux
+Multi-Arch: same
+Description: Use zlib instead of internal library for DEFLATE
+Status: install ok installed
+
+Package: sfml
+Version: 2.6.1
+Depends: freetype, libflac, libogg, libvorbis, openal-soft, opengl, stb, vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 7d8de3e4c4c25314bb666039a4015813b95e233b8d48e99dec2839a3166bc02d
+Description: Simple and fast multimedia library
+Status: install ok installed
+
+Package: imgui
+Version: 1.91.0
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 4055bdb5451ea29f42e3ae2beeb963612cc52bdd7423903c3d586f273e4f85f3
+Description: Bloat-free Immediate Mode Graphical User interface for C++ with minimal dependencies.
+Status: install ok installed
+
+Package: imgui-sfml
+Version: 2.6
+Depends: imgui, opengl, sfml, vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 0d35ffb0937e5e192a7f55829d6e77fdaefdb6ed7b112c03ed94ef7fcc688e28
+Description: ImGui binding for use with SFML
+Status: install ok installed
+
+Package: luabridge
+Version: 2.8
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 9480e44cb3ced3b21d16dd145fc1307130cd1755c02b8f83c9a9f681886da287
+Description: A lightweight, dependency-free library for binding Lua to C++
+Status: install ok installed
+
+Package: nlohmann-json
+Version: 3.11.3
+Port-Version: 1
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 7f64f48e398df6d7d76115e8f7321171627d68ec5a6ab3614319c1dbb5074b0f
+Description: JSON for Modern C++
+Status: install ok installed
+
+Package: zstd
+Version: 1.5.6
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 00438bc129153cbcbf3eee85912a872535e814296391128874f45a97e5c9086b
+Description: Zstandard - Fast real-time compression algorithm
+Status: install ok installed
+
+Package: vcpkg-cmake-get-vars
+Version: 2023-12-31
+Depends: vcpkg-cmake
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 05764b4d91e2ba6e616e78a2c90f316a18ffb628c2f1c66bc115b8dfe805565b
+Status: install ok installed
+
+Package: vcpkg-tool-meson
+Version: 1.5.1
+Depends: vcpkg-cmake-get-vars
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 0235eec7516557b64ead112f88eaf05765649ec5a3312db9914b90197d149606
+Description: Meson build system
+Status: install ok installed
+
+Package: lz4
+Version: 1.10.0
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 5bcbcc4173999923c543f6e171bf1f3a8c8208a7d5cdeddeac72df258b993ba6
+Description: Lossless compression algorithm, providing compression speed at 400 MB/s per core.
+Status: install ok installed
+
+Package: libxcrypt
+Version: 4.4.36
+Port-Version: 1
+Architecture: x64-linux
+Multi-Arch: same
+Abi: ee6bcd6a6033b29c34b97bd3ab54b9e0d209d233863b1825dd0be3f4ed443eb0
+Description: libxcrypt is a modern library for one-way hashing of passwords. On Linux-based systems, by default libxcrypt will be binary backward compatible with the libcrypt.so.1 shipped as part of the GNU C Library.
+Status: install ok installed
+
+Package: libmount
+Version: 2.40
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 15aa52b5e895554a0c1e88b43659ec1a86949e7294a62da5e361d311eb5b544e
+Description: Block device identification library from util-linux
+Status: install ok installed
+
+Package: liblzma
+Version: 5.6.2
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-linux
+Multi-Arch: same
+Abi: c2ed9f4ab61c8c17e90076685ee80d9574939582eb94f09409892d3c92e04d42
+Description: Compression library with an API similar to that of zlib.
+Status: install ok installed
+
+Package: libcap
+Version: 2.70
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 16095ebc17b482d3978fd56224a258e053eaff2a79f4190b0d2b1ba1cecc720b
+Description: A library for getting and setting POSIX.1e (formerly POSIX 6) draft 15 capabilities.
+Status: install ok installed
+
+Package: gperf
+Version: 3.1
+Port-Version: 6
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 6277690db2761c909a72c38becde8e5aee42d480794605d2e3a8594ae8afb4fd
+Description: GNU perfect hash function generator
+Status: install ok installed
+
