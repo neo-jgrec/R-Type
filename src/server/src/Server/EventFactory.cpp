@@ -36,12 +36,13 @@ void EventFactory::playerConnected(Server &server)
                 continue;
             std::cout << "New connection from " << endpoint << std::endl;
             playersConnection[id] = std::make_shared<asio::ip::udp::endpoint>(endpoint);
-            if (server.getGameState() == GAME)
-                players[id] = EntityFactory::createPlayer(server, id);
             break;
         }
         if (id == 4)
             return;
+
+        // send the new player to himself
+        networkingService.sendRequestResponse(endpoint, header, {id});
 
         for (uint8_t i = 0; i < 4; i++) {
             if (!playersConnection[i].has_value() || i == id)
@@ -57,6 +58,11 @@ void EventFactory::playerConnected(Server &server)
                 PlayerConnect,
                 {i});
         }
+
+        if (server.getGameState() != GAME)
+            return;
+
+        players[id] = EntityFactory::createPlayer(server, id);
 
         // Send all player positions to the new player
         for (uint8_t i = 0; i < 4; i++) {
@@ -108,9 +114,6 @@ void EventFactory::playerConnected(Server &server)
                     static_cast<uint8_t>(y)
                 });
         }
-
-        // send the new player to himself
-        networkingService.sendRequestResponse(endpoint, header, {id});
     });
 }
 
