@@ -218,6 +218,7 @@ void Game::render()
     _gameEngine.registry.run_system<core::ge::TextComponent>();
     _gameEngine.registry.run_system<core::ge::SliderComponent>();
     _gameEngine.registry.run_system<core::ge::TextInputComponent, core::ge::DrawableComponent, core::ge::TextComponent>();
+    _gameEngine.registry.run_system<IndicatorComponent>();
 
     _gameEngine.window.display();
 }

@@ -7,6 +7,7 @@
 #include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/Text.hpp>
 #include <SFML/System/Vector2.hpp>
+#include <ostream>
 
 #include "../../../game/Components.hpp"
 #include "../../../game/CollisionMask.hpp"
@@ -291,13 +292,16 @@ core::ecs::Entity EntityFactory::createEnemy(Game &game, const sf::Vector2f& pos
         .loop = true
     });
 
-    IndicatorComponent indicator;
-    indicator.isEnemyOffscreen = true;
-    indicator.pos = { static_cast<float>(gameEngine.window.getSize().x) - 20.0f, position.y };
-    indicator.shape = sf::CircleShape(10.0f, 3);
-    indicator.shape.setFillColor(sf::Color::Green);
-    indicator.shape.setRotation(90.0f);
-    registry.add_component(enemy, indicator);
+    std::cout << "enemy size = " << enemySize.y << std::endl;
+    sf::Vector2f indicatorPos = { static_cast<float>(gameEngine.window.getSize().x) - 20.0f, position.y + (enemySize.y / 2) };
+    sf::CircleShape shape = sf::CircleShape(10.0f, 3);
+    shape.setFillColor(sf::Color::Green);
+    shape.setRotation(90.0f);
+    gameEngine.registry.add_component(enemy, IndicatorComponent{
+        .pos = indicatorPos,
+        .isEnemyOffscreen = true,
+        .shape = shape,
+    });
 
     return enemy;
 }

@@ -1,5 +1,6 @@
 #include "Systems.hpp"
 
+#include <SFML/Graphics/RenderWindow.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <ostream>
 
@@ -9,6 +10,8 @@
 #include "src/event/EventPool.hpp"
 #include "../../../game/Components.hpp"
 #include "../../../game/RequestType.hpp"
+
+sf::Vector2f getViewBounds(const sf::RenderWindow& window);
 
 
 static std::pair<std::shared_ptr<core::ge::TransformComponent>, std::shared_ptr<core::ge::AnimationComponent>> getPlayerAnimComponents(core::ecs::Registry& registry)
@@ -406,15 +409,15 @@ namespace Systems {
     {
         auto &gameEngine = game.getGameEngine();
         auto &registry = gameEngine.registry;
-        auto windowSize = gameEngine.window.getSize();
+        auto windowSize = getViewBounds(gameEngine.window);
 
         registry.add_system<core::ge::TransformComponent, IndicatorComponent, Enemy>(
             [&](core::ecs::Entity, core::ge::TransformComponent &enemyTransform, IndicatorComponent &indicator, Enemy) {
                 if (enemyTransform.position.x > static_cast<float>(windowSize.x)) {
                     indicator.isEnemyOffscreen = true;
-                    indicator.pos.y = enemyTransform.position.y;
+                    indicator.pos.y = enemyTransform.position.y + (enemyTransform.size.y / 2);
                 } else {
-                    indicator.isEnemyOffscreen = false;
+                    // indicator.isEnemyOffscreen = false;
                 }
             });
     }
