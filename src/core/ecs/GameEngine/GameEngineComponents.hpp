@@ -254,6 +254,12 @@ struct DisabledComponent {
     bool disabled = false;
 };
 
+/**
+ * @struct MetricsComponent
+ * @brief Component to display performance metrics.
+ */
+struct MetricsComponent {}; // only an identifier
+
 } // namespace core::ge
 
 #endif /* !GAMEENGINECOMPONENTS_HPP_ */

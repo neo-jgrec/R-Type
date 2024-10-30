@@ -33,6 +33,7 @@ int main()
 {
     core::GameEngine engine{false};
     engine.initWindow({SCREEN_WIDTH, SCREEN_HEIGHT}, 60, "Pong");
+    bool areMetricsEnabled = false;
 
     engine.currentScene = 0;
 
@@ -149,12 +150,24 @@ int main()
                 isRunning = false;
                 break;
             }
+            if (event.key.keysym.sym == SDLK_m) {
+                std::cout << "Metrics enabled: " << areMetricsEnabled << std::endl;
+                areMetricsEnabled = !areMetricsEnabled;
+                if (areMetricsEnabled) {
+                    engine.reEnableMetrics();
+                } else {
+                    engine.disableMetrics();
+                }
+            }
         }
 
         engine.registry.run_system<core::ge::TransformComponent, VelocityComponent, core::ge::DrawableComponent>();
         engine.registry.run_system<core::ge::TransformComponent, PlayerControlComponent, core::ge::DrawableComponent>();
         engine.registry.run_system<core::ge::DrawableComponent>();
         engine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent>();
+
+        if (areMetricsEnabled)
+            engine.updateMetrics();
 
         // RENDER
         SDL_SetRenderDrawColor(engine.renderer, 0, 0, 0, 255);

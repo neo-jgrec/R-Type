@@ -1,6 +1,7 @@
 #ifndef GAMEENGINE_HPP_
 #define GAMEENGINE_HPP_
 
+#include <SFML/Graphics/Text.hpp>
 #include "../Registry/Registry.hpp"
 #include "./GameEngineComponents.hpp"
 #include "MusicManager.hpp"
@@ -16,7 +17,7 @@ namespace core {
 /**
  * @class GameEngine
  * @brief Manages the core game loop, systems, and rendering operations.
- * 
+ *
  * The `GameEngine` class is responsible for initializing and managing the game components, such as the entity registry, systems,
  * rendering, and sound. It also manages the SFML window and the scene switching logic.
  */
@@ -24,10 +25,10 @@ class GameEngine {
 public:
     /**
      * @brief Constructs a GameEngine object and initializes components and systems.
-     * 
+     *
      * The constructor initializes the component registry and sets up various game systems such as rendering, animations, and collisions.
      * Optionally, it can initialize an SFML window for rendering.
-     * 
+     *
      * @param initWindow A boolean flag that indicates whether to initialize the SFML window. Default is true.
      */
     GameEngine(bool initWindow = true) {
@@ -48,6 +49,7 @@ public:
         registry.register_component<core::ge::TextInputComponent>();
         registry.register_component<core::ge::SliderComponent>();
         registry.register_component<core::ge::DisabledComponent>();
+        registry.register_component<core::ge::MetricsComponent>();
 
         // Initialize systems
         positionSystem();
@@ -130,6 +132,14 @@ public:
             return;
         }
 
+        if (TTF_Init() == -1) {
+            std::cerr << "SDL_ttf could not initialize! SDL_ttf Error: " << TTF_GetError() << std::endl;
+            SDL_DestroyRenderer(renderer);
+            SDL_DestroyWindow(sdlWindow);
+            SDL_Quit();
+            return;
+        }
+
         // we need to precise this because the sdl create a new pointer for the renderer
         // do not remove the line please
         assetManager = AssetManager{renderer};
@@ -141,10 +151,146 @@ public:
 #endif
     }
 
+    float cpuUsage = 0.0f;
+    float ramUsage = 0.0f;
+    float fps = 0.0f;
+    ecs::Entity cpuEntity;
+    ecs::Entity ramEntity;
+    ecs::Entity fpsEntity;
+
+    void initGameMetrics()
+    {
+        assetManager.loadFont("_ARIAL", "assets/Fonts/Arial.ttf");
+
+        cpuEntity = registry.spawn_entity();
+        ramEntity = registry.spawn_entity();
+        fpsEntity = registry.spawn_entity();
+
+        #ifdef GE_USE_SDL
+            auto font = assetManager.getFont("_ARIAL");
+            if (!font) {
+                std::cerr << "Failed to load font for metrics!" << std::endl;
+                return;
+            }
+            SDL_Color White = {255, 255, 255, 255};
+            SDL_Surface* cpuSurface = TTF_RenderText_Solid(font, "CPU: 0.0%", White);
+            SDL_Surface* ramSurface = TTF_RenderText_Solid(font, "RAM: 0.0%", White);
+            SDL_Surface* fpsSurface = TTF_RenderText_Solid(font, "FPS: 0.0", White);
+            SDL_Texture* cpuTexture = SDL_CreateTextureFromSurface(renderer, cpuSurface);
+            SDL_Texture* ramTexture = SDL_CreateTextureFromSurface(renderer, ramSurface);
+            SDL_Texture* fpsTexture = SDL_CreateTextureFromSurface(renderer, fpsSurface);
+            SDL_FreeSurface(cpuSurface);
+            SDL_FreeSurface(ramSurface);
+            SDL_FreeSurface(fpsSurface);
+
+            SDL_Rect cpuRect = {10, 10, 100, 50};
+            SDL_Rect ramRect = {10, 70, 100, 50};
+            SDL_Rect fpsRect = {10, 130, 100, 50};
+
+            registry.add_component<core::ge::DrawableComponent>(cpuEntity, core::ge::DrawableComponent{cpuRect, cpuTexture});
+            registry.add_component<core::ge::DrawableComponent>(ramEntity, core::ge::DrawableComponent{ramRect, ramTexture});
+            registry.add_component<core::ge::DrawableComponent>(fpsEntity, core::ge::DrawableComponent{fpsRect, fpsTexture});
+            registry.add_component<core::ge::MetricsComponent>(cpuEntity, core::ge::MetricsComponent{});
+            registry.add_component<core::ge::MetricsComponent>(ramEntity, core::ge::MetricsComponent{});
+            registry.add_component<core::ge::MetricsComponent>(fpsEntity, core::ge::MetricsComponent{});
+        #else
+            if (assetManager.getFont("_ARIAL").getInfo().family.empty()) {
+                std::cerr << "Failed to load font for metrics!" << std::endl;
+                return;
+            }
+            sf::Text cpuText;
+            cpuText.setFont(assetManager.getFont("_ARIAL"));
+            cpuText.setCharacterSize(24);
+            cpuText.setFillColor(sf::Color::White);
+
+            sf::Text ramText;
+            ramText.setFont(assetManager.getFont("_ARIAL"));
+            ramText.setCharacterSize(24);
+            ramText.setFillColor(sf::Color::White);
+
+            sf::Text fpsText;
+            fpsText.setFont(assetManager.getFont("_ARIAL"));
+            fpsText.setCharacterSize(24);
+            fpsText.setFillColor(sf::Color::White);
+
+            auto font = assetManager.getFont("_ARIAL");
+
+            registry.add_component<core::ge::TextComponent>(cpuEntity, core::ge::TextComponent{cpuText, font});
+            registry.add_component<core::ge::TextComponent>(ramEntity, core::ge::TextComponent{ramText, font});
+            registry.add_component<core::ge::TextComponent>(fpsEntity, core::ge::TextComponent{fpsText, font});
+            registry.add_component<core::ge::MetricsComponent>(cpuEntity, core::ge::MetricsComponent{});
+            registry.add_component<core::ge::MetricsComponent>(ramEntity, core::ge::MetricsComponent{});
+            registry.add_component<core::ge::MetricsComponent>(fpsEntity, core::ge::MetricsComponent{});
+        #endif
+    }
+
+    void disableMetrics()
+    {
+        if (registry.has_component<core::ge::DrawableComponent>(cpuEntity))
+            registry.remove_component<core::ge::DrawableComponent>(cpuEntity);
+        if (registry.has_component<core::ge::DrawableComponent>(ramEntity))
+            registry.remove_component<core::ge::DrawableComponent>(ramEntity);
+        if (registry.has_component<core::ge::DrawableComponent>(fpsEntity))
+            registry.remove_component<core::ge::DrawableComponent>(fpsEntity);
+    }
+
+    void reEnableMetrics()
+    {
+        initGameMetrics();
+    }
+
+    void updateMetrics()
+    {
+        if (!registry.has_component<core::ge::DrawableComponent>(cpuEntity) ||
+            !registry.has_component<core::ge::DrawableComponent>(ramEntity) ||
+            !registry.has_component<core::ge::DrawableComponent>(fpsEntity))
+            return;
+        delta_t = clock.restart().asSeconds();
+        fps = 1.0f / delta_t;
+
+        #ifdef GE_USE_SDL
+            cpuUsage = getCPUUsage();
+            ramUsage = getRAMUsage();
+
+            SDL_Color White = {255, 255, 255, 255};
+            auto font = assetManager.getFont("_ARIAL");
+
+            SDL_Surface* cpuSurface = TTF_RenderText_Solid(font, ("CPU: " + std::to_string(cpuUsage) + "%").c_str(), White);
+            SDL_Surface* ramSurface = TTF_RenderText_Solid(font, ("RAM: " + std::to_string(ramUsage) + "%").c_str(), White);
+            SDL_Surface* fpsSurface = TTF_RenderText_Solid(font, ("FPS: " + std::to_string(fps)).c_str(), White);
+
+            auto updateTexture = [&](ecs::Entity entity, SDL_Surface* surface) {
+                SDL_Texture* newTexture = SDL_CreateTextureFromSurface(renderer, surface);
+                auto drawable = registry.get_component<core::ge::DrawableComponent>(entity);
+                SDL_DestroyTexture(drawable->texture);
+                drawable->texture = newTexture;
+                SDL_FreeSurface(surface);
+            };
+
+            updateTexture(cpuEntity, cpuSurface);
+            updateTexture(ramEntity, ramSurface);
+            updateTexture(fpsEntity, fpsSurface);
+
+        #else
+            cpuUsage = getCPUUsage();
+            ramUsage = getRAMUsage();
+
+            auto updateText = [&](ecs::Entity entity, const std::string& text) {
+                auto textComp = registry.get_component<core::ge::TextComponent>(entity);
+                textComp->text.setString(text);
+            };
+
+            updateText(cpuEntity, "CPU: " + std::to_string(cpuUsage) + "%");
+            updateText(ramEntity, "RAM: " + std::to_string(ramUsage) + "%");
+            updateText(fpsEntity, "FPS: " + std::to_string(fps));
+        #endif
+    }
+
+
 protected:
     /**
      * @brief Sets up the system for rendering drawable components.
-     * 
+     *
      * This system renders entities' `DrawableComponent` if they belong to the active scene.
      */
     void renderSystems()
@@ -175,7 +321,7 @@ protected:
 
     /**
      * @brief Initializes the system that handles entity positions, sizes, scales, and rotations.
-     * 
+     *
      * This system updates the `DrawableComponent` of entities based on their `TransformComponent` (position, size, rotation, and scale).
      */
     void positionSystem()
@@ -198,7 +344,7 @@ protected:
 
     /**
      * @brief Sets up the system for handling animations.
-     * 
+     *
      * This system updates the current frame of an entity's animation based on the elapsed time and frame duration.
      */
     void animationSystem()
@@ -236,7 +382,7 @@ protected:
 
     /**
      * @brief Initializes the sound system for playing sound effects.
-     * 
+     *
      * This system ensures that sound effects are played once when triggered, and sets `isPlaying` to prevent repeated playback.
      */
     void soundSystem()
@@ -264,7 +410,7 @@ protected:
 
     /**
      * @brief Sets up the collision detection system for handling interactions between entities.
-     * 
+     *
      * This system checks for collisions between entities and triggers their `onCollision` callbacks if they intersect.
      */
     void collisionSystem() {
@@ -317,7 +463,7 @@ protected:
 
     /**
      * @brief Sets up the clicable interaction system.
-     * 
+     *
      * This system handles user interactions with buttons, including hover and click states, and adjusts their size when hovered or clicked.
      */
     void clickableSystem() {
@@ -377,7 +523,7 @@ protected:
 
     /**
      * @brief Initializes the text rendering system.
-     * 
+     *
      * This system handles the rendering of `TextComponent` entities that belong to the active scene.
      */
     void textSystem()
@@ -508,6 +654,15 @@ protected:
                 });
         #endif
     }
+    private:
+        static float getCPUUsage()
+        {
+            return 0.0f;
+        }
+        static float getRAMUsage()
+        {
+            return 0.0f;
+        }
     };
 }
 
