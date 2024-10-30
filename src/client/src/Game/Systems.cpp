@@ -294,17 +294,18 @@ namespace Systems {
                     case EnemySpawn: {
                         auto [id, enemyType, position] = std::get<std::tuple<std::uint8_t, std::uint8_t, sf::Vector2u>>(event.getPayload());
                         std::cout << "EnemySpawn payload: id = " << static_cast<int>(id) << ", enemyType = " << static_cast<int>(enemyType) << ", position = (" << position.x << ", " << position.y << ")" << std::endl;
-                        switch (enemyType) {
-                            case 0:
-                                game.addToScene(EntityFactory::createShooterEnemy(game, sf::Vector2f(position), id));
-                                break;
-                            case 1:
-                                game.addToScene(EntityFactory::createEnemy(game, sf::Vector2f(position), id));
-                                break;
-                            default:
-                                std::cerr << "Unknown enemy type: " << static_cast<int>(enemyType) << std::endl;
-                                break;
-                        }
+                        game.addToScene(EntityFactory::createShooterProjectile(game, sf::Vector2f(position), id));
+                        //switch (enemyType) {
+                        //    case 0:
+                        //        game.addToScene(EntityFactory::createShooterEnemy(game, sf::Vector2f(position), id));
+                        //        break;
+                        //    case 1:
+                        //        game.addToScene(EntityFactory::createEnemy(game, sf::Vector2f(position), id));
+                        //        break;
+                        //    default:
+                        //        std::cerr << "Unknown enemy type: " << static_cast<int>(enemyType) << std::endl;
+                        //        break;
+                        //}
                         break;
                     }
 

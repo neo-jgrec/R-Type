@@ -361,7 +361,6 @@ core::ecs::Entity EntityFactory::createShooterEnemy(Game &game, const sf::Vector
 
 core::ecs::Entity EntityFactory::createShooterProjectile(Game &game, const sf::Vector2f& position, std::uint8_t enemyId)
 {
-    std::cout << "a " << std::endl;
     auto& gameEngine = game.getGameEngine();
     auto& registry = gameEngine.registry;
     auto& config = game.getConfigManager();
@@ -389,14 +388,13 @@ core::ecs::Entity EntityFactory::createShooterProjectile(Game &game, const sf::V
     });
 
 
-    std::cout << "b " << std::endl;
     auto texture = gameEngine.assetManager.getTexture("shooter_enemy");
 
     sf::RectangleShape projectileShape(projectileSize);
     projectileShape.setTexture(texture.get());
     projectileShape.setTextureRect(sf::IntRect(0, 0, 7, 6));
-    //gameEngine.registry.add_component(projectile, core::ge::DrawableComponent{projectileShape});
-    //gameEngine.registry.add_component(projectile, core::ge::TextureComponent{texture});
+    gameEngine.registry.add_component(projectile, core::ge::DrawableComponent{projectileShape});
+    gameEngine.registry.add_component(projectile, core::ge::TextureComponent{texture});
 
     std::vector<sf::IntRect> animFrames;
     animFrames.reserve(8);
@@ -411,16 +409,6 @@ core::ecs::Entity EntityFactory::createShooterProjectile(Game &game, const sf::V
         .currentFrame = 0,
         .loop = true
     });
-
-
-    std::cout << "b " << std::endl;
-
-    std::cout << "shooter projectile created :" << std::endl;
-    std::cout << "projectile size : " << projectileSize.x << " " << projectileSize.y << std::endl;
-    std::cout << "projectile speed : " << projectileSpeed.x << " " << projectileSpeed.y << std::endl;
-    std::cout << "projectile damage : " << damage << std::endl;
-    std::cout << "projectile position : " << position.x << " " << position.y << std::endl;
-
     return projectile;
 }
 
