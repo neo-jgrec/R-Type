@@ -293,6 +293,7 @@ namespace Systems {
 
                     case EnemySpawn: {
                         auto [id, enemyType, position] = std::get<std::tuple<std::uint8_t, std::uint8_t, sf::Vector2u>>(event.getPayload());
+                        std::cout << "EnemySpawn payload: id = " << static_cast<int>(id) << ", enemyType = " << static_cast<int>(enemyType) << ", position = (" << position.x << ", " << position.y << ")" << std::endl;
                         switch (enemyType) {
                             case 0:
                                 game.addToScene(EntityFactory::createShooterEnemy(game, sf::Vector2f(position), id));

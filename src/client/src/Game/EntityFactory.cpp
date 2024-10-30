@@ -359,6 +359,71 @@ core::ecs::Entity EntityFactory::createShooterEnemy(Game &game, const sf::Vector
     return enemy;
 }
 
+core::ecs::Entity EntityFactory::createShooterProjectile(Game &game, const sf::Vector2f& position, std::uint8_t enemyId)
+{
+    std::cout << "a " << std::endl;
+    auto& gameEngine = game.getGameEngine();
+    auto& registry = gameEngine.registry;
+    auto& config = game.getConfigManager();
+
+    core::ecs::Entity projectile = gameEngine.registry.spawn_entity();
+
+    sf::Vector2f projectileSize = sf::Vector2f(
+        config.getValue<float>("/enemies/1/projectile/size/x"),
+        config.getValue<float>("/enemies/1/projectile/size/y")
+    );
+
+    sf::Vector2f projectileSpeed = sf::Vector2f(
+        config.getValue<float>("/enemies/1/projectile/speed/x"),
+        config.getValue<float>("/enemies/1/projectile/speed/y")
+    );
+
+    int damage = config.getValue<int>("/enemies/1/projectile/damage");
+
+    gameEngine.registry.add_component(projectile, core::ge::TransformComponent{position, projectileSize, game.getGameScale(), 0.0f});
+    gameEngine.registry.add_component(projectile, core::ge::VelocityComponent{-projectileSpeed.x, projectileSpeed.y});
+    gameEngine.registry.add_component(projectile, DamageComponent{damage});
+    gameEngine.registry.add_component(projectile, Projectile{});
+    gameEngine.registry.add_component(projectile, core::ge::DrawableComponent{
+        sf::RectangleShape(projectileSize)
+    });
+
+
+    std::cout << "b " << std::endl;
+    auto texture = gameEngine.assetManager.getTexture("shooter_enemy");
+
+    sf::RectangleShape projectileShape(projectileSize);
+    projectileShape.setTexture(texture.get());
+    projectileShape.setTextureRect(sf::IntRect(0, 0, 7, 6));
+    //gameEngine.registry.add_component(projectile, core::ge::DrawableComponent{projectileShape});
+    //gameEngine.registry.add_component(projectile, core::ge::TextureComponent{texture});
+
+    std::vector<sf::IntRect> animFrames;
+    animFrames.reserve(8);
+    for (int i = 0; i < 8; i++)
+        animFrames.emplace_back(i * 17, 45, 7, 6);
+    gameEngine.registry.add_component(projectile, core::ge::AnimationComponent{
+        .animations = {
+            {core::ge::AnimationState::Moving, animFrames}
+        },
+        .frameTime = 0.05f,
+        .elapsedTime = 0.0f,
+        .currentFrame = 0,
+        .loop = true
+    });
+
+
+    std::cout << "b " << std::endl;
+
+    std::cout << "shooter projectile created :" << std::endl;
+    std::cout << "projectile size : " << projectileSize.x << " " << projectileSize.y << std::endl;
+    std::cout << "projectile speed : " << projectileSpeed.x << " " << projectileSpeed.y << std::endl;
+    std::cout << "projectile damage : " << damage << std::endl;
+    std::cout << "projectile position : " << position.x << " " << position.y << std::endl;
+
+    return projectile;
+}
+
 core::ecs::Entity EntityFactory::createButton(Game &game, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void()>& onClick)
 {
     auto& gameEngine = game.getGameEngine();
