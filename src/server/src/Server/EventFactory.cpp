@@ -57,6 +57,58 @@ void EventFactory::playerConnected(Server &server)
                 PlayerConnect,
                 {i});
         }
+
+        // Send all player positions to the new player
+        for (uint8_t i = 0; i < 4; i++) {
+            if (!players[i].has_value() || i == id)
+                continue;
+            const auto &transformComponent = server.getGameEngine().registry.get_component<core::ge::TransformComponent>(players[i].value());
+            const auto x = static_cast<uint32_t>(transformComponent->position.x);
+            const auto y = static_cast<uint32_t>(transformComponent->position.y);
+
+            for (uint8_t j = 0; j < 4; j++) {
+                if (!playersConnection[j].has_value() || j == id)
+                    continue;
+                networkingService.sendRequest(
+                    endpoint,
+                    PlayerMove,
+                    {
+                        i,
+                        static_cast<uint8_t>(x >> 24),
+                        static_cast<uint8_t>(x >> 16),
+                        static_cast<uint8_t>(x >> 8),
+                        static_cast<uint8_t>(x),
+                        static_cast<uint8_t>(y >> 24),
+                        static_cast<uint8_t>(y >> 16),
+                        static_cast<uint8_t>(y >> 8),
+                        static_cast<uint8_t>(y)
+                    });
+            }
+        }
+
+        // Send all enemies to the new player
+        for (const auto &enemy : server.getGameEngine().registry.get_entities<Enemy>()) {
+            const auto enemyComponent = server.getGameEngine().registry.get_component<Enemy>(enemy);
+            const auto &transformComponent = server.getGameEngine().registry.get_component<core::ge::TransformComponent>(enemy);
+            const auto x = static_cast<uint32_t>(transformComponent->position.x);
+            const auto y = static_cast<uint32_t>(transformComponent->position.y);
+
+            networkingService.sendRequest(
+                endpoint,
+                EnemySpawn,
+                {
+                    enemyComponent->id,
+                    static_cast<uint8_t>(x >> 24),
+                    static_cast<uint8_t>(x >> 16),
+                    static_cast<uint8_t>(x >> 8),
+                    static_cast<uint8_t>(x),
+                    static_cast<uint8_t>(y >> 24),
+                    static_cast<uint8_t>(y >> 16),
+                    static_cast<uint8_t>(y >> 8),
+                    static_cast<uint8_t>(y)
+                });
+        }
+
         // send the new player to himself
         networkingService.sendRequestResponse(endpoint, header, {id});
     });
