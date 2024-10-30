@@ -293,7 +293,7 @@ core::ecs::Entity EntityFactory::createEnemy(Game &game, const sf::Vector2f& pos
     });
 
     std::cout << "enemy size = " << enemySize.y << std::endl;
-    sf::Vector2f indicatorPos = { static_cast<float>(gameEngine.window.getSize().x) - 20.0f, position.y + (enemySize.y / 2) };
+    sf::Vector2f indicatorPos = { static_cast<float>(gameEngine.window.getSize().x), position.y + (enemySize.y / 2) };
     sf::CircleShape shape = sf::CircleShape(10.0f, 3);
     shape.setFillColor(sf::Color::Green);
     shape.setRotation(90.0f);

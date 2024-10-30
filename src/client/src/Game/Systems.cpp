@@ -293,6 +293,7 @@ namespace Systems {
 
                     case EnemySpawn: {
                         auto [id, enemyType, position] = std::get<std::tuple<std::uint8_t, std::uint8_t, sf::Vector2u>>(event.getPayload());
+                        std::cout << "Enemy spawned at position: (" << position.x << ", " << position.y << ")" << std::endl;
                         switch (enemyType) {
                             case 0:
                                 game.addToScene(EntityFactory::createShooterEnemy(game, sf::Vector2f(position), id));
@@ -411,13 +412,18 @@ namespace Systems {
         auto &registry = gameEngine.registry;
         auto windowSize = getViewBounds(gameEngine.window);
 
+        const float warning = 100.0f;
+
         registry.add_system<core::ge::TransformComponent, IndicatorComponent, Enemy>(
             [&](core::ecs::Entity, core::ge::TransformComponent &enemyTransform, IndicatorComponent &indicator, Enemy) {
-                if (enemyTransform.position.x > static_cast<float>(windowSize.x)) {
+                if (enemyTransform.position.x <= windowSize.x + warning)
+                    std::cout << "hello" << std::endl;
+                if (enemyTransform.position.x > windowSize.x && enemyTransform.position.x <= (windowSize.x + warning)) {
+                    std::cout << "coucou" << std::endl;
                     indicator.isEnemyOffscreen = true;
                     indicator.pos.y = enemyTransform.position.y + (enemyTransform.size.y / 2);
                 } else {
-                    // indicator.isEnemyOffscreen = false;
+                    indicator.isEnemyOffscreen = false;
                 }
             });
     }
