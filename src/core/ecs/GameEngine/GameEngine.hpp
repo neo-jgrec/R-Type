@@ -239,7 +239,7 @@ public:
         initGameMetrics();
     }
 
-    void updateMetrics()
+    void updateMetrics(bool onlyFPS = false)
     {
         if (!registry.has_component<core::ge::DrawableComponent>(cpuEntity) ||
             !registry.has_component<core::ge::DrawableComponent>(ramEntity) ||
@@ -247,6 +247,23 @@ public:
             return;
         delta_t = clock.restart().asSeconds();
         fps = 1.0f / delta_t;
+
+        if (onlyFPS) {
+            #ifdef GE_USE_SDL
+                auto font = assetManager.getFont("_ARIAL");
+                SDL_Color White = {255, 255, 255, 255};
+                SDL_Surface* fpsSurface = TTF_RenderText_Solid(font, ("FPS: " + std::to_string(fps)).c_str(), White);
+                auto drawable = registry.get_component<core::ge::DrawableComponent>(fpsEntity);
+                SDL_Texture* newTexture = SDL_CreateTextureFromSurface(renderer, fpsSurface);
+                SDL_DestroyTexture(drawable->texture);
+                drawable->texture = newTexture;
+                SDL_FreeSurface(fpsSurface);
+            #else
+                auto textComp = registry.get_component<core::ge::TextComponent>(fpsEntity);
+                textComp->text.setString("FPS: " + std::to_string(fps));
+            #endif
+            return;
+        }
 
         #ifdef GE_USE_SDL
             cpuUsage = getCPUUsage();
@@ -657,11 +674,41 @@ protected:
     private:
         static float getCPUUsage()
         {
-            return 0.0f;
+            #ifdef _WIN32
+                return 0.0f;
+            #else
+                const std::string cmd = "ps -A -o %cpu | awk '{s+=$1} END {print s}'";
+                FILE *pipe = popen(cmd.c_str(), "r");
+                if (!pipe)
+                    return 0.0f;
+                char buffer[128];
+                std::string result;
+                while (!feof(pipe)) {
+                    if (fgets(buffer, 128, pipe) != NULL)
+                        result += buffer;
+                }
+                pclose(pipe);
+                return std::stof(result);
+            #endif
         }
         static float getRAMUsage()
         {
-            return 0.0f;
+            #ifdef _WIN32
+                return 0.0f;
+            #else
+                const std::string cmd = "free | grep Mem | awk '{print $3/$2 * 100.0}'";
+                FILE *pipe = popen(cmd.c_str(), "r");
+                if (!pipe)
+                    return 0.0f;
+                char buffer[128];
+                std::string result;
+                while (!feof(pipe)) {
+                    if (fgets(buffer, 128, pipe) != NULL)
+                        result += buffer;
+                }
+                pclose(pipe);
+                return std::stof(result);
+            #endif
         }
     };
 }

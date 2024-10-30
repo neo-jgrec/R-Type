@@ -166,8 +166,16 @@ int main()
         engine.registry.run_system<core::ge::DrawableComponent>();
         engine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent>();
 
-        if (areMetricsEnabled)
-            engine.updateMetrics();
+        static sf::Clock clock;
+        if (areMetricsEnabled) {
+            sf::Time deltaTime = clock.getElapsedTime();
+            if (deltaTime.asSeconds() >= 1.0f) {
+                engine.updateMetrics();
+                clock.restart();
+            } else {
+                engine.updateMetrics(true);
+            }
+        }
 
         // RENDER
         SDL_SetRenderDrawColor(engine.renderer, 0, 0, 0, 255);
