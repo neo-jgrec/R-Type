@@ -141,6 +141,17 @@ int main()
         }},
     }});
 
+    engine.addMetrics("Player 1 Score", [&engine, player1]() {
+        return std::to_string(engine.registry.get_component<PlayerScoreComponent>(player1)->score);
+    });
+    engine.addMetrics("Player 2 Score", [&engine, player2]() {
+        return std::to_string(engine.registry.get_component<PlayerScoreComponent>(player2)->score);
+    });
+    engine.addMetrics("Ball Position", [&engine, ball]() {
+        auto transform = engine.registry.get_component<core::ge::TransformComponent>(ball);
+        return std::to_string(transform->position.x) + ", " + std::to_string(transform->position.y);
+    });
+
     bool isRunning = true;
 
     while (isRunning) {
@@ -166,8 +177,16 @@ int main()
         engine.registry.run_system<core::ge::DrawableComponent>();
         engine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent>();
 
-        if (areMetricsEnabled)
-            engine.updateMetrics();
+        static sf::Clock clock;
+        if (areMetricsEnabled) {
+            sf::Time deltaTime = clock.getElapsedTime();
+            if (deltaTime.asSeconds() >= 1.0f) {
+                engine.updateMetrics();
+                clock.restart();
+            } else {
+                engine.updateMetrics(true);
+            }
+        }
 
         // RENDER
         SDL_SetRenderDrawColor(engine.renderer, 0, 0, 0, 255);
