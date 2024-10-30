@@ -177,7 +177,7 @@ void Game::parseMap(Game &game, const std::string& mapFilePath, sf::RenderWindow
             gameEngine.registry.add_component(tileEntity, core::ge::CollisionComponent{
                 WORLD, {sf::FloatRect(0.0f, 0.0f, mapData["cellSize"].get<float>() * gameScale.x, mapData["cellSize"].get<float>() * gameScale.y)},
                 {
-                    {PLAYER_PROJECTILE, [&](const core::ecs::Entity self, const core::ecs::Entity other) {
+                    {PLAYER_PROJECTILE, [&](const core::ecs::Entity self, [[maybe_unused]] const core::ecs::Entity other) {
                         const auto& tileOpt = gameEngine.registry.get_components<TileComponent>()[self];
                         if (tileOpt.has_value()) {
                             const auto& tile = tileOpt.value();
