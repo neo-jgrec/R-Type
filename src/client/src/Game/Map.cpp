@@ -74,11 +74,8 @@ void Game::parseMap(Game &game, const std::string& mapFilePath, sf::RenderWindow
 {
     auto& gameEngine = game.getGameEngine();
     auto& registry = gameEngine.registry;
-    auto& config = game.getConfigManager();
 
     std::ifstream mapFile(mapFilePath);
-
-    int tileDamage = config.getValue<int>("/map/tiles/health", 10);
 
     if (!mapFile) {
         std::cerr << "Error: Could not open map file: " << mapFilePath << std::endl;

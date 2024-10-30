@@ -38,9 +38,6 @@ core::ecs::Entity EntityFactory::createBall(Game &game, const sf::Vector2f& posi
                 auto vel = registry.get_component<core::ge::VelocityComponent>(self);
                 auto transform = registry.get_component<core::ge::TransformComponent>(self);
                 auto physics = registry.get_component<core::ge::PhysicsComponent>(self);
-                const float minVelocity = 1.0f;
-                if (std::abs(vel->dx) < minVelocity && std::abs(vel->dy) < minVelocity)
-                    return;
 
                 const auto windowSize = game.getGameEngine().window.getSize();
                 const float offset = 1.0f;
