@@ -162,7 +162,6 @@ int main()
                 break;
             }
             if (event.key.keysym.sym == SDLK_m) {
-                std::cout << "Metrics enabled: " << areMetricsEnabled << std::endl;
                 areMetricsEnabled = !areMetricsEnabled;
                 if (areMetricsEnabled) {
                     engine.reEnableMetrics();
@@ -181,6 +180,7 @@ int main()
         if (areMetricsEnabled) {
             sf::Time deltaTime = clock.getElapsedTime();
             if (deltaTime.asSeconds() >= 1.0f) {
+                engine.run_script("assets/scripts/example.lua", "printMessage", std::string("Script says : Metrics updated (every secs)!"));
                 engine.updateMetrics();
                 clock.restart();
             } else {
