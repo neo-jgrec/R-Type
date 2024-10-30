@@ -141,6 +141,17 @@ int main()
         }},
     }});
 
+    engine.addMetrics("Player 1 Score", [&engine, player1]() {
+        return std::to_string(engine.registry.get_component<PlayerScoreComponent>(player1)->score);
+    });
+    engine.addMetrics("Player 2 Score", [&engine, player2]() {
+        return std::to_string(engine.registry.get_component<PlayerScoreComponent>(player2)->score);
+    });
+    engine.addMetrics("Ball Position", [&engine, ball]() {
+        auto transform = engine.registry.get_component<core::ge::TransformComponent>(ball);
+        return std::to_string(transform->position.x) + ", " + std::to_string(transform->position.y);
+    });
+
     bool isRunning = true;
 
     while (isRunning) {

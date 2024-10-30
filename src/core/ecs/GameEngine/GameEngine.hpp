@@ -31,7 +31,10 @@ public:
      *
      * @param initWindow A boolean flag that indicates whether to initialize the SFML window. Default is true.
      */
-    GameEngine(bool initWindow = true) {
+    GameEngine(bool initWindow = true)
+        : cpuEntity(ecs::Entity{}),
+          ramEntity(ecs::Entity{}),
+          fpsEntity(ecs::Entity{}) {
         // Register all necessary components
         registry.register_component<core::ge::TransformComponent>();
         registry.register_component<core::ge::DrawableComponent>();
@@ -157,6 +160,41 @@ public:
     ecs::Entity cpuEntity;
     ecs::Entity ramEntity;
     ecs::Entity fpsEntity;
+    std::unordered_map<std::string, ecs::Entity> customMetrics;
+    std::unordered_map<std::string, std::function<std::string()>> metricLambdas;
+
+    void addMetrics(const std::string& name, const std::function<std::string()>& valueFunc, bool metric = false)
+    {
+        ecs::Entity metricEntity = registry.spawn_entity();
+        metricLambdas[name] = valueFunc;
+        customMetrics[name] = metricEntity;
+        assetManager.loadFont("_ARIAL", "assets/Fonts/Arial.ttf");
+
+        #ifdef GE_USE_SDL
+            auto font = assetManager.getFont("_ARIAL");
+            SDL_Color White = {255, 255, 255, 255};
+            SDL_Surface* metricSurface = TTF_RenderText_Solid(font, (name + ": " + valueFunc()).c_str(), White);
+            SDL_Texture* metricTexture = SDL_CreateTextureFromSurface(renderer, metricSurface);
+            SDL_FreeSurface(metricSurface);
+
+            int yOffset = 10 + 60 * (customMetrics.size() + 2);
+            SDL_Rect metricRect = {10, yOffset, 150, 50};
+
+            if (metric)
+                registry.add_component<core::ge::DrawableComponent>(metricEntity, core::ge::DrawableComponent{metricRect, metricTexture});
+            registry.add_component<core::ge::MetricsComponent>(metricEntity, core::ge::MetricsComponent{});
+        #else
+            sf::Text metricText;
+            metricText.setFont(assetManager.getFont("_ARIAL"));
+            metricText.setCharacterSize(24);
+            metricText.setFillColor(sf::Color::White);
+            metricText.setString(name + ": " + valueFunc());
+
+            if (metric)
+                registry.add_component<core::ge::TextComponent>(metricEntity, core::ge::TextComponent{metricText, assetManager.getFont("_ARIAL")});
+            registry.add_component<core::ge::MetricsComponent>(metricEntity, core::ge::MetricsComponent{});
+        #endif
+    }
 
     void initGameMetrics()
     {
@@ -213,64 +251,82 @@ public:
             fpsText.setCharacterSize(24);
             fpsText.setFillColor(sf::Color::White);
 
-            auto font = assetManager.getFont("_ARIAL");
-
-            registry.add_component<core::ge::TextComponent>(cpuEntity, core::ge::TextComponent{cpuText, font});
-            registry.add_component<core::ge::TextComponent>(ramEntity, core::ge::TextComponent{ramText, font});
-            registry.add_component<core::ge::TextComponent>(fpsEntity, core::ge::TextComponent{fpsText, font});
+            registry.add_component<core::ge::TextComponent>(cpuEntity, core::ge::TextComponent{cpuText, assetManager.getFont("_ARIAL")});
+            registry.add_component<core::ge::TextComponent>(ramEntity, core::ge::TextComponent{ramText, assetManager.getFont("_ARIAL")});
+            registry.add_component<core::ge::TextComponent>(fpsEntity, core::ge::TextComponent{fpsText, assetManager.getFont("_ARIAL")});
             registry.add_component<core::ge::MetricsComponent>(cpuEntity, core::ge::MetricsComponent{});
             registry.add_component<core::ge::MetricsComponent>(ramEntity, core::ge::MetricsComponent{});
             registry.add_component<core::ge::MetricsComponent>(fpsEntity, core::ge::MetricsComponent{});
         #endif
+
+        [[maybe_unused]] int yOffset = 10 + 60 * 3;
+        for (const auto& [name, entity] : customMetrics) {
+            auto valueFunc = metricLambdas[name];
+
+            #ifdef GE_USE_SDL
+                auto font = assetManager.getFont("_ARIAL");
+                SDL_Color White = {255, 255, 255, 255};
+                SDL_Surface* metricSurface = TTF_RenderText_Solid(font, (name + ": " + valueFunc()).c_str(), White);
+                SDL_Texture* metricTexture = SDL_CreateTextureFromSurface(renderer, metricSurface);
+                SDL_FreeSurface(metricSurface);
+
+                SDL_Rect metricRect = {10, yOffset, 150, 50};
+                registry.add_component<core::ge::DrawableComponent>(entity, core::ge::DrawableComponent{metricRect, metricTexture});
+            #else
+                sf::Text metricText;
+                metricText.setFont(assetManager.getFont("_ARIAL"));
+                metricText.setCharacterSize(24);
+                metricText.setFillColor(sf::Color::White);
+                metricText.setString(name + ": " + valueFunc());
+
+                registry.add_component<core::ge::TextComponent>(entity, core::ge::TextComponent{metricText, assetManager.getFont("_ARIAL")});
+            #endif
+            registry.add_component<core::ge::MetricsComponent>(entity, core::ge::MetricsComponent{});
+            yOffset += 60;
+        }
     }
 
     void disableMetrics()
     {
+        // Disable predefined metrics
         if (registry.has_component<core::ge::DrawableComponent>(cpuEntity))
             registry.remove_component<core::ge::DrawableComponent>(cpuEntity);
         if (registry.has_component<core::ge::DrawableComponent>(ramEntity))
             registry.remove_component<core::ge::DrawableComponent>(ramEntity);
         if (registry.has_component<core::ge::DrawableComponent>(fpsEntity))
             registry.remove_component<core::ge::DrawableComponent>(fpsEntity);
-    }
 
-    void reEnableMetrics()
-    {
-        initGameMetrics();
+        // Disable custom metrics
+        for (auto& [name, entity] : customMetrics) {
+            if (registry.has_component<core::ge::DrawableComponent>(entity))
+                registry.remove_component<core::ge::DrawableComponent>(entity);
+        }
     }
 
     void updateMetrics(bool onlyFPS = false)
     {
-        if (!registry.has_component<core::ge::DrawableComponent>(cpuEntity) ||
-            !registry.has_component<core::ge::DrawableComponent>(ramEntity) ||
-            !registry.has_component<core::ge::DrawableComponent>(fpsEntity))
+        if (!registry.has_component<core::ge::DrawableComponent>(fpsEntity))
             return;
+
         delta_t = clock.restart().asSeconds();
         fps = 1.0f / delta_t;
 
-        if (onlyFPS) {
-            #ifdef GE_USE_SDL
-                auto font = assetManager.getFont("_ARIAL");
-                SDL_Color White = {255, 255, 255, 255};
+        #ifdef GE_USE_SDL
+            auto font = assetManager.getFont("_ARIAL");
+            SDL_Color White = {255, 255, 255, 255};
+
+            if (onlyFPS) {
                 SDL_Surface* fpsSurface = TTF_RenderText_Solid(font, ("FPS: " + std::to_string(fps)).c_str(), White);
                 auto drawable = registry.get_component<core::ge::DrawableComponent>(fpsEntity);
                 SDL_Texture* newTexture = SDL_CreateTextureFromSurface(renderer, fpsSurface);
                 SDL_DestroyTexture(drawable->texture);
                 drawable->texture = newTexture;
                 SDL_FreeSurface(fpsSurface);
-            #else
-                auto textComp = registry.get_component<core::ge::TextComponent>(fpsEntity);
-                textComp->text.setString("FPS: " + std::to_string(fps));
-            #endif
-            return;
-        }
+                return;
+            }
 
-        #ifdef GE_USE_SDL
             cpuUsage = getCPUUsage();
             ramUsage = getRAMUsage();
-
-            SDL_Color White = {255, 255, 255, 255};
-            auto font = assetManager.getFont("_ARIAL");
 
             SDL_Surface* cpuSurface = TTF_RenderText_Solid(font, ("CPU: " + std::to_string(cpuUsage) + "%").c_str(), White);
             SDL_Surface* ramSurface = TTF_RenderText_Solid(font, ("RAM: " + std::to_string(ramUsage) + "%").c_str(), White);
@@ -288,19 +344,43 @@ public:
             updateTexture(ramEntity, ramSurface);
             updateTexture(fpsEntity, fpsSurface);
 
+            for (auto& [name, entity] : customMetrics) {
+                auto valueFunc = metricLambdas[name];
+                SDL_Surface* surface = TTF_RenderText_Solid(font, (name + ": " + valueFunc()).c_str(), White);
+                SDL_Texture* newTexture = SDL_CreateTextureFromSurface(renderer, surface);
+                auto drawable = registry.get_component<core::ge::DrawableComponent>(entity);
+                SDL_DestroyTexture(drawable->texture);
+                drawable->texture = newTexture;
+                SDL_FreeSurface(surface);
+            }
         #else
-            cpuUsage = getCPUUsage();
-            ramUsage = getRAMUsage();
-
             auto updateText = [&](ecs::Entity entity, const std::string& text) {
                 auto textComp = registry.get_component<core::ge::TextComponent>(entity);
                 textComp->text.setString(text);
             };
 
+            if (onlyFPS) {
+                updateText(fpsEntity, "FPS: " + std::to_string(fps));
+                return;
+            }
+
+            cpuUsage = getCPUUsage();
+            ramUsage = getRAMUsage();
+
             updateText(cpuEntity, "CPU: " + std::to_string(cpuUsage) + "%");
             updateText(ramEntity, "RAM: " + std::to_string(ramUsage) + "%");
             updateText(fpsEntity, "FPS: " + std::to_string(fps));
+
+            for (auto& [name, entity] : customMetrics) {
+                auto valueFunc = metricLambdas[name];
+                updateText(entity, name + ": " + valueFunc());
+            }
         #endif
+    }
+
+    void reEnableMetrics()
+    {
+        initGameMetrics();
     }
 
 
