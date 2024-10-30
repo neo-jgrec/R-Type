@@ -64,6 +64,8 @@ public:
 
     static core::ecs::Entity createShooterEnemy(Game &game, const sf::Vector2f& position, std::uint8_t enemyId);
 
+    static core::ecs::Entity createBall(Game &game, const sf::Vector2f& position);
+
     /**
      * @brief Creates a button entity for the game's UI.
      *
