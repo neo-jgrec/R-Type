@@ -221,6 +221,7 @@ void Game::render()
 void Game::processEvents()
 {
     sf::Event event{};
+
     while (_gameEngine.window.pollEvent(event)) {
         if (event.type == sf::Event::Closed) {
             _windowOpen = false;
@@ -232,6 +233,17 @@ void Game::processEvents()
             if (event.key.code == sf::Keyboard::Escape && isPressed) {
                 _windowOpen = false;
                 _gameEngine.window.close();
+            }
+
+            if (event.key.code == sf::Keyboard::M && isPressed) {
+                std::cout << "M key pressed" << std::endl;
+                metricsEnabled = !metricsEnabled;
+                std::cout << "metrics enabled = " << metricsEnabled << std::endl;
+                if (metricsEnabled) {
+                    _gameEngine.reEnableMetrics();
+                } else {
+                    _gameEngine.disableMetrics();
+                }
             }
 
             auto playerEntities = _gameEngine.registry.get_entities<Player, InputStateComponent>();

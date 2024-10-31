@@ -46,6 +46,7 @@ public:
     std::optional<std::string> keyToUpdate; ///< The key to update in the settings menu.
     std::map<std::string, core::ecs::Entity> keyBindingTexts; ///< The key bindings for the game.
     bool _autoFire = false;
+    bool metricsEnabled = false;
 
 private:
     GameState _gameState = GameState::Loading; ///< The current state of the game.

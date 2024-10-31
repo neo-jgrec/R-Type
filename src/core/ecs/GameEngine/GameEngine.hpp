@@ -198,6 +198,7 @@ public:
 
     void initGameMetrics()
     {
+        std::cout << "initGameMetrics" << std::endl;
         assetManager.loadFont("_ARIAL", "assets/Fonts/Arial.ttf");
 
         cpuEntity = registry.spawn_entity();
@@ -232,28 +233,35 @@ public:
             registry.add_component<core::ge::MetricsComponent>(ramEntity, core::ge::MetricsComponent{});
             registry.add_component<core::ge::MetricsComponent>(fpsEntity, core::ge::MetricsComponent{});
         #else
-            if (assetManager.getFont("_ARIAL").getInfo().family.empty()) {
+            if (assetManager.getFont("arial").getInfo().family.empty()) {
                 std::cerr << "Failed to load font for metrics!" << std::endl;
                 return;
             }
             sf::Text cpuText;
-            cpuText.setFont(assetManager.getFont("_ARIAL"));
+            cpuText.setFont(assetManager.getFont("arial"));
             cpuText.setCharacterSize(24);
             cpuText.setFillColor(sf::Color::White);
+            cpuText.setPosition(0.0f,0.0f);
 
             sf::Text ramText;
-            ramText.setFont(assetManager.getFont("_ARIAL"));
+            ramText.setFont(assetManager.getFont("arial"));
             ramText.setCharacterSize(24);
             ramText.setFillColor(sf::Color::White);
+            ramText.setPosition(0.0f, 30.0f);
 
             sf::Text fpsText;
-            fpsText.setFont(assetManager.getFont("_ARIAL"));
+            fpsText.setFont(assetManager.getFont("arial"));
             fpsText.setCharacterSize(24);
             fpsText.setFillColor(sf::Color::White);
+            fpsText.setPosition(0.0f, 60.0f);
 
-            registry.add_component<core::ge::TextComponent>(cpuEntity, core::ge::TextComponent{cpuText, assetManager.getFont("_ARIAL")});
-            registry.add_component<core::ge::TextComponent>(ramEntity, core::ge::TextComponent{ramText, assetManager.getFont("_ARIAL")});
-            registry.add_component<core::ge::TextComponent>(fpsEntity, core::ge::TextComponent{fpsText, assetManager.getFont("_ARIAL")});
+            cpuText.setString("CPU: 0.0%");
+            ramText.setString("RAM: 0.0%");
+            fpsText.setString("FPS: 0.0");
+
+            registry.add_component<core::ge::TextComponent>(cpuEntity, core::ge::TextComponent{cpuText, assetManager.getFont("arial")});
+            registry.add_component<core::ge::TextComponent>(ramEntity, core::ge::TextComponent{ramText, assetManager.getFont("arial")});
+            registry.add_component<core::ge::TextComponent>(fpsEntity, core::ge::TextComponent{fpsText, assetManager.getFont("arial")});
             registry.add_component<core::ge::MetricsComponent>(cpuEntity, core::ge::MetricsComponent{});
             registry.add_component<core::ge::MetricsComponent>(ramEntity, core::ge::MetricsComponent{});
             registry.add_component<core::ge::MetricsComponent>(fpsEntity, core::ge::MetricsComponent{});
@@ -274,12 +282,12 @@ public:
                 registry.add_component<core::ge::DrawableComponent>(entity, core::ge::DrawableComponent{metricRect, metricTexture});
             #else
                 sf::Text metricText;
-                metricText.setFont(assetManager.getFont("_ARIAL"));
+                metricText.setFont(assetManager.getFont("arial"));
                 metricText.setCharacterSize(24);
                 metricText.setFillColor(sf::Color::White);
                 metricText.setString(name + ": " + valueFunc());
 
-                registry.add_component<core::ge::TextComponent>(entity, core::ge::TextComponent{metricText, assetManager.getFont("_ARIAL")});
+                registry.add_component<core::ge::TextComponent>(entity, core::ge::TextComponent{metricText, assetManager.getFont("arial")});
             #endif
             registry.add_component<core::ge::MetricsComponent>(entity, core::ge::MetricsComponent{});
             yOffset += 60;
@@ -380,6 +388,7 @@ public:
 
     void reEnableMetrics()
     {
+        std::cout << "reEnableMetrics" << std::endl;
         initGameMetrics();
     }
 
