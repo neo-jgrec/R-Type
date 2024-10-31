@@ -297,13 +297,25 @@ public:
     void disableMetrics()
     {
         // Disable predefined metrics
-        if (registry.has_component<core::ge::DrawableComponent>(cpuEntity))
-            registry.remove_component<core::ge::DrawableComponent>(cpuEntity);
-        if (registry.has_component<core::ge::DrawableComponent>(ramEntity))
-            registry.remove_component<core::ge::DrawableComponent>(ramEntity);
-        if (registry.has_component<core::ge::DrawableComponent>(fpsEntity))
-            registry.remove_component<core::ge::DrawableComponent>(fpsEntity);
+        #ifdef GE_USE_SDL
+            if (registry.has_component<core::ge::DrawableComponent>(cpuEntity))
+                registry.remove_component<core::ge::DrawableComponent>(cpuEntity);
+            if (registry.has_component<core::ge::DrawableComponent>(ramEntity))
+                registry.remove_component<core::ge::DrawableComponent>(ramEntity);
+            if (registry.has_component<core::ge::DrawableComponent>(fpsEntity))
+                registry.remove_component<core::ge::DrawableComponent>(fpsEntity);
 
+        #else
+            if (registry.has_component<core::ge::TextComponent>(cpuEntity)) {
+                registry.remove_component<core::ge::TextComponent>(cpuEntity);
+            }
+            if (registry.has_component<core::ge::TextComponent>(ramEntity)) {
+                registry.remove_component<core::ge::TextComponent>(ramEntity);
+            }
+            if (registry.has_component<core::ge::TextComponent>(fpsEntity)) {
+                registry.remove_component<core::ge::TextComponent>(fpsEntity);
+            }
+        #endif
         // Disable custom metrics
         for (auto& [name, entity] : customMetrics) {
             if (registry.has_component<core::ge::DrawableComponent>(entity))
