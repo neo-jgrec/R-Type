@@ -192,7 +192,7 @@ public:
             metricText.setString(name + ": " + valueFunc());
 
             if (metric)
-                registry.add_component<core::ge::TextComponent>(metricEntity, core::ge::TextComponent{metricText, assetManager.getFont("_ARIAL")});
+                registry.add_component<core::ge::TextComponent>(metricEntity, core::ge::TextComponent{metricText, assetManager.getFont("_ARIAL"), true});
             registry.add_component<core::ge::MetricsComponent>(metricEntity, core::ge::MetricsComponent{});
         #endif
     }
@@ -260,9 +260,9 @@ public:
             ramText.setString("RAM: 0.0%");
             fpsText.setString("FPS: 0.0");
 
-            registry.add_component<core::ge::TextComponent>(cpuEntity, core::ge::TextComponent{cpuText, assetManager.getFont("arial")});
-            registry.add_component<core::ge::TextComponent>(ramEntity, core::ge::TextComponent{ramText, assetManager.getFont("arial")});
-            registry.add_component<core::ge::TextComponent>(fpsEntity, core::ge::TextComponent{fpsText, assetManager.getFont("arial")});
+            registry.add_component<core::ge::TextComponent>(cpuEntity, core::ge::TextComponent{cpuText, assetManager.getFont("arial"), true});
+            registry.add_component<core::ge::TextComponent>(ramEntity, core::ge::TextComponent{ramText, assetManager.getFont("arial"), true});
+            registry.add_component<core::ge::TextComponent>(fpsEntity, core::ge::TextComponent{fpsText, assetManager.getFont("arial"), true});
             registry.add_component<core::ge::MetricsComponent>(cpuEntity, core::ge::MetricsComponent{});
             registry.add_component<core::ge::MetricsComponent>(ramEntity, core::ge::MetricsComponent{});
             registry.add_component<core::ge::MetricsComponent>(fpsEntity, core::ge::MetricsComponent{});
@@ -288,7 +288,7 @@ public:
                 metricText.setFillColor(sf::Color::White);
                 metricText.setString(name + ": " + valueFunc());
 
-                registry.add_component<core::ge::TextComponent>(entity, core::ge::TextComponent{metricText, assetManager.getFont("arial")});
+                registry.add_component<core::ge::TextComponent>(entity, core::ge::TextComponent{metricText, assetManager.getFont("arial"), true});
             #endif
             registry.add_component<core::ge::MetricsComponent>(entity, core::ge::MetricsComponent{});
             yOffset += 60;
@@ -326,7 +326,7 @@ public:
 
     void updateMetrics(bool onlyFPS = false)
     {
-
+        // TODO: vérifier que ça marche encore avec sdl car déplacer condition si drawable component
         delta_t = clock.restart().asSeconds();
         fps = 1.0f / delta_t;
 
@@ -387,10 +387,6 @@ public:
 
             cpuUsage = getCPUUsage();
             ramUsage = getRAMUsage();
-
-            std::cout << "fps = " << fps << std::endl;
-            std::cout << "cpu = " << cpuUsage << std::endl;
-            std::cout << "ram = " << ramUsage << std::endl;
 
             updateText(cpuEntity, "CPU: " + std::to_string(cpuUsage) + "%");
             updateText(ramEntity, "RAM: " + std::to_string(ramUsage) + "%");
@@ -659,14 +655,20 @@ protected:
         #else
             registry.add_system<core::ge::TextComponent>(
                 [&window = window](core::ecs::Entity, core::ge::TextComponent &text) {
-
+                    
+                    const sf::View currentView = window.getView();
+                    if (text.isFixed) {
+                        window.setView(window.getDefaultView());
+                    }
                     if (text.text.getString().isEmpty()) {
                         std::cerr << "Warning: Attempting to draw empty text" << std::endl;
                         return;
                     }
-
                     text.text.setFont(text.font);
                     window.draw(text.text);
+                    if (text.isFixed) {
+                        window.setView(currentView);
+                    }
                 });
         #endif
     }

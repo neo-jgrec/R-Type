@@ -236,9 +236,7 @@ void Game::processEvents()
             }
 
             if (event.key.code == sf::Keyboard::M && isPressed) {
-                std::cout << "M key pressed" << std::endl;
                 metricsEnabled = !metricsEnabled;
-                std::cout << "metrics enabled = " << metricsEnabled << std::endl;
                 if (metricsEnabled) {
                     _gameEngine.reEnableMetrics();
                 } else {

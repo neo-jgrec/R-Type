@@ -386,7 +386,7 @@ core::ecs::Entity EntityFactory::createButton(Game &game, const sf::Vector2f& po
 
     registry.add_component(button, core::ge::TransformComponent{position, size, sf::Vector2f(1.0f, 1.0f), 0.0f});
     registry.add_component(button, core::ge::DrawableComponent{shape});
-    registry.add_component(button, core::ge::TextComponent{text, font});
+    registry.add_component(button, core::ge::TextComponent{text, font, false});
     registry.add_component(button, core::ge::ClickableComponent{false, false, onClick});
     return button;
 }
@@ -421,7 +421,7 @@ core::ecs::Entity EntityFactory::createTextInput(Game &game, const sf::Vector2f&
     text.setPosition(position.x + 10.0f, position.y + 10.0f);
 
 
-    registry.add_component(textInput, core::ge::TextComponent{titleText, font});
+    registry.add_component(textInput, core::ge::TextComponent{titleText, font, false});
     registry.add_component(textInput, core::ge::DrawableComponent{shape});
     registry.add_component(textInput, core::ge::TextInputComponent{text, font, false, 0, 20});
 
@@ -455,7 +455,7 @@ core::ecs::Entity EntityFactory::createSlider(Game &game, const sf::Vector2f& po
     text.setPosition(position.x, position.y - 40.0f);
 
     registry.add_component(slider, core::ge::SliderComponent{0, 100, currentValue, bar, handle, onChange});
-    registry.add_component(slider, core::ge::TextComponent{text, font});
+    registry.add_component(slider, core::ge::TextComponent{text, font, false});
 
     return slider;
 }
