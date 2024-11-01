@@ -1,6 +1,8 @@
 #ifndef GAMEENGINE_HPP_
 #define GAMEENGINE_HPP_
 
+#include <SFML/Graphics/Text.hpp>
+#include <cmath>
 extern "C"
 {
     #include <lua.h>
@@ -62,6 +64,8 @@ public:
         registry.register_component<core::ge::SliderComponent>();
         registry.register_component<core::ge::DisabledComponent>();
         registry.register_component<core::ge::MetricsComponent>();
+        registry.register_component<core::ge::PhysicsComponent>();
+        registry.register_component<core::ge::GravityComponent>();
 
         // Initialize systems
         positionSystem();
@@ -74,6 +78,7 @@ public:
         textSystem();
         textInputSystem();
         sliderSystem();
+        physicsSystem();
 
         luaState = luaL_newstate();
         luaL_openlibs(luaState);
@@ -819,6 +824,35 @@ protected:
                 pclose(pipe);
                 return std::stof(result);
             #endif
+        }
+        void physicsSystem() {
+            registry.add_system<ge::TransformComponent, ge::VelocityComponent, ge::PhysicsComponent>(
+                [&]([[maybe_unused]] ecs::Entity entity, [[maybe_unused]] ge::TransformComponent &transform,
+                    ge::VelocityComponent &velocity, ge::PhysicsComponent &physics) {
+                    if (physics.isStatic)
+                        return;
+
+                    physics.acceleration.x = physics.forces.x / physics.mass;
+                    physics.acceleration.y = physics.forces.y / physics.mass;
+
+                    velocity.dx += physics.acceleration.x * delta_t;
+                    velocity.dy += physics.acceleration.y * delta_t;
+
+                    velocity.dx *= (1.0f - physics.friction);
+                    velocity.dy *= (1.0f - physics.friction);
+
+                    physics.forces = {0.0f, 0.0f};
+                });
+
+            registry.add_system<ge::VelocityComponent, ge::PhysicsComponent, ge::GravityComponent>(
+                [&](ecs::Entity, [[maybe_unused]] ge::VelocityComponent &velocity,
+                    ge::PhysicsComponent &physics, ge::GravityComponent &gravity) {
+                    if (physics.isStatic)
+                        return;
+
+                    physics.forces.x += gravity.gravity.x * physics.mass;
+                    physics.forces.y += gravity.gravity.y * physics.mass;
+                });
         }
     };
 }

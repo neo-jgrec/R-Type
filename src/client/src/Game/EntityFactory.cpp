@@ -11,6 +11,64 @@
 #include "../../../core/ecs/GameEngine/GameEngineComponents.hpp"
 #include "Utils/ClientComponents.hpp"
 
+core::ecs::Entity EntityFactory::createBall(Game &game, const sf::Vector2f& position, const sf::Vector2f& velocity)
+{
+    auto& gameEngine = game.getGameEngine();
+    auto& registry = gameEngine.registry;
+
+    core::ecs::Entity ball = registry.spawn_entity();
+    registry.add_component(ball, core::ge::TransformComponent{position, {20, 20}, game.getGameScale(), 0});
+    registry.add_component(ball, core::ge::DrawableComponent{sf::RectangleShape(sf::Vector2f(20, 20))});
+    registry.add_component(ball, core::ge::VelocityComponent{velocity.x, velocity.y});
+    registry.add_component(ball, core::ge::PhysicsComponent{
+        .mass = 500.0f,
+        .elasticity = 0.5f,
+        .friction = 0.0f,
+        .isStatic = false,
+        .acceleration = {10, 10},
+        .forces = {10, 10}
+    });
+    registry.add_component(ball, core::ge::GravityComponent{});
+
+    registry.add_component(ball, core::ge::CollisionComponent{
+        BALL,
+        {sf::FloatRect(0, 0, 20, 20)},
+        {
+            {WORLD_BORDER, [&](const core::ecs::Entity self, const core::ecs::Entity) {
+                auto vel = registry.get_component<core::ge::VelocityComponent>(self);
+                auto transform = registry.get_component<core::ge::TransformComponent>(self);
+                auto physics = registry.get_component<core::ge::PhysicsComponent>(self);
+
+                const auto windowSize = game.getGameEngine().window.getSize();
+                const float offset = 0.1f;
+                const float effectiveHeight = transform->size.y * transform->scale.y;
+                const float effectiveWidth = transform->size.x * transform->scale.x;
+
+                if (transform->position.x <= 0) {
+                    transform->position.x = offset;
+                    vel->dx = std::abs(vel->dx) * physics->elasticity;
+                    physics->forces.x = std::abs(physics->forces.x) * physics->elasticity;
+                } else if (transform->position.x >= static_cast<float>(windowSize.x) - effectiveWidth) {
+                    transform->position.x = static_cast<float>(windowSize.x) - effectiveWidth - offset;
+                    vel->dx = -std::abs(vel->dx) * physics->elasticity;
+                    physics->forces.x = -std::abs(physics->forces.x) * physics->elasticity;
+                }
+                if (transform->position.y <= 20) {
+                    transform->position.y = 20 + offset;
+                    vel->dy = std::abs(vel->dy) * physics->elasticity;
+                    physics->forces.y = std::abs(physics->forces.y) * physics->elasticity;
+                } else if (transform->position.y >= static_cast<float>(windowSize.y) - effectiveHeight) {
+                    transform->position.y = static_cast<float>(windowSize.y) - effectiveHeight - offset;
+                    vel->dy = -std::abs(vel->dy) * physics->elasticity;
+                    physics->forces.y = -std::abs(physics->forces.y) * physics->elasticity;
+                }
+            }}
+        }
+    });
+
+    return ball;
+}
+
 core::ecs::Entity EntityFactory::createPlayer(Game &game, const sf::Vector2f& position, uint8_t id, bool self)
 {
     auto& gameEngine = game.getGameEngine();
