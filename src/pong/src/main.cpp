@@ -162,7 +162,6 @@ int main()
                 break;
             }
             if (event.key.keysym.sym == SDLK_m) {
-                std::cout << "Metrics enabled: " << areMetricsEnabled << std::endl;
                 areMetricsEnabled = !areMetricsEnabled;
                 if (areMetricsEnabled) {
                     engine.reEnableMetrics();

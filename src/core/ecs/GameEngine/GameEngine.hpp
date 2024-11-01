@@ -199,7 +199,6 @@ public:
 
     void initGameMetrics()
     {
-        std::cout << "initGameMetrics" << std::endl;
         assetManager.loadFont("_ARIAL", "assets/Fonts/Arial.ttf");
 
         cpuEntity = registry.spawn_entity();
@@ -401,7 +400,6 @@ public:
 
     void reEnableMetrics()
     {
-        std::cout << "reEnableMetrics" << std::endl;
         initGameMetrics();
     }
 
@@ -655,7 +653,7 @@ protected:
         #else
             registry.add_system<core::ge::TextComponent>(
                 [&window = window](core::ecs::Entity, core::ge::TextComponent &text) {
-                    
+
                     const sf::View currentView = window.getView();
                     if (text.isFixed) {
                         window.setView(window.getDefaultView());

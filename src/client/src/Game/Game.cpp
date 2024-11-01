@@ -333,6 +333,7 @@ void Game::run() {
     // TODO: implement a way to load maps at runtimes dynamically
     parseMap(*this, "./assets/JY_map.json", _gameEngine.window);
     Scenes::loadMainMenu(*this);
+    sf::Clock metricsClock;
     while (_windowOpen) {
         sf::Time elapsed = _gameEngine.clock.restart();
         _gameEngine.delta_t = elapsed.asSeconds();
@@ -354,8 +355,11 @@ void Game::run() {
             default:
                 break;
         }
-        if (metricsEnabled) {
+        if (metricsEnabled && metricsClock.getElapsedTime().asSeconds() >= 1.0f) {
             _gameEngine.updateMetrics();
+            metricsClock.restart();
+        } else if (metricsEnabled) {
+            _gameEngine.updateMetrics(true);
         }
         sound();
         render();
