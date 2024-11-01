@@ -1,5 +1,6 @@
 #include "Game.hpp"
 
+#include <string>
 #include <vector>
 #include <iostream>
 #include <SFML/System/Time.hpp>
@@ -409,6 +410,22 @@ void Game::loadingProgress(const float progress)
     _gameEngine.window.draw(progressBar);
     _gameEngine.window.draw(loadingText);
     _gameEngine.window.display();
+}
+
+void Game::initGameMetrics() {
+    auto playerEntites = _gameEngine.registry.get_entities<Player>();
+    core::ecs::Entity player = core::ecs::Entity{};
+
+    if (playerEntites.empty()) {
+        std::cout << "no player" << std::endl;
+        return;
+    }
+
+    player = playerEntites[0];
+    _gameEngine.addMetrics("Player Pos", [this, player] () {
+        auto transform = _gameEngine.registry.get_component<core::ge::TransformComponent>(player);
+        return "X: " + std::to_string(static_cast<int>(transform->position.x)) + ", Y: " + std::to_string(static_cast<int>(transform->position.y));
+    });
 }
 
 

@@ -1,6 +1,7 @@
 #ifndef GAMEENGINE_HPP_
 #define GAMEENGINE_HPP_
 
+#include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/Text.hpp>
 #include <ostream>
 #include "../Registry/Registry.hpp"
@@ -205,6 +206,8 @@ public:
         ramEntity = registry.spawn_entity();
         fpsEntity = registry.spawn_entity();
 
+        [[maybe_unused]] float yOffsetSfml = 0.0f;
+
         #ifdef GE_USE_SDL
             auto font = assetManager.getFont("_ARIAL");
             if (!font) {
@@ -241,19 +244,22 @@ public:
             cpuText.setFont(assetManager.getFont("arial"));
             cpuText.setCharacterSize(24);
             cpuText.setFillColor(sf::Color::White);
-            cpuText.setPosition(0.0f,0.0f);
+            cpuText.setPosition(0.0f,yOffsetSfml);
+            yOffsetSfml += 30.0f;
 
             sf::Text ramText;
             ramText.setFont(assetManager.getFont("arial"));
             ramText.setCharacterSize(24);
             ramText.setFillColor(sf::Color::White);
-            ramText.setPosition(0.0f, 30.0f);
+            ramText.setPosition(0.0f, yOffsetSfml);
+            yOffsetSfml += 30.0f;
 
             sf::Text fpsText;
             fpsText.setFont(assetManager.getFont("arial"));
             fpsText.setCharacterSize(24);
             fpsText.setFillColor(sf::Color::White);
-            fpsText.setPosition(0.0f, 60.0f);
+            fpsText.setPosition(0.0f, yOffsetSfml);
+            yOffsetSfml += 30.0f;
 
             cpuText.setString("CPU: 0.0%");
             ramText.setString("RAM: 0.0%");
@@ -286,6 +292,8 @@ public:
                 metricText.setCharacterSize(24);
                 metricText.setFillColor(sf::Color::White);
                 metricText.setString(name + ": " + valueFunc());
+                metricText.setPosition(0.0f, yOffsetSfml);
+                yOffsetSfml += 30.0f;
 
                 registry.add_component<core::ge::TextComponent>(entity, core::ge::TextComponent{metricText, assetManager.getFont("arial"), true});
             #endif
@@ -317,10 +325,17 @@ public:
             }
         #endif
         // Disable custom metrics
-        for (auto& [name, entity] : customMetrics) {
-            if (registry.has_component<core::ge::DrawableComponent>(entity))
-                registry.remove_component<core::ge::DrawableComponent>(entity);
-        }
+        #ifdef GE_USE_SDL
+            for (auto& [name, entity] : customMetrics) {
+                if (registry.has_component<core::ge::DrawableComponent>(entity))
+                    registry.remove_component<core::ge::DrawableComponent>(entity);
+            }
+        #else
+            for (auto& [name, entity] : customMetrics) {
+                if (registry.has_component<core::ge::TextComponent>(entity))
+                    registry.remove_component<core::ge::TextComponent>(entity);
+            }
+        #endif
     }
 
     void updateMetrics(bool onlyFPS = false)

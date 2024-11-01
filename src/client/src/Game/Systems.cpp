@@ -190,6 +190,7 @@ namespace Systems {
                             gameEngine.window.getView().getSize() / 2.0f,
                             playerId,
                             event.getHeader().packetId == game.getPlayerConnectionHeader().packetId));
+                        game.initGameMetrics();
                         break;
                     }
 

@@ -7,6 +7,7 @@
 #include "../../../core/ecs/GameEngine/GameEngine.hpp"
 #include "../../../core/network/NetworkService.hpp"
 #include "../../../core/config/ConfigManager.hpp"
+#include "../../../game/Components.hpp"
 
 /**
  * @struct Tile
@@ -132,6 +133,11 @@ public:
      * The game loop continues running until the game window is closed.
      */
     void run();
+
+    /**
+     * @brief Inits game metrics like player info, map info etc.
+     */
+    void initGameMetrics();
 
     core::GameEngine &getGameEngine() { return _gameEngine; }
     core::ecs::Registry &getRegistry() { return _gameEngine.registry; }
