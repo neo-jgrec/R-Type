@@ -163,46 +163,38 @@ core::ecs::Entity EntityFactory::createPlayer(Game &game, const sf::Vector2f& po
     return player;
 }
 
-core::ecs::Entity EntityFactory::createPlayerProjectile(Game &game, core::ge::TransformComponent& playerTransform)
+core::ecs::Entity EntityFactory::createPlayerProjectile(Game &game, const sf::Vector2u pos)
 {
     auto& gameEngine = game.getGameEngine();
     auto& registry = gameEngine.registry;
-    auto& config = game.getConfigManager();
+    const auto& config = game.getConfigManager();
 
-    core::ecs::Entity projectile = registry.spawn_entity();
+    const core::ecs::Entity projectile = registry.spawn_entity();
 
-    sf::Vector2f projectileSize = sf::Vector2f(
+    const sf::Vector2f floatPos{static_cast<float>(pos.x), static_cast<float>(pos.y)};
+    const sf::Vector2f projectileSize{
         config.getValue<float>("/player/weapons/0/size/x", 72.0f),
         config.getValue<float>("/player/weapons/0/size/y", 20.0f)
-    );
-
-    sf::Vector2f projectileSpeed = sf::Vector2f(
+    };
+    const sf::Vector2f projectileSpeed{
         config.getValue<float>("/player/weapons/0/speed/x", 500.0f),
         config.getValue<float>("/player/weapons/0/speed/y", 0.0f)
-    );
+    };
+    const int damage = config.getValue<int>("/player/weapons/0/damage", 10);
 
-    int damage = config.getValue<int>("/player/weapons/0/damage", 10);
-
-    sf::Vector2f startPosition = playerTransform.position;
-
-    float playerWidth = playerTransform.size.x * playerTransform.scale.x;
-    float playerHeight = playerTransform.size.y * playerTransform.scale.y;
-    startPosition.x += playerWidth;
-    startPosition.y += (playerHeight / 2.0f) - (projectileSize.y / 2.0f);
-
-    registry.add_component(projectile, core::ge::TransformComponent{startPosition, projectileSize, game.getGameScale(), 0.0f});
+    registry.add_component(projectile, core::ge::TransformComponent{floatPos, projectileSize, game.getGameScale(), 0.0f});
     registry.add_component(projectile, core::ge::CollisionComponent{PLAYER_PROJECTILE, {sf::FloatRect(0.0f, 0.0f, 18.0f, 5.0f)}});
     registry.add_component(projectile, core::ge::VelocityComponent{projectileSpeed.x, projectileSpeed.y});
     registry.add_component(projectile, DamageComponent{damage});
     registry.add_component(projectile, Projectile{});
 
-    auto buffer = gameEngine.assetManager.getSound("shooting");
+    const auto buffer = gameEngine.assetManager.getSound("shooting");
 
     sf::Sound sound;
     sound.setBuffer(*buffer);
     gameEngine.registry.add_component(projectile, core::ge::SoundComponent{sound, buffer, true, false});
 
-    auto texture = gameEngine.assetManager.getTexture("player_projectile");
+    const auto texture = gameEngine.assetManager.getTexture("player_projectile");
 
     sf::RectangleShape projectileShape(sf::Vector2f(18.0f, 5.0f));
     projectileShape.setTexture(texture.get());
@@ -213,40 +205,30 @@ core::ecs::Entity EntityFactory::createPlayerProjectile(Game &game, core::ge::Tr
     return projectile;
 }
 
-core::ecs::Entity EntityFactory::createPlayerMissile(Game &game, core::ge::TransformComponent &playerTransform)
+core::ecs::Entity EntityFactory::createPlayerMissile(Game &game, const sf::Vector2u pos)
 {
     auto& gameEngine = game.getGameEngine();
     auto& registry = gameEngine.registry;
-    auto& config = game.getConfigManager();
+    const auto& config = game.getConfigManager();
 
-    core::ecs::Entity missile = registry.spawn_entity();
+    const core::ecs::Entity missile = registry.spawn_entity();
 
-    sf::Vector2f missileSize = sf::Vector2f(
+    const sf::Vector2f floatPos{static_cast<float>(pos.x), static_cast<float>(pos.y)};
+    const sf::Vector2f size{
         config.getValue<float>("/player/weapons/1/size/x", 136.0f),
         config.getValue<float>("/player/weapons/1/size/y", 48.0f)
-    );
-
-    sf::Vector2f missileSpeed = sf::Vector2f(
+    };
+    const sf::Vector2f speed{
         config.getValue<float>("/player/weapons/1/speed/x", 500.0f),
         config.getValue<float>("/player/weapons/1/speed/y", 0.0f)
-    );
+    };
+    const int damage = config.getValue<int>("/player/weapons/1/damage", 50);
 
-    int damage = config.getValue<int>("/player/weapons/1/damage", 50);
-
-    int health = config.getValue<int>("/player/weapons/1/health", 100);
-
-    sf::Vector2f startPosition = playerTransform.position;
-    float playerWidth = playerTransform.size.x * playerTransform.scale.x;
-    float playerHeight = playerTransform.size.y * playerTransform.scale.y;
-    startPosition.x += playerWidth;
-    startPosition.y += (playerHeight / 2.0f) - ((missileSize.y / 2.0f) * game.getGameScale().y);
-
-    registry.add_component(missile, core::ge::TransformComponent{startPosition, missileSize, game.getGameScale(), 0.0f});
-    registry.add_component(missile, core::ge::CollisionComponent{PLAYER_MISSILE, {sf::FloatRect(0.0f, 0.0f, missileSize.x, missileSize.y)}});
-    registry.add_component(missile, core::ge::VelocityComponent{missileSpeed.x, missileSpeed.y});
+    registry.add_component(missile, core::ge::TransformComponent{floatPos, size, game.getGameScale(), 0.0f});
+    registry.add_component(missile, core::ge::CollisionComponent{PLAYER_MISSILE, {sf::FloatRect(0.0f, 0.0f, size.x, size.y)}});
+    registry.add_component(missile, core::ge::VelocityComponent{speed.x, speed.y});
     registry.add_component(missile, DamageComponent{damage});
     registry.add_component(missile, Projectile{});
-    registry.add_component(missile, HealthComponent{health});
 
     auto buffer = gameEngine.assetManager.getSound("missile_sound");
 

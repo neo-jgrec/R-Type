@@ -181,13 +181,13 @@ void EventFactory::playerMove(Server &server)
     });
 }
 
-void EventFactory::playerShoot(Server &server)
+void EventFactory::playerProjectileShoot(Server &server)
 {
     const NetworkingService &networkingService = server.getNetworkingService();
     core::GameEngine &gameEngine = server.getGameEngine();
     const std::array<std::optional<core::ecs::Entity>, 4> &players = server.getPlayers();
 
-    networkingService.addEvent(PlayerShoot, [&](const GDTPHeader &, const std::vector<uint8_t> &payload, const asio::ip::udp::endpoint &) {
+    networkingService.addEvent(PlayerProjectileShoot, [&](const GDTPHeader &, const std::vector<uint8_t> &payload, const asio::ip::udp::endpoint &) {
         if (payload.size() != 1)
             return;
 
@@ -197,14 +197,32 @@ void EventFactory::playerShoot(Server &server)
         if (id >= 4 || !players[id].has_value())
             return;
 
-        static uint8_t projectileId = 0;
-        EntityFactory::createProjectile(server, players[id].value(), projectileId++);
+        EntityFactory::createProjectile(server, players[id].value());
 
-        {
-            const auto &playerComponent = gameEngine.registry.get_component<Player>(players[id].value());
-            playerComponent->lastTimePacketReceived = std::time(nullptr);
-        }
+        const auto &playerComponent = gameEngine.registry.get_component<Player>(players[id].value());
+        playerComponent->lastTimePacketReceived = std::time(nullptr);
+    });
+}
 
-        server.sendRequestToPlayers(PlayerShoot, payload);
+void EventFactory::playerMissileShoot(Server &server)
+{
+    const NetworkingService &networkingService = server.getNetworkingService();
+    core::GameEngine &gameEngine = server.getGameEngine();
+    const std::array<std::optional<core::ecs::Entity>, 4> &players = server.getPlayers();
+
+    networkingService.addEvent(PlayerMissileShoot, [&](const GDTPHeader &, const std::vector<uint8_t> &payload, const asio::ip::udp::endpoint &) {
+        if (payload.size() != 1)
+            return;
+
+        std::lock_guard lock(server.getRegistryMutex());
+
+        const uint8_t id = payload[0];
+        if (id >= 4 || !players[id].has_value())
+            return;
+
+        EntityFactory::createMissile(server, players[id].value());
+
+        const auto &playerComponent = gameEngine.registry.get_component<Player>(players[id].value());
+        playerComponent->lastTimePacketReceived = std::time(nullptr);
     });
 }
