@@ -2,6 +2,7 @@
 
 #include <SFML/System/Vector2.hpp>
 #include <ostream>
+#include <queue>
 
 #include "Utils/ClientComponents.hpp"
 #include "EntityFactory.hpp"
@@ -67,21 +68,35 @@ namespace Systems {
                 if (game._autoFire) {
                     autoFireTimer += gameEngine.delta_t;
                     if (autoFireTimer >= 0.3f && autoFireCount < 10) {
-                        game.addToScene(EntityFactory::createPlayerProjectile(game, transform));
+                        auto selfProjectileQueue = game.getSelfProjectileQueue();
+                        const auto entity = EntityFactory::createPlayerProjectile(game, {
+                            static_cast<uint32_t>(transform.position.x + 99.0f),
+                            static_cast<uint32_t>(transform.position.y + 15.0f)
+                        });
+                        selfProjectileQueue->push(entity);
+                        game.addToScene(entity);
+
                         networkingService.sendRequest(
                             "127.0.0.1",
                             1111,
-                            PlayerShoot,
+                            PlayerProjectileShoot,
                             {player.id}
                         );
                         autoFireTimer = 0.0f;
                         autoFireCount += 1;
                     } else if (autoFireTimer >= 0.3 && autoFireCount >= 10) {
-                        game.addToScene(EntityFactory::createPlayerMissile(game, transform));
+                        auto selfMissileQueue = game.getSelfMissileQueue();
+                        const auto entity = EntityFactory::createPlayerMissile(game, {
+                            static_cast<uint32_t>(transform.position.x + 99.0f),
+                            static_cast<uint32_t>(transform.position.y + 15.0f)
+                        });
+                        selfMissileQueue->push(entity);
+                        game.addToScene(entity);
+
                         networkingService.sendRequest(
                             "127.0.0.1",
                             1111,
-                            PlayerShoot,
+                            PlayerMissileShoot,
                             {player.id}
                         );
                         autoFireTimer = 0.0f;
@@ -117,20 +132,34 @@ namespace Systems {
                         }
                     } else {
                         if (shootCounter.nextShotType == 0) {
-                            game.addToScene(EntityFactory::createPlayerProjectile(game, transform));
+                            auto selfProjectileQueue = game.getSelfProjectileQueue();
+                            const auto entity = EntityFactory::createPlayerProjectile(game, {
+                                static_cast<uint32_t>(transform.position.x + 99.0f),
+                                static_cast<uint32_t>(transform.position.y + 15.0f)
+                            });
+                            selfProjectileQueue->push(entity);
+                            game.addToScene(entity);
+
                             networkingService.sendRequest(
                                 "127.0.0.1",
                                 1111,
-                                PlayerShoot,
+                                PlayerProjectileShoot,
                                 {player.id}
                             );
                         }
                         if (shootCounter.nextShotType == 1) {
-                            game.addToScene(EntityFactory::createPlayerMissile(game, transform));
+                            auto selfMissileQueue = game.getSelfMissileQueue();
+                            const auto entity = EntityFactory::createPlayerMissile(game, {
+                                static_cast<uint32_t>(transform.position.x + 99.0f),
+                                static_cast<uint32_t>(transform.position.y + 15.0f)
+                            });
+                            selfMissileQueue->push(entity);
+                            game.addToScene(entity);
+
                             networkingService.sendRequest(
                                 "127.0.0.1",
                                 1111,
-                                PlayerShoot,
+                                PlayerMissileShoot,
                                 {player.id}
                             );
                         }
@@ -280,15 +309,29 @@ namespace Systems {
                         break;
                     }
 
-                    case PlayerShoot: {
-                        const auto playerShootPayload = std::get<std::uint8_t>(event.getPayload());
-                        for (auto playerEntity : registry.get_entities<Player>()) {
-                            if (registry.get_component<Player>(playerEntity)->id != playerShootPayload)
-                                continue;
+                    case PlayerProjectileCreate: {
+                        const auto [id, pos] = std::get<std::pair<std::uint8_t, sf::Vector2u>>(event.getPayload());
 
-                            auto playerTransform = registry.get_component<core::ge::TransformComponent>(playerEntity);
-                            game.addToScene(EntityFactory::createPlayerProjectile(game, *playerTransform));
+                        if (auto selfProjectileQueue = game.getSelfProjectileQueue();
+                            !selfProjectileQueue->empty()) {
+                            auto projectile = selfProjectileQueue->front();
+                            selfProjectileQueue->pop();
+                            registry.kill_entity(projectile);
                         }
+                        game.addToScene(EntityFactory::createPlayerProjectile(game, pos));
+                        break;
+                    }
+
+                    case PlayerMissileCreate: {
+                        const auto [id, pos] = std::get<std::pair<std::uint8_t, sf::Vector2u>>(event.getPayload());
+
+                        if (auto selfMissileQueue = game.getSelfMissileQueue();
+                            !selfMissileQueue->empty()) {
+                            auto missile = selfMissileQueue->front();
+                            selfMissileQueue->pop();
+                            registry.kill_entity(missile);
+                        }
+                        game.addToScene(EntityFactory::createPlayerMissile(game, pos));
                         break;
                     }
 

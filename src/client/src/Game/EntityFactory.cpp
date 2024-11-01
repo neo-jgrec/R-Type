@@ -11,6 +11,64 @@
 #include "../../../core/ecs/GameEngine/GameEngineComponents.hpp"
 #include "Utils/ClientComponents.hpp"
 
+core::ecs::Entity EntityFactory::createBall(Game &game, const sf::Vector2f& position, const sf::Vector2f& velocity)
+{
+    auto& gameEngine = game.getGameEngine();
+    auto& registry = gameEngine.registry;
+
+    core::ecs::Entity ball = registry.spawn_entity();
+    registry.add_component(ball, core::ge::TransformComponent{position, {20, 20}, game.getGameScale(), 0});
+    registry.add_component(ball, core::ge::DrawableComponent{sf::RectangleShape(sf::Vector2f(20, 20))});
+    registry.add_component(ball, core::ge::VelocityComponent{velocity.x, velocity.y});
+    registry.add_component(ball, core::ge::PhysicsComponent{
+        .mass = 500.0f,
+        .elasticity = 0.5f,
+        .friction = 0.0f,
+        .isStatic = false,
+        .acceleration = {10, 10},
+        .forces = {10, 10}
+    });
+    registry.add_component(ball, core::ge::GravityComponent{});
+
+    registry.add_component(ball, core::ge::CollisionComponent{
+        BALL,
+        {sf::FloatRect(0, 0, 20, 20)},
+        {
+            {WORLD_BORDER, [&](const core::ecs::Entity self, const core::ecs::Entity) {
+                auto vel = registry.get_component<core::ge::VelocityComponent>(self);
+                auto transform = registry.get_component<core::ge::TransformComponent>(self);
+                auto physics = registry.get_component<core::ge::PhysicsComponent>(self);
+
+                const auto windowSize = game.getGameEngine().window.getSize();
+                const float offset = 0.1f;
+                const float effectiveHeight = transform->size.y * transform->scale.y;
+                const float effectiveWidth = transform->size.x * transform->scale.x;
+
+                if (transform->position.x <= 0) {
+                    transform->position.x = offset;
+                    vel->dx = std::abs(vel->dx) * physics->elasticity;
+                    physics->forces.x = std::abs(physics->forces.x) * physics->elasticity;
+                } else if (transform->position.x >= static_cast<float>(windowSize.x) - effectiveWidth) {
+                    transform->position.x = static_cast<float>(windowSize.x) - effectiveWidth - offset;
+                    vel->dx = -std::abs(vel->dx) * physics->elasticity;
+                    physics->forces.x = -std::abs(physics->forces.x) * physics->elasticity;
+                }
+                if (transform->position.y <= 20) {
+                    transform->position.y = 20 + offset;
+                    vel->dy = std::abs(vel->dy) * physics->elasticity;
+                    physics->forces.y = std::abs(physics->forces.y) * physics->elasticity;
+                } else if (transform->position.y >= static_cast<float>(windowSize.y) - effectiveHeight) {
+                    transform->position.y = static_cast<float>(windowSize.y) - effectiveHeight - offset;
+                    vel->dy = -std::abs(vel->dy) * physics->elasticity;
+                    physics->forces.y = -std::abs(physics->forces.y) * physics->elasticity;
+                }
+            }}
+        }
+    });
+
+    return ball;
+}
+
 core::ecs::Entity EntityFactory::createPlayer(Game &game, const sf::Vector2f& position, uint8_t id, bool self)
 {
     auto& gameEngine = game.getGameEngine();
@@ -105,46 +163,38 @@ core::ecs::Entity EntityFactory::createPlayer(Game &game, const sf::Vector2f& po
     return player;
 }
 
-core::ecs::Entity EntityFactory::createPlayerProjectile(Game &game, core::ge::TransformComponent& playerTransform)
+core::ecs::Entity EntityFactory::createPlayerProjectile(Game &game, const sf::Vector2u pos)
 {
     auto& gameEngine = game.getGameEngine();
     auto& registry = gameEngine.registry;
-    auto& config = game.getConfigManager();
+    const auto& config = game.getConfigManager();
 
-    core::ecs::Entity projectile = registry.spawn_entity();
+    const core::ecs::Entity projectile = registry.spawn_entity();
 
-    sf::Vector2f projectileSize = sf::Vector2f(
+    const sf::Vector2f floatPos{static_cast<float>(pos.x), static_cast<float>(pos.y)};
+    const sf::Vector2f projectileSize{
         config.getValue<float>("/player/weapons/0/size/x", 72.0f),
         config.getValue<float>("/player/weapons/0/size/y", 20.0f)
-    );
-
-    sf::Vector2f projectileSpeed = sf::Vector2f(
+    };
+    const sf::Vector2f projectileSpeed{
         config.getValue<float>("/player/weapons/0/speed/x", 500.0f),
         config.getValue<float>("/player/weapons/0/speed/y", 0.0f)
-    );
+    };
+    const int damage = config.getValue<int>("/player/weapons/0/damage", 10);
 
-    int damage = config.getValue<int>("/player/weapons/0/damage", 10);
-
-    sf::Vector2f startPosition = playerTransform.position;
-
-    float playerWidth = playerTransform.size.x * playerTransform.scale.x;
-    float playerHeight = playerTransform.size.y * playerTransform.scale.y;
-    startPosition.x += playerWidth;
-    startPosition.y += (playerHeight / 2.0f) - (projectileSize.y / 2.0f);
-
-    registry.add_component(projectile, core::ge::TransformComponent{startPosition, projectileSize, game.getGameScale(), 0.0f});
+    registry.add_component(projectile, core::ge::TransformComponent{floatPos, projectileSize, game.getGameScale(), 0.0f});
     registry.add_component(projectile, core::ge::CollisionComponent{PLAYER_PROJECTILE, {sf::FloatRect(0.0f, 0.0f, 18.0f, 5.0f)}});
     registry.add_component(projectile, core::ge::VelocityComponent{projectileSpeed.x, projectileSpeed.y});
     registry.add_component(projectile, DamageComponent{damage});
     registry.add_component(projectile, Projectile{});
 
-    auto buffer = gameEngine.assetManager.getSound("shooting");
+    const auto buffer = gameEngine.assetManager.getSound("shooting");
 
     sf::Sound sound;
     sound.setBuffer(*buffer);
     gameEngine.registry.add_component(projectile, core::ge::SoundComponent{sound, buffer, true, false});
 
-    auto texture = gameEngine.assetManager.getTexture("player_projectile");
+    const auto texture = gameEngine.assetManager.getTexture("player_projectile");
 
     sf::RectangleShape projectileShape(sf::Vector2f(18.0f, 5.0f));
     projectileShape.setTexture(texture.get());
@@ -155,40 +205,30 @@ core::ecs::Entity EntityFactory::createPlayerProjectile(Game &game, core::ge::Tr
     return projectile;
 }
 
-core::ecs::Entity EntityFactory::createPlayerMissile(Game &game, core::ge::TransformComponent &playerTransform)
+core::ecs::Entity EntityFactory::createPlayerMissile(Game &game, const sf::Vector2u pos)
 {
     auto& gameEngine = game.getGameEngine();
     auto& registry = gameEngine.registry;
-    auto& config = game.getConfigManager();
+    const auto& config = game.getConfigManager();
 
-    core::ecs::Entity missile = registry.spawn_entity();
+    const core::ecs::Entity missile = registry.spawn_entity();
 
-    sf::Vector2f missileSize = sf::Vector2f(
+    const sf::Vector2f floatPos{static_cast<float>(pos.x), static_cast<float>(pos.y)};
+    const sf::Vector2f size{
         config.getValue<float>("/player/weapons/1/size/x", 136.0f),
         config.getValue<float>("/player/weapons/1/size/y", 48.0f)
-    );
-
-    sf::Vector2f missileSpeed = sf::Vector2f(
+    };
+    const sf::Vector2f speed{
         config.getValue<float>("/player/weapons/1/speed/x", 500.0f),
         config.getValue<float>("/player/weapons/1/speed/y", 0.0f)
-    );
+    };
+    const int damage = config.getValue<int>("/player/weapons/1/damage", 50);
 
-    int damage = config.getValue<int>("/player/weapons/1/damage", 50);
-
-    int health = config.getValue<int>("/player/weapons/1/health", 100);
-
-    sf::Vector2f startPosition = playerTransform.position;
-    float playerWidth = playerTransform.size.x * playerTransform.scale.x;
-    float playerHeight = playerTransform.size.y * playerTransform.scale.y;
-    startPosition.x += playerWidth;
-    startPosition.y += (playerHeight / 2.0f) - ((missileSize.y / 2.0f) * game.getGameScale().y);
-
-    registry.add_component(missile, core::ge::TransformComponent{startPosition, missileSize, game.getGameScale(), 0.0f});
-    registry.add_component(missile, core::ge::CollisionComponent{PLAYER_MISSILE, {sf::FloatRect(0.0f, 0.0f, missileSize.x, missileSize.y)}});
-    registry.add_component(missile, core::ge::VelocityComponent{missileSpeed.x, missileSpeed.y});
+    registry.add_component(missile, core::ge::TransformComponent{floatPos, size, game.getGameScale(), 0.0f});
+    registry.add_component(missile, core::ge::CollisionComponent{PLAYER_MISSILE, {sf::FloatRect(0.0f, 0.0f, size.x, size.y)}});
+    registry.add_component(missile, core::ge::VelocityComponent{speed.x, speed.y});
     registry.add_component(missile, DamageComponent{damage});
     registry.add_component(missile, Projectile{});
-    registry.add_component(missile, HealthComponent{health});
 
     auto buffer = gameEngine.assetManager.getSound("missile_sound");
 
@@ -357,127 +397,6 @@ core::ecs::Entity EntityFactory::createShooterEnemy(Game &game, const sf::Vector
         .loop = true
     });
     return enemy;
-}
-
-core::ecs::Entity EntityFactory::createButton(Game &game, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void()>& onClick)
-{
-    auto& gameEngine = game.getGameEngine();
-    auto& registry = gameEngine.registry;
-
-    core::ecs::Entity button = registry.spawn_entity();
-
-    sf::RectangleShape shape(size);
-    shape.setPosition(position);
-    shape.setFillColor(sf::Color::White);
-    shape.setOutlineThickness(2);
-    shape.setOutlineColor(sf::Color::Black);
-
-    auto font = gameEngine.assetManager.getFont("arial");
-
-    sf::Text text;
-    text.setFont(font);
-    text.setString(label);
-    text.setCharacterSize(24);
-    text.setFillColor(sf::Color::Black);
-
-    sf::FloatRect textBounds = text.getLocalBounds();
-    text.setOrigin(textBounds.left + textBounds.width / 2.0f, textBounds.top + textBounds.height / 2.0f);
-    text.setPosition(position.x + size.x / 2.0f, position.y + size.y / 2.0f);
-
-    registry.add_component(button, core::ge::TransformComponent{position, size, sf::Vector2f(1.0f, 1.0f), 0.0f});
-    registry.add_component(button, core::ge::DrawableComponent{shape});
-    registry.add_component(button, core::ge::TextComponent{text, font, false});
-    registry.add_component(button, core::ge::ClickableComponent{false, false, onClick});
-    return button;
-}
-
-core::ecs::Entity EntityFactory::createTextInput(Game &game, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& title)
-{
-    auto& gameEngine = game.getGameEngine();
-    auto& registry = gameEngine.registry;
-
-    core::ecs::Entity textInput = registry.spawn_entity();
-
-    sf::RectangleShape shape(size);
-    shape.setPosition(position);
-    shape.setFillColor(sf::Color::White);
-    shape.setOutlineThickness(2);
-    shape.setOutlineColor(sf::Color::Black);
-
-    auto font = gameEngine.assetManager.getFont("arial");
-
-    sf::Text titleText;
-    titleText.setFont(font);
-    titleText.setString(title);
-    titleText.setCharacterSize(24);
-    titleText.setFillColor(sf::Color::White);
-    titleText.setPosition(position.x, position.y - 40.0f);
-
-    sf::Text text;
-    text.setFont(font);
-    text.setString("");
-    text.setCharacterSize(24);
-    text.setFillColor(sf::Color::Black);
-    text.setPosition(position.x + 10.0f, position.y + 10.0f);
-
-
-    registry.add_component(textInput, core::ge::TextComponent{titleText, font, false});
-    registry.add_component(textInput, core::ge::DrawableComponent{shape});
-    registry.add_component(textInput, core::ge::TextInputComponent{text, font, false, 0, 20});
-
-    return textInput;
-}
-
-core::ecs::Entity EntityFactory::createSlider(Game &game, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void(float)>& onChange, float currentValue)
-{
-    auto& gameEngine = game.getGameEngine();
-    auto& registry = gameEngine.registry;
-
-    core::ecs::Entity slider = registry.spawn_entity();
-
-    sf::RectangleShape bar(size);
-    bar.setPosition(position);
-    bar.setFillColor(sf::Color::White);
-    bar.setOutlineThickness(2);
-    bar.setOutlineColor(sf::Color::Black);
-
-    sf::CircleShape handle(15);
-    handle.setPosition(position.x + size.x, position.y + size.y / 2);
-    handle.setFillColor(sf::Color::Red);
-
-    auto font = gameEngine.assetManager.getFont("arial");
-
-    sf::Text text;
-    text.setFont(font);
-    text.setString(label);
-    text.setCharacterSize(24);
-    text.setFillColor(sf::Color::White);
-    text.setPosition(position.x, position.y - 40.0f);
-
-    registry.add_component(slider, core::ge::SliderComponent{0, 100, currentValue, bar, handle, onChange});
-    registry.add_component(slider, core::ge::TextComponent{text, font, false});
-
-    return slider;
-}
-
-core::ecs::Entity EntityFactory::createImage(Game &game, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& textureName)
-{
-    auto& gameEngine = game.getGameEngine();
-    auto& registry = gameEngine.registry;
-
-    core::ecs::Entity img = registry.spawn_entity();
-
-    sf::RectangleShape shape(size);
-    shape.setPosition(position);
-
-    auto texture = gameEngine.assetManager.getTexture(textureName);
-
-    shape.setTexture(texture.get());
-
-    registry.add_component(img, core::ge::DrawableComponent{shape});
-    registry.add_component(img, core::ge::TextureComponent{texture});
-
-    return img;
 }
 
 core::ecs::Entity EntityFactory::createGameEventManager(Game &game)

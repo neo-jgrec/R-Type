@@ -15,6 +15,8 @@ namespace Scenes {
 
     void loadGame(Game &game);
     void updateGame(Game &game);
+
+    std::vector<core::ecs::Entity> createWorldBorders(core::GameEngine& engine);
 };
 
 #endif //SCENES_HPP

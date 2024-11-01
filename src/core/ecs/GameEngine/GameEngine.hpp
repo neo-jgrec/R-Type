@@ -3,7 +3,16 @@
 
 #include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/Text.hpp>
-#include <ostream>
+#include <cmath>
+extern "C"
+{
+    #include <lua.h>
+    #include <lauxlib.h>
+    #include <lualib.h>
+}
+
+#include <LuaBridge/LuaBridge.h>
+
 #include "../Registry/Registry.hpp"
 #include "./GameEngineComponents.hpp"
 #include "MusicManager.hpp"
@@ -34,7 +43,8 @@ public:
      * @param initWindow A boolean flag that indicates whether to initialize the SFML window. Default is true.
      */
     GameEngine(bool initWindow = true)
-        : cpuEntity(ecs::Entity{}),
+        : luaState(nullptr),
+          cpuEntity(ecs::Entity{}),
           ramEntity(ecs::Entity{}),
           fpsEntity(ecs::Entity{}) {
         // Register all necessary components
@@ -55,6 +65,8 @@ public:
         registry.register_component<core::ge::SliderComponent>();
         registry.register_component<core::ge::DisabledComponent>();
         registry.register_component<core::ge::MetricsComponent>();
+        registry.register_component<core::ge::PhysicsComponent>();
+        registry.register_component<core::ge::GravityComponent>();
 
         // Initialize systems
         positionSystem();
@@ -67,6 +79,10 @@ public:
         textSystem();
         textInputSystem();
         sliderSystem();
+        physicsSystem();
+
+        luaState = luaL_newstate();
+        luaL_openlibs(luaState);
 
         if (!initWindow)
             return;
@@ -78,6 +94,23 @@ public:
      * @brief Destructor for the GameEngine class. Defaulted.
      */
     ~GameEngine() = default;
+
+    template <typename... Args>
+    std::optional<luabridge::LuaRef> run_script(const std::string &path, const std::string &function, Args &&... args)
+    {
+        if (luaL_dofile(luaState, path.c_str())) {
+            std::cerr << "Error loading script: " << lua_tostring(luaState, -1) << std::endl;
+            return std::nullopt;
+        }
+
+        luabridge::LuaRef luaFunction = luabridge::getGlobal(luaState, function.c_str());
+        if (!luaFunction.isFunction()) {
+            std::cerr << "Error loading function: " << lua_tostring(luaState, -1) << std::endl;
+            return std::nullopt;
+        }
+
+        return luaFunction(std::forward<Args>(args)...);
+    }
 
     void run_collision(const uint8_t wantedMask, const ecs::Entity entity)
     {
@@ -104,6 +137,7 @@ public:
     int currentScene = 0;               ///< The currently active scene, represented by an integer.
     sf::Clock clock;                    ///< SFML clock for tracking time in the game loop.
     core::ge::KeyBinding keyBindingsConfig; ///< The key bindings configuration for the game.
+    lua_State *luaState;                ///< The Lua state for running Lua scripts.
 
     #ifdef GE_USE_SDL
         void initWindow(sf::VideoMode size, [[maybe_unused]] int framerateLimit, const std::string& title, SDL_WindowFlags style = SDL_WINDOW_SHOWN)
@@ -830,6 +864,35 @@ protected:
                 pclose(pipe);
                 return std::stof(result);
             #endif
+        }
+        void physicsSystem() {
+            registry.add_system<ge::TransformComponent, ge::VelocityComponent, ge::PhysicsComponent>(
+                [&]([[maybe_unused]] ecs::Entity entity, [[maybe_unused]] ge::TransformComponent &transform,
+                    ge::VelocityComponent &velocity, ge::PhysicsComponent &physics) {
+                    if (physics.isStatic)
+                        return;
+
+                    physics.acceleration.x = physics.forces.x / physics.mass;
+                    physics.acceleration.y = physics.forces.y / physics.mass;
+
+                    velocity.dx += physics.acceleration.x * delta_t;
+                    velocity.dy += physics.acceleration.y * delta_t;
+
+                    velocity.dx *= (1.0f - physics.friction);
+                    velocity.dy *= (1.0f - physics.friction);
+
+                    physics.forces = {0.0f, 0.0f};
+                });
+
+            registry.add_system<ge::VelocityComponent, ge::PhysicsComponent, ge::GravityComponent>(
+                [&](ecs::Entity, [[maybe_unused]] ge::VelocityComponent &velocity,
+                    ge::PhysicsComponent &physics, ge::GravityComponent &gravity) {
+                    if (physics.isStatic)
+                        return;
+
+                    physics.forces.x += gravity.gravity.x * physics.mass;
+                    physics.forces.y += gravity.gravity.y * physics.mass;
+                });
         }
     };
 }

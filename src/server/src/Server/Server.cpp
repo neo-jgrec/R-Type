@@ -50,7 +50,8 @@ Server::Server()
     EventFactory::playerConnected(*this);
     EventFactory::playerDisconnected(*this);
     EventFactory::playerMove(*this);
-    EventFactory::playerShoot(*this);
+    EventFactory::playerProjectileShoot(*this);
+    EventFactory::playerMissileShoot(*this);
 }
 
 void Server::start()

@@ -39,7 +39,10 @@ private:
     static Event handleGameOver(const GDTPHeader& header, const std::vector<uint8_t>& payload);
     static Event handleMapScroll(const GDTPHeader& header, const std::vector<uint8_t>& payload);
     static Event handleTileDestroy(const GDTPHeader& header, const std::vector<uint8_t>& payload);
-    static Event handlePlayerShoot(const GDTPHeader& header, const std::vector<uint8_t>& payload);
+    static Event handlePlayerProjectileCreate(const GDTPHeader& header, const std::vector<uint8_t>& payload);
+    static Event handlePlayerMissileCreate(const GDTPHeader& header, const std::vector<uint8_t>& payload);
+    static Event handlePlayerProjectileDestroy(const GDTPHeader& header, const std::vector<uint8_t>& payload);
+    static Event handlePlayerMissileDestroy(const GDTPHeader& header, const std::vector<uint8_t>& payload);
     static Event handlePlayerMove(const GDTPHeader& header, const std::vector<uint8_t>& payload);
     static Event handlePlayerCollide(const GDTPHeader& header, const std::vector<uint8_t>& payload);
     static Event handlePlayerHit(const GDTPHeader& header, const std::vector<uint8_t>& payload);
