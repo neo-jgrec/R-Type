@@ -360,8 +360,6 @@ void Game::run() {
         if (metricsEnabled && metricsClock.getElapsedTime().asSeconds() >= 1.0f) {
             _gameEngine.updateMetrics();
             metricsClock.restart();
-        } else if (metricsEnabled) {
-            _gameEngine.updateMetrics(true);
         }
         sound();
         render();
