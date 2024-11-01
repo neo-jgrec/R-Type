@@ -6,6 +6,7 @@
 #include "../../../game/RequestType.hpp"
 #include "../../../game/Components.hpp"
 #include "Utils/ClientComponents.hpp"
+#include "../../../core/ecs/GameEngine/UIComponents.hpp"
 
 namespace Scenes {
     void loadMainMenu(Game &game)
@@ -25,22 +26,22 @@ namespace Scenes {
         const sf::Vector2f buttonSize(200.0f, 50.0f);
         constexpr float buttonSpacing = 20.0f;
 
-        game.addToScene(EntityFactory::createImage(
-            game,
+        game.addToScene(core::ge::UIFactory::createImage(
+            game.getGameEngine(),
             sf::Vector2f(0.0f, 0.0f),
             sf::Vector2f(windowSize),
             "background"
         ));
 
-        game.addToScene(EntityFactory::createImage(
-            game,
+        game.addToScene(core::ge::UIFactory::createImage(
+            game.getGameEngine(),
             sf::Vector2f(centerX - 500.0f, centerY - 400.0f),
             sf::Vector2f(1000.0f, 300.0f),
             "logo"
         ));
 
-        game.addToScene(EntityFactory::createButton(
-            game,
+        game.addToScene(core::ge::UIFactory::createButton(
+            game.getGameEngine(),
             sf::Vector2f(centerX - buttonSize.x / 2, centerY - buttonSize.y - buttonSpacing),
             buttonSize,
             "Solo",
@@ -50,8 +51,8 @@ namespace Scenes {
             }
         ));
 
-        game.addToScene(EntityFactory::createButton(
-            game,
+        game.addToScene(core::ge::UIFactory::createButton(
+            game.getGameEngine(),
             sf::Vector2f(centerX - buttonSize.x / 2, centerY),
             buttonSize,
             "Multiplayer",
@@ -61,8 +62,8 @@ namespace Scenes {
             }
         ));
 
-        game.addToScene(EntityFactory::createButton(
-            game,
+        game.addToScene(core::ge::UIFactory::createButton(
+            game.getGameEngine(),
             sf::Vector2f(centerX - buttonSize.x / 2, centerY + buttonSize.y + buttonSpacing),
             buttonSize,
             "Settings",
@@ -72,8 +73,8 @@ namespace Scenes {
             }
         ));
 
-        game.addToScene(EntityFactory::createButton(
-            game,
+        game.addToScene(core::ge::UIFactory::createButton(
+            game.getGameEngine(),
             sf::Vector2f(centerX - buttonSize.x / 2, centerY + 2 * (buttonSize.y + buttonSpacing)),
             buttonSize,
             "Quit",
@@ -122,15 +123,15 @@ namespace Scenes {
         game.addToScene(title);
         gameEngine.registry.add_component(title, core::ge::TextComponent{titleText, font});
 
-        game.addToScene(EntityFactory::createImage(
-            game,
+        game.addToScene(core::ge::UIFactory::createImage(
+            game.getGameEngine(),
             sf::Vector2f(0.0f, 0.0f),
             sf::Vector2f(windowSize),
             "background"
         ));
 
-        game.addToScene(EntityFactory::createButton(
-            game,
+        game.addToScene(core::ge::UIFactory::createButton(
+            game.getGameEngine(),
             sf::Vector2f(buttonSize.y, buttonSize.y - buttonSpacing),
             buttonSize,
             "< Go back",
@@ -187,22 +188,22 @@ namespace Scenes {
             ipInputPosition.y + buttonSize.y  * 2 + padding
         );
 
-        game.addToScene(EntityFactory::createTextInput(
-            game,
+        game.addToScene(core::ge::UIFactory::createTextInput(
+            game.getGameEngine(),
             ipInputPosition,
             buttonSize,
             "Enter IP Address"
         ));
 
-        game.addToScene(EntityFactory::createTextInput(
-            game,
+        game.addToScene(core::ge::UIFactory::createTextInput(
+            game.getGameEngine(),
             portInputPosition,
             buttonSize,
             "Enter Port"
         ));
 
-        game.addToScene(EntityFactory::createButton(
-            game,
+        game.addToScene(core::ge::UIFactory::createButton(
+            game.getGameEngine(),
             createRoomPosition,
             buttonSize,
             "Create Room",
@@ -211,8 +212,8 @@ namespace Scenes {
             }
         ));
 
-        game.addToScene(EntityFactory::createButton(
-            game,
+        game.addToScene(core::ge::UIFactory::createButton(
+            game.getGameEngine(),
             startButtonPosition,
             buttonSize,
             "Room 1",
@@ -262,15 +263,15 @@ namespace Scenes {
         game.addToScene(title);
         gameEngine.registry.add_component(title, core::ge::TextComponent{titleText, font});
 
-        game.addToScene(EntityFactory::createImage(
-            game,
+        game.addToScene(core::ge::UIFactory::createImage(
+            game.getGameEngine(),
             sf::Vector2f(0.0f, 0.0f),
             sf::Vector2f(windowSize),
             "background"
         ));
 
-        game.addToScene(EntityFactory::createButton(
-            game,
+        game.addToScene(core::ge::UIFactory::createButton(
+            game.getGameEngine(),
             sf::Vector2f(buttonSize.y, buttonSize.y - 20.0f),
             buttonSize,
             "< Go back",
@@ -280,8 +281,8 @@ namespace Scenes {
             }
         ));
 
-        game.addToScene(EntityFactory::createSlider(
-            game,
+        game.addToScene(core::ge::UIFactory::createSlider(
+            game.getGameEngine(),
             sf::Vector2f(buttonSize.y, buttonSize.y * 3 + buttonSpacing),
             sf::Vector2f(200.0f, 10.0f),
             "Volume",
@@ -315,8 +316,8 @@ namespace Scenes {
         createKeyBindingDisplay("Move Right", keyBindings.moveRightKey, (startY + 5 * buttonSize.y) + labelSpacing);
         createKeyBindingDisplay("Shoot", keyBindings.fireKey, (startY + 7 * buttonSize.y) + labelSpacing);
 
-        game.addToScene(EntityFactory::createButton(
-            game,
+        game.addToScene(core::ge::UIFactory::createButton(
+            game.getGameEngine(),
             sf::Vector2f(buttonSize.y, startY),
             buttonSize,
             "Move Up",
@@ -326,8 +327,8 @@ namespace Scenes {
         ));
         startY += buttonSpacing + buttonSize.y + labelSpacing;
 
-        game.addToScene(EntityFactory::createButton(
-            game,
+        game.addToScene(core::ge::UIFactory::createButton(
+            game.getGameEngine(),
             sf::Vector2f(buttonSize.y, startY),
             buttonSize,
             "Move Down",
@@ -337,8 +338,8 @@ namespace Scenes {
         ));
         startY += buttonSpacing + buttonSize.y + labelSpacing;
 
-        game.addToScene(EntityFactory::createButton(
-            game,
+        game.addToScene(core::ge::UIFactory::createButton(
+            game.getGameEngine(),
             sf::Vector2f(buttonSize.y, startY),
             buttonSize,
             "Move Left",
@@ -348,8 +349,8 @@ namespace Scenes {
         ));
         startY += buttonSpacing + buttonSize.y + labelSpacing;
 
-        game.addToScene(EntityFactory::createButton(
-            game,
+        game.addToScene(core::ge::UIFactory::createButton(
+            game.getGameEngine(),
             sf::Vector2f(buttonSize.y, startY),
             buttonSize,
             "Move Right",
@@ -359,8 +360,8 @@ namespace Scenes {
         ));
         startY += buttonSpacing + buttonSize.y + labelSpacing;
 
-        game.addToScene(EntityFactory::createButton(
-            game,
+        game.addToScene(core::ge::UIFactory::createButton(
+            game.getGameEngine(),
             sf::Vector2f(buttonSize.y, startY),
             buttonSize,
             "Shoot",
@@ -370,8 +371,8 @@ namespace Scenes {
         ));
         startY += buttonSpacing + buttonSize.y * 2 + labelSpacing;
 
-        core::ecs::Entity autoFireButtonEntity = EntityFactory::createButton(
-        game,
+        core::ecs::Entity autoFireButtonEntity = core::ge::UIFactory::createButton(
+            game.getGameEngine(),
         sf::Vector2f(buttonSize.y, startY),
         sf::Vector2f(300.0f, 50.0f),
         std::string("Auto-fire Mode: ") + (game._autoFire ? "On" : "Off"),

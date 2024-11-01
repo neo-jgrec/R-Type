@@ -62,24 +62,32 @@ public:
      */
     static core::ecs::Entity createEnemy(Game &game, const sf::Vector2f& position, std::uint8_t enemyId);
 
+    /**
+     * @brief Creates a shooter enemy entity with the given position and ID.
+     *
+     * The shooter enemy is a specialized type of enemy that can fire projectiles at the player.
+     * It is assigned components for transform, collision, velocity, health, damage, and animations.
+     * Unlike regular enemies, shooter enemies have additional logic for projectile firing behavior.
+     *
+     * @param game The game instance to manage enemy-related resources.
+     * @param position The initial position of the shooter enemy.
+     * @param enemyId A unique identifier for the shooter enemy.
+     * @return The created shooter enemy entity.
+     */
     static core::ecs::Entity createShooterEnemy(Game &game, const sf::Vector2f& position, std::uint8_t enemyId);
 
     /**
-     * @brief Creates a button entity for the game's UI.
+     * @brief Creates a game event manager entity to handle global game events.
      *
-     * The button is assigned components such as transform, drawable, text, and a callback function for when the button is clicked.
-     * It can be used in various game states (e.g., Main Menu).
+     * The game event manager is responsible for processing and distributing game-wide events
+     * such as player connections, disconnections, game state changes, and other global events.
+     * It is assigned an EventComponent and acts as a central hub for event handling.
      *
-     * @param position The position of the button in the UI.
-     * @param size The size of the button.
-     * @param label The text label displayed on the button.
-     * @param onClick A callback function to be invoked when the button is clicked.q
-     * @return The created button entity.
+     * @param game The game instance to manage event-related resources.
+     * @return The created game event manager entity.
+     * 
+     * @see EventComponent For the component that enables event handling capabilities.
      */
-    static core::ecs::Entity createButton(Game &game, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void()>& onClick);
-    static core::ecs::Entity createTextInput(Game &game, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& title);
-    static core::ecs::Entity createSlider(Game &game, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void(float)>& onChange, float currentValue);
-    static core::ecs::Entity createImage(Game &game, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& textureName);
     static core::ecs::Entity createGameEventManager(Game &game);
 };
 
