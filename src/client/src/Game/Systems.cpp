@@ -182,7 +182,6 @@ namespace Systems {
 
         registry.add_system<EventComponent>([&](core::ecs::Entity, EventComponent&) {
             for (auto &event : EventPool::getInstance().getAllEvents()) {
-                std::cout << event << std::endl;
                 switch (event.getType()) {
                     case PlayerConnect: {
                         const auto playerId = std::get<std::uint8_t>(event.getPayload());
@@ -309,7 +308,6 @@ namespace Systems {
 
                     case EnemyMove: {
                         auto [id, position] = std::get<std::pair<std::uint8_t, sf::Vector2u>>(event.getPayload());
-                        std::cout << "EnemyMove payload: id = " << static_cast<int>(id) << ", position = (" << position.x << ", " << position.y << ")" << std::endl;
                         for (auto enemyEntity : registry.get_entities<Enemy>()) {
                             if (registry.get_component<Enemy>(enemyEntity)->id == id)
                                 return;

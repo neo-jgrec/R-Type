@@ -414,7 +414,6 @@ namespace Scenes {
         auto &gameEngine = game.getGameEngine();
 
         gameEngine.registry.run_system<EventComponent>();
-        gameEngine.updateMetrics();
 
         gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent>();
         gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent>();

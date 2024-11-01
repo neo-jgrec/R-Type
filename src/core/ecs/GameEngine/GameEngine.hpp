@@ -2,6 +2,7 @@
 #define GAMEENGINE_HPP_
 
 #include <SFML/Graphics/Text.hpp>
+#include <ostream>
 #include "../Registry/Registry.hpp"
 #include "./GameEngineComponents.hpp"
 #include "MusicManager.hpp"
@@ -325,13 +326,13 @@ public:
 
     void updateMetrics(bool onlyFPS = false)
     {
-        if (!registry.has_component<core::ge::DrawableComponent>(fpsEntity))
-            return;
 
         delta_t = clock.restart().asSeconds();
         fps = 1.0f / delta_t;
 
         #ifdef GE_USE_SDL
+            if (!registry.has_component<core::ge::DrawableComponent>(fpsEntity))
+                return;
             auto font = assetManager.getFont("_ARIAL");
             SDL_Color White = {255, 255, 255, 255};
 
@@ -386,6 +387,10 @@ public:
 
             cpuUsage = getCPUUsage();
             ramUsage = getRAMUsage();
+
+            std::cout << "fps = " << fps << std::endl;
+            std::cout << "cpu = " << cpuUsage << std::endl;
+            std::cout << "ram = " << ramUsage << std::endl;
 
             updateText(cpuEntity, "CPU: " + std::to_string(cpuUsage) + "%");
             updateText(ramEntity, "RAM: " + std::to_string(ramUsage) + "%");

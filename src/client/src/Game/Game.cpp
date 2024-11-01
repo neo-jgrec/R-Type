@@ -356,6 +356,9 @@ void Game::run() {
             default:
                 break;
         }
+        if (metricsEnabled) {
+            _gameEngine.updateMetrics();
+        }
         sound();
         render();
     }
