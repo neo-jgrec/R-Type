@@ -418,7 +418,6 @@ void Game::initGameMetrics() {
     core::ecs::Entity player = core::ecs::Entity{};
 
     if (playerEntites.empty()) {
-        std::cout << "no player" << std::endl;
         return;
     }
 
@@ -426,6 +425,13 @@ void Game::initGameMetrics() {
     _gameEngine.addMetrics("Player position", [this, player] () {
         auto transform = _gameEngine.registry.get_component<core::ge::TransformComponent>(player);
         return "X: " + std::to_string(static_cast<int>(transform->position.x)) + ", Y: " + std::to_string(static_cast<int>(transform->position.y));
+    });
+    _gameEngine.addMetrics("Player velocity", [this, player] () {
+        auto velocity = _gameEngine.registry.get_component<core::ge::VelocityComponent>(player);
+        float speed = std::sqrt(velocity->dx * velocity->dx + velocity->dy * velocity->dy);
+        std::ostringstream stream;
+        stream << std::fixed << std::setprecision(2) << speed;
+        return stream.str() + " px/s";
     });
     _gameEngine.addMetrics("Auto-fire mode", [this] () {
         return _autoFire ? "Enabled" : "Disabled";
