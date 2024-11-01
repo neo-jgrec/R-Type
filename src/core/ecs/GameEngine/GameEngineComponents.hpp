@@ -260,6 +260,29 @@ struct DisabledComponent {
  */
 struct MetricsComponent {}; // only an identifier
 
+/**
+ * @struct PhysicsComponent
+ * @brief Defines physical properties of an entity
+ *
+ * Contains properties that affect how the entity behaves in the physics simulation
+ */
+struct PhysicsComponent {
+    float mass = 1.0f;                  // Mass of the entity in kg
+    float elasticity = 0.5f;            // Bounce factor (0 = no bounce, 1 = perfect bounce)
+    float friction = 0.1f;              // Friction coefficient
+    bool isStatic = false;              // If true, object won't move but will affect others
+    sf::Vector2f acceleration{0.0f, 0.0f}; // Current acceleration
+    sf::Vector2f forces{0.0f, 0.0f};    // Sum of forces acting on the entity
+};
+
+/**
+ * @struct GravityComponent
+ * @brief Optional component to make entities affected by gravity
+ */
+struct GravityComponent {
+    sf::Vector2f gravity{0.0f, 300.0f}; // Default gravity force (can be customized)
+};
+
 } // namespace core::ge
 
 #endif /* !GAMEENGINECOMPONENTS_HPP_ */

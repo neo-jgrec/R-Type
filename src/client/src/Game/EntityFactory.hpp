@@ -77,6 +77,17 @@ public:
     static core::ecs::Entity createShooterEnemy(Game &game, const sf::Vector2f& position, std::uint8_t enemyId);
 
     /**
+     * @brief Creates a ball entity that can interact with other game objects.
+     *
+     * The ball entity includes physics-based components for movement and collision detection.
+     *
+     * @param game The game instance to manage ball-related resources.
+     * @param position The initial position of the ball.
+     * @return The created ball entity.
+     */
+    static core::ecs::Entity createBall(Game &game, const sf::Vector2f& position, const sf::Vector2f& velocity);
+
+    /**
      * @brief Creates a game event manager entity to handle global game events.
      *
      * The game event manager is responsible for processing and distributing game-wide events
