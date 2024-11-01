@@ -14,7 +14,10 @@ const std::unordered_map<uint8_t, EventFactory::EventHandler> EventFactory::hand
     {RequestType::GameOver, handleGameOver},
     {RequestType::MapScroll, handleMapScroll},
     {RequestType::TileDestroy, handleTileDestroy},
-    {RequestType::PlayerShoot, handlePlayerShoot},
+    {RequestType::PlayerProjectileCreate, handlePlayerProjectileCreate},
+    {RequestType::PlayerMissileCreate, handlePlayerMissileCreate},
+    {RequestType::PlayerProjectileDestroy, handlePlayerProjectileDestroy},
+    {RequestType::PlayerMissileDestroy, handlePlayerMissileDestroy},
     {RequestType::PlayerMove, handlePlayerMove},
     {RequestType::PlayerCollide, handlePlayerCollide},
     {RequestType::PlayerHit, handlePlayerHit},
@@ -52,13 +55,44 @@ Event EventFactory::handleTileDestroy([[maybe_unused]] const GDTPHeader& header,
     return {RequestType::TileDestroy, header, sf::Vector2u{x, y}};
 }
 
-Event EventFactory::handlePlayerShoot([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload)
+Event EventFactory::handlePlayerProjectileCreate([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload)
 {
-    if (payload.size() != 1) {
-        throw std::runtime_error("Invalid payload size for PlayerShoot event");
+    if (payload.size() != 9) {
+        throw std::runtime_error("Invalid payload size for PlayerProjectileCreate event");
     }
     std::uint8_t projectileId = payload[0];
-    return {RequestType::PlayerShoot, header, projectileId};
+    std::uint32_t x = (payload[1] << 24) | (payload[2] << 16) | (payload[3] << 8) | payload[4];
+    std::uint32_t y = (payload[5] << 24) | (payload[6] << 16) | (payload[7] << 8) | payload[8];
+    return {RequestType::PlayerProjectileCreate, header, std::make_pair(projectileId, sf::Vector2u{x, y})};
+}
+
+Event EventFactory::handlePlayerMissileCreate([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload)
+{
+    if (payload.size() != 9) {
+        throw std::runtime_error("Invalid payload size for PlayerMissileCreate event");
+    }
+    std::uint8_t missileId = payload[0];
+    std::uint32_t x = (payload[1] << 24) | (payload[2] << 16) | (payload[3] << 8) | payload[4];
+    std::uint32_t y = (payload[5] << 24) | (payload[6] << 16) | (payload[7] << 8) | payload[8];
+    return {RequestType::PlayerMissileCreate, header, std::make_pair(missileId, sf::Vector2u{x, y})};
+}
+
+Event EventFactory::handlePlayerProjectileDestroy([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload)
+{
+    if (payload.size() != 1) {
+        throw std::runtime_error("Invalid payload size for PlayerProjectileDestroy event");
+    }
+    std::uint8_t projectileId = payload[0];
+    return {RequestType::PlayerProjectileDestroy, header, projectileId};
+}
+
+Event EventFactory::handlePlayerMissileDestroy([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload)
+{
+    if (payload.size() != 1) {
+        throw std::runtime_error("Invalid payload size for PlayerMissileDestroy event");
+    }
+    std::uint8_t missileId = payload[0];
+    return {RequestType::PlayerMissileDestroy, header, missileId};
 }
 
 Event EventFactory::handlePlayerMove([[maybe_unused]] const GDTPHeader& header, const std::vector<uint8_t>& payload)

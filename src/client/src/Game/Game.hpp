@@ -1,6 +1,7 @@
 #pragma once
 
 #include <list>
+#include <queue>
 #include <SFML/System/Vector2.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include "../../../core/ecs/Entity/Entity.hpp"
@@ -46,6 +47,9 @@ public:
     std::optional<std::string> keyToUpdate; ///< The key to update in the settings menu.
     std::map<std::string, core::ecs::Entity> keyBindingTexts; ///< The key bindings for the game.
     bool _autoFire = false;
+
+    std::shared_ptr<std::queue<core::ecs::Entity>> _selfProjectileQueue = std::make_shared<std::queue<core::ecs::Entity>>(); ///< Queue of self projectiles.
+    std::shared_ptr<std::queue<core::ecs::Entity>> _selfMissileQueue = std::make_shared<std::queue<core::ecs::Entity>>(); ///< Queue of self missiles.
 
 private:
     GameState _gameState = GameState::Loading; ///< The current state of the game.
@@ -139,6 +143,8 @@ public:
     GameState getGameState() const { return _gameState; }
     sf::Vector2f getGameScale() const { return gameScale; }
     GDTPHeader &getPlayerConnectionHeader() { return _playerConnectionHeader; }
+    std::shared_ptr<std::queue<core::ecs::Entity>> getSelfProjectileQueue() const { return _selfProjectileQueue; }
+    std::shared_ptr<std::queue<core::ecs::Entity>> getSelfMissileQueue() const { return _selfMissileQueue; }
 
     void setGameState(const GameState state) { _gameState = state; }
     void setPlayerConnectionHeader(const GDTPHeader &header) { _playerConnectionHeader = header; }

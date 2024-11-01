@@ -277,17 +277,25 @@ core::ecs::Entity EntityFactory::createEnemy(Server &server, const uint32_t x, u
 
 core::ecs::Entity EntityFactory::createProjectile(
     Server &server,
-    const core::ecs::Entity &player,
-    const uint8_t id)
+    const core::ecs::Entity &player)
 {
-    auto &gameEngine = server.getGameEngine();
-    auto &config = server.getConfigManager();
+    static uint8_t id = 0;
+    if (id >= 255) {
+        id = 0;
+        return core::ecs::Entity{};
+    }
 
-    const auto onCollision = [&, id](const core::ecs::Entity& entity, const core::ecs::Entity& otherEntity) {
-        std::cout << "Projectile " << static_cast<int>(id) << " died" << std::endl;
+    auto &gameEngine = server.getGameEngine();
+    const auto &config = server.getConfigManager();
+
+    const uint8_t currentId = id;
+    const auto onCollision = [&, currentId](const core::ecs::Entity& entity, const core::ecs::Entity& otherEntity) {
+        std::cout << "Projectile " << static_cast<int>(currentId) << " died" << std::endl;
 
         gameEngine.run_collision(PLAYER_PROJECTILE, otherEntity);
         gameEngine.registry.kill_entity(entity);
+
+        server.sendRequestToPlayers(PlayerProjectileDestroy, {currentId});
     };
 
     const core::ecs::Entity projectile = gameEngine.registry.spawn_entity();
@@ -307,9 +315,89 @@ core::ecs::Entity EntityFactory::createProjectile(
         {TILE, onCollision}}});
     gameEngine.registry.add_component(projectile, Projectile{id});
 
+
+    {
+        const auto x = static_cast<uint32_t>(playerTransform->position.x);
+        const auto y = static_cast<uint32_t>(playerTransform->position.y);
+
+        server.sendRequestToPlayers(PlayerProjectileCreate, {
+            id,
+            static_cast<uint8_t>(x >> 24),
+            static_cast<uint8_t>(x >> 16),
+            static_cast<uint8_t>(x >> 8),
+            static_cast<uint8_t>(x),
+            static_cast<uint8_t>(y >> 24),
+            static_cast<uint8_t>(y >> 16),
+            static_cast<uint8_t>(y >> 8),
+            static_cast<uint8_t>(y)
+        });
+    }
+
     std::cout << "Projectile " << static_cast<int>(id) << " created" << std::endl;
     return projectile;
 }
+
+core::ecs::Entity EntityFactory::createMissile(
+    Server &server,
+    const core::ecs::Entity &player)
+{
+    static uint8_t id = 0;
+    if (id >= 255) {
+        id = 0;
+        return core::ecs::Entity{};
+    }
+
+    auto &gameEngine = server.getGameEngine();
+    const auto &config = server.getConfigManager();
+
+    const uint8_t currentId = id;
+    const auto onCollision = [&, currentId](const core::ecs::Entity& entity, const core::ecs::Entity& otherEntity) {
+        std::cout << "Projectile " << static_cast<int>(currentId) << " died" << std::endl;
+
+        gameEngine.run_collision(PLAYER_PROJECTILE, otherEntity);
+        gameEngine.registry.kill_entity(entity);
+
+        server.sendRequestToPlayers(PlayerMissileDestroy, {currentId});
+    };
+
+    const core::ecs::Entity projectile = gameEngine.registry.spawn_entity();
+
+    const auto &playerTransform = gameEngine.registry.get_component<core::ge::TransformComponent>(player);
+
+    const auto size = sf::Vector2f(
+        config.getValue<float>("/player/weapons/1/size/x", 136.0f),
+        config.getValue<float>("/player/weapons/1/size/y", 48.0f)
+    );
+
+    gameEngine.registry.add_component(projectile, core::ge::VelocityComponent{config.getValue<float>("/player/weapons/1/speed/x", 500.0f), config.getValue<float>("/player/weapons/1/speed/y", 0.0f)});
+    gameEngine.registry.add_component(projectile, core::ge::TransformComponent{playerTransform->position, size, sf::Vector2f(1, 1), 0});
+    gameEngine.registry.add_component(projectile, core::ge::CollisionComponent{PLAYER_PROJECTILE, std::vector{sf::FloatRect(0, 0, size.x, size.y)},{
+        {ENEMY, onCollision},
+        {WORLD, onCollision},
+        {TILE, onCollision}}});
+    gameEngine.registry.add_component(projectile, Projectile{id});
+
+    {
+        const auto x = static_cast<uint32_t>(playerTransform->position.x);
+        const auto y = static_cast<uint32_t>(playerTransform->position.y);
+
+        server.sendRequestToPlayers(PlayerMissileCreate, {
+            id,
+            static_cast<uint8_t>(x >> 24),
+            static_cast<uint8_t>(x >> 16),
+            static_cast<uint8_t>(x >> 8),
+            static_cast<uint8_t>(x),
+            static_cast<uint8_t>(y >> 24),
+            static_cast<uint8_t>(y >> 16),
+            static_cast<uint8_t>(y >> 8),
+            static_cast<uint8_t>(y)
+        });
+    }
+
+    std::cout << "Missile " << static_cast<int>(id) << " created" << std::endl;
+    return projectile;
+}
+
 
 core::ecs::Entity EntityFactory::createTile(
     Server &server,

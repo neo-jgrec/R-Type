@@ -3,7 +3,6 @@
 
 #include <SFML/Graphics.hpp>
 #include <SFML/System/Vector2.hpp>
-#include "../../../core/ecs/GameEngine/GameEngineComponents.hpp"
 #include "Game.hpp"
 #include "../../../core/config/ConfigManager.hpp"
 
@@ -35,10 +34,9 @@ public:
      * The projectile is assigned components such as transform, collision, velocity, damage, and drawable.
      * A sound effect for firing the projectile is also included.
      *
-     * @param playerTransform The transform component of the player to position the projectile correctly.
      * @return The created projectile entity.
      */
-    static core::ecs::Entity createPlayerProjectile(Game &game, core::ge::TransformComponent& playerTransform);
+    static core::ecs::Entity createPlayerProjectile(Game &game, sf::Vector2u pos);
 
     /**
      * @brief Creates a missile entity for the player, using the player's position and scale.
@@ -46,10 +44,9 @@ public:
      * The missile is similar to the projectile but deals more damage and has a different size and sound.
      * Components include transform, collision, velocity, damage, and animation.
      *
-     * @param playerTransform The transform component of the player to position the missile correctly.
      * @return The created missile entity.
      */
-    static core::ecs::Entity createPlayerMissile(Game &game, core::ge::TransformComponent& playerTransform);
+    static core::ecs::Entity createPlayerMissile(Game &game, sf::Vector2u pos);
 
     /**
      * @brief Creates an enemy entity with the given position and game scale.

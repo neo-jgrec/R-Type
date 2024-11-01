@@ -93,8 +93,17 @@ public:
             case RequestType::PlayerMove:
                 os << "PlayerMove";
                 break;
-            case RequestType::PlayerShoot:
-                os << "PlayerShoot";
+            case RequestType::PlayerProjectileCreate:
+                os << "PlayerProjectileCreate";
+                break;
+            case RequestType::PlayerMissileCreate:
+                os << "PlayerMissileCreate";
+                break;
+            case RequestType::PlayerProjectileDestroy:
+                os << "PlayerProjectileDestroy";
+                break;
+            case RequestType::PlayerMissileDestroy:
+                os << "PlayerMissileDestroy";
                 break;
             case RequestType::PlayerCollide:
                 os << "PlayerCollide";
