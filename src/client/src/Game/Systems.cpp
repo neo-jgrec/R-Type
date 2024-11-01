@@ -216,6 +216,7 @@ namespace Systems {
                                 drawableComp->shape.setSize(sf::Vector2f(36.0f * 3, 36.0f * 3));
                                 transformComp->size = sf::Vector2f(36.0f * 3, 36.0f * 3);
                                 transformComp->position = sf::Vector2f(transformComp->position.x, transformComp->position.y);
+                                game.metricsEnabled = false;
                                 registry.remove_component<core::ge::VelocityComponent>(playerEntity);
                                 registry.remove_component<core::ge::TransformComponent>(playerEntity);
                                 registry.remove_component<core::ge::CollisionComponent>(playerEntity);

@@ -1,5 +1,6 @@
 #include "Game.hpp"
 
+#include <cmath>
 #include <string>
 #include <vector>
 #include <iostream>
@@ -422,9 +423,15 @@ void Game::initGameMetrics() {
     }
 
     player = playerEntites[0];
-    _gameEngine.addMetrics("Player Pos", [this, player] () {
+    _gameEngine.addMetrics("Player position", [this, player] () {
         auto transform = _gameEngine.registry.get_component<core::ge::TransformComponent>(player);
         return "X: " + std::to_string(static_cast<int>(transform->position.x)) + ", Y: " + std::to_string(static_cast<int>(transform->position.y));
+    });
+    _gameEngine.addMetrics("Auto-fire mode", [this] () {
+        return _autoFire ? "Enabled" : "Disabled";
+    });
+    _gameEngine.addMetrics("Time", [this] () {
+        return std::to_string(static_cast<int>(time.getElapsedTime().asSeconds()));
     });
 }
 
