@@ -84,7 +84,7 @@ public:
      * @param position The initial position of the ball.
      * @return The created ball entity.
      */
-    static core::ecs::Entity createBall(Game &game, const sf::Vector2f& position);
+    static core::ecs::Entity createBall(Game &game, const sf::Vector2f& position, const sf::Vector2f& velocity);
 
     /**
      * @brief Creates a button entity for the game's UI.

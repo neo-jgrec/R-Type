@@ -795,7 +795,6 @@ protected:
             #endif
         }
         void physicsSystem() {
-            // Handle physics for entities with physics components
             registry.add_system<ge::TransformComponent, ge::VelocityComponent, ge::PhysicsComponent>(
                 [&]([[maybe_unused]] ecs::Entity entity, [[maybe_unused]] ge::TransformComponent &transform,
                     ge::VelocityComponent &velocity, ge::PhysicsComponent &physics) {

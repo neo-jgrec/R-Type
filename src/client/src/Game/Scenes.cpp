@@ -83,7 +83,10 @@ namespace Scenes {
             }
         ));
 
-        game.addToScene(EntityFactory::createBall(game, sf::Vector2f(100, 100)));
+        game.addToScene(EntityFactory::createBall(game, sf::Vector2f(10, 250), sf::Vector2f(0, 10)));
+        game.addToScene(EntityFactory::createBall(game, sf::Vector2f(100, 200), sf::Vector2f(0, 0)));
+        game.addToScene(EntityFactory::createBall(game, sf::Vector2f(190, 235), sf::Vector2f(0, 50)));
+
 
         for (const auto& border : createWorldBorders(gameEngine))
             game.addToScene(border);
