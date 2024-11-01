@@ -3,6 +3,15 @@
 
 #include <SFML/Graphics/Text.hpp>
 #include <cmath>
+extern "C"
+{
+    #include <lua.h>
+    #include <lauxlib.h>
+    #include <lualib.h>
+}
+
+#include <LuaBridge/LuaBridge.h>
+
 #include "../Registry/Registry.hpp"
 #include "./GameEngineComponents.hpp"
 #include "MusicManager.hpp"
@@ -33,7 +42,8 @@ public:
      * @param initWindow A boolean flag that indicates whether to initialize the SFML window. Default is true.
      */
     GameEngine(bool initWindow = true)
-        : cpuEntity(ecs::Entity{}),
+        : luaState(nullptr),
+          cpuEntity(ecs::Entity{}),
           ramEntity(ecs::Entity{}),
           fpsEntity(ecs::Entity{}) {
         // Register all necessary components
@@ -70,6 +80,9 @@ public:
         sliderSystem();
         physicsSystem();
 
+        luaState = luaL_newstate();
+        luaL_openlibs(luaState);
+
         if (!initWindow)
             return;
 
@@ -80,6 +93,23 @@ public:
      * @brief Destructor for the GameEngine class. Defaulted.
      */
     ~GameEngine() = default;
+
+    template <typename... Args>
+    std::optional<luabridge::LuaRef> run_script(const std::string &path, const std::string &function, Args &&... args)
+    {
+        if (luaL_dofile(luaState, path.c_str())) {
+            std::cerr << "Error loading script: " << lua_tostring(luaState, -1) << std::endl;
+            return std::nullopt;
+        }
+
+        luabridge::LuaRef luaFunction = luabridge::getGlobal(luaState, function.c_str());
+        if (!luaFunction.isFunction()) {
+            std::cerr << "Error loading function: " << lua_tostring(luaState, -1) << std::endl;
+            return std::nullopt;
+        }
+
+        return luaFunction(std::forward<Args>(args)...);
+    }
 
     void run_collision(const uint8_t wantedMask, const ecs::Entity entity)
     {
@@ -106,6 +136,7 @@ public:
     int currentScene = 0;               ///< The currently active scene, represented by an integer.
     sf::Clock clock;                    ///< SFML clock for tracking time in the game loop.
     core::ge::KeyBinding keyBindingsConfig; ///< The key bindings configuration for the game.
+    lua_State *luaState;                ///< The Lua state for running Lua scripts.
 
     #ifdef GE_USE_SDL
         void initWindow(sf::VideoMode size, [[maybe_unused]] int framerateLimit, const std::string& title, SDL_WindowFlags style = SDL_WINDOW_SHOWN)

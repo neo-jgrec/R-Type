@@ -42,6 +42,7 @@ endif()
 
 find_package(asio REQUIRED)
 find_package(SFML COMPONENTS graphics window system audio network REQUIRED)
+find_package(Lua REQUIRED)
 
 file(GLOB_RECURSE SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
@@ -64,6 +65,7 @@ target_link_libraries(r-type_client
         PRIVATE
         asio::asio
         sfml-graphics sfml-window sfml-system sfml-audio sfml-network
+        ${LUA_LIBRARIES}
 )
 
 # Install the target
