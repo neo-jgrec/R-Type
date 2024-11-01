@@ -206,16 +206,12 @@ void Game::render()
 {
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::TransformComponent>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::AnimationComponent>();
-    _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::CollisionComponent>();
 
     _gameEngine.window.clear();
     _gameEngine.registry.run_system<ViewComponent>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent, HitAnimationComponent>();
     _gameEngine.registry.run_system<core::ge::DrawableComponent, core::ge::DisabledComponent>();
-    _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent>();
-    _gameEngine.registry.run_system<core::ge::VelocityComponent, core::ge::PhysicsComponent, core::ge::GravityComponent>();
-    _gameEngine.registry.run_system<core::ge::TransformComponent, core::ge::VelocityComponent, core::ge::PhysicsComponent>();
     _gameEngine.registry.run_system<core::ge::TextComponent>();
     _gameEngine.registry.run_system<core::ge::SliderComponent>();
     _gameEngine.registry.run_system<core::ge::TextInputComponent, core::ge::DrawableComponent, core::ge::TextComponent>();
