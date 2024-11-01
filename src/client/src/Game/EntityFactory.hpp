@@ -63,14 +63,15 @@ public:
     static core::ecs::Entity createEnemy(Game &game, const sf::Vector2f& position, std::uint8_t enemyId);
 
     /**
-     * @brief Creates a shooter-type enemy entity that can fire projectiles.
+     * @brief Creates a shooter enemy entity with the given position and ID.
      *
-     * The shooter enemy is a specialized enemy type that includes components for shooting behavior
-     * in addition to standard enemy components like transform, collision, velocity, and health.
+     * The shooter enemy is a specialized type of enemy that can fire projectiles at the player.
+     * It is assigned components for transform, collision, velocity, health, damage, and animations.
+     * Unlike regular enemies, shooter enemies have additional logic for projectile firing behavior.
      *
      * @param game The game instance to manage enemy-related resources.
      * @param position The initial position of the shooter enemy.
-     * @param enemyId The unique identifier for the enemy type.
+     * @param enemyId A unique identifier for the shooter enemy.
      * @return The created shooter enemy entity.
      */
     static core::ecs::Entity createShooterEnemy(Game &game, const sf::Vector2f& position, std::uint8_t enemyId);
@@ -87,69 +88,16 @@ public:
     static core::ecs::Entity createBall(Game &game, const sf::Vector2f& position, const sf::Vector2f& velocity);
 
     /**
-     * @brief Creates a button entity for the game's UI.
-     *
-     * The button is assigned components such as transform, drawable, text, and a callback function for when the button is clicked.
-     * It can be used in various game states (e.g., Main Menu).
-     *
-     * @param position The position of the button in the UI.
-     * @param size The size of the button.
-     * @param label The text label displayed on the button.
-     * @param onClick A callback function to be invoked when the button is clicked.q
-     * @return The created button entity.
-     */
-    static core::ecs::Entity createButton(Game &game, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void()>& onClick);
-
-    /**
-     * @brief Creates a text input field for the game's UI.
-     *
-     * The text input field allows users to enter text and includes components for
-     * handling keyboard input, displaying text, and managing focus states.
-     *
-     * @param game The game instance to manage UI resources.
-     * @param position The position of the text input in the UI.
-     * @param size The size of the text input field.
-     * @param title The placeholder or label text for the input field.
-     * @return The created text input entity.
-     */
-    static core::ecs::Entity createTextInput(Game &game, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& title);
-
-    /**
-     * @brief Creates a slider control for the game's UI.
-     *
-     * The slider allows users to select a value within a range and includes components
-     * for handling mouse input and visual feedback.
-     *
-     * @param game The game instance to manage UI resources.
-     * @param position The position of the slider in the UI.
-     * @param size The size of the slider control.
-     * @param label The text label for the slider.
-     * @param onChange Callback function triggered when the slider value changes.
-     * @param currentValue The initial value of the slider.
-     * @return The created slider entity.
-     */
-    static core::ecs::Entity createSlider(Game &game, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& label, const std::function<void(float)>& onChange, float currentValue);
-
-    /**
-     * @brief Creates an image entity for the game's UI.
-     *
-     * The image entity displays a texture and includes components for positioning and rendering.
-     *
-     * @param game The game instance to manage UI resources.
-     * @param position The position of the image in the UI.
-     * @param size The size of the image.
-     * @param textureName The name of the texture resource to display.
-     * @return The created image entity.
-     */
-    static core::ecs::Entity createImage(Game &game, const sf::Vector2f& position, const sf::Vector2f& size, const std::string& textureName);
-
-    /**
      * @brief Creates a game event manager entity to handle global game events.
      *
-     * The event manager coordinates game-wide events and state changes.
+     * The game event manager is responsible for processing and distributing game-wide events
+     * such as player connections, disconnections, game state changes, and other global events.
+     * It is assigned an EventComponent and acts as a central hub for event handling.
      *
      * @param game The game instance to manage event-related resources.
      * @return The created game event manager entity.
+     * 
+     * @see EventComponent For the component that enables event handling capabilities.
      */
     static core::ecs::Entity createGameEventManager(Game &game);
 };
