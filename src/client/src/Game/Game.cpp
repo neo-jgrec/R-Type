@@ -1,5 +1,7 @@
 #include "Game.hpp"
 
+#include <cmath>
+#include <string>
 #include <vector>
 #include <iostream>
 #include <SFML/System/Time.hpp>
@@ -221,6 +223,7 @@ void Game::render()
 void Game::processEvents()
 {
     sf::Event event{};
+
     while (_gameEngine.window.pollEvent(event)) {
         if (event.type == sf::Event::Closed) {
             _windowOpen = false;
@@ -232,6 +235,15 @@ void Game::processEvents()
             if (event.key.code == sf::Keyboard::Escape && isPressed) {
                 _windowOpen = false;
                 _gameEngine.window.close();
+            }
+
+            if (event.key.code == sf::Keyboard::M && isPressed) {
+                metricsEnabled = !metricsEnabled;
+                if (metricsEnabled) {
+                    _gameEngine.reEnableMetrics();
+                } else {
+                    _gameEngine.disableMetrics();
+                }
             }
 
             auto playerEntities = _gameEngine.registry.get_entities<Player, InputStateComponent>();
@@ -323,6 +335,7 @@ void Game::run() {
     // TODO: implement a way to load maps at runtimes dynamically
     parseMap(*this, "./assets/JY_map.json", _gameEngine.window);
     Scenes::loadMainMenu(*this);
+    sf::Clock metricsClock;
     while (_windowOpen) {
         sf::Time elapsed = _gameEngine.clock.restart();
         _gameEngine.delta_t = elapsed.asSeconds();
@@ -343,6 +356,12 @@ void Game::run() {
                 break;
             default:
                 break;
+        }
+        if (metricsEnabled && metricsClock.getElapsedTime().asSeconds() >= 1.0f) {
+            _gameEngine.updateMetrics();
+            metricsClock.restart();
+        } else if (metricsEnabled) {
+            _gameEngine.updateMetrics(true);
         }
         sound();
         render();
@@ -392,6 +411,34 @@ void Game::loadingProgress(const float progress)
     _gameEngine.window.draw(progressBar);
     _gameEngine.window.draw(loadingText);
     _gameEngine.window.display();
+}
+
+void Game::initGameMetrics() {
+    auto playerEntites = _gameEngine.registry.get_entities<Player>();
+    core::ecs::Entity player = core::ecs::Entity{};
+
+    if (playerEntites.empty()) {
+        return;
+    }
+
+    player = playerEntites[0];
+    _gameEngine.addMetrics("Player position", [this, player] () {
+        auto transform = _gameEngine.registry.get_component<core::ge::TransformComponent>(player);
+        return "X: " + std::to_string(static_cast<int>(transform->position.x)) + ", Y: " + std::to_string(static_cast<int>(transform->position.y));
+    });
+    _gameEngine.addMetrics("Player velocity", [this, player] () {
+        auto velocity = _gameEngine.registry.get_component<core::ge::VelocityComponent>(player);
+        float speed = std::sqrt(velocity->dx * velocity->dx + velocity->dy * velocity->dy);
+        std::ostringstream stream;
+        stream << std::fixed << std::setprecision(2) << speed;
+        return stream.str() + " px/s";
+    });
+    _gameEngine.addMetrics("Auto-fire mode", [this] () {
+        return _autoFire ? "Enabled" : "Disabled";
+    });
+    _gameEngine.addMetrics("Time", [this] () {
+        return std::to_string(static_cast<int>(time.getElapsedTime().asSeconds()));
+    });
 }
 
 

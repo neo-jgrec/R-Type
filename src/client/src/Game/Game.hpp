@@ -1,5 +1,6 @@
 #pragma once
 
+#include <SFML/System/Clock.hpp>
 #include <list>
 #include <queue>
 #include <SFML/System/Vector2.hpp>
@@ -8,6 +9,7 @@
 #include "../../../core/ecs/GameEngine/GameEngine.hpp"
 #include "../../../core/network/NetworkService.hpp"
 #include "../../../core/config/ConfigManager.hpp"
+#include "../../../game/Components.hpp"
 
 /**
  * @struct Tile
@@ -46,7 +48,9 @@ public:
     sf::Vector2f gameScale = {1.0f, 1.0f}; ///< Scaling factor for the game view, adjusted during window resizing.
     std::optional<std::string> keyToUpdate; ///< The key to update in the settings menu.
     std::map<std::string, core::ecs::Entity> keyBindingTexts; ///< The key bindings for the game.
-    bool _autoFire = false;
+    bool _autoFire = false; ///< Flag to track if the auto fire mode in on.
+    bool metricsEnabled = false; ///< Flag to trac if the metrics are enabled.
+    sf::Clock time; ///< Clock to track time elapsed in a game.
 
     std::shared_ptr<std::queue<core::ecs::Entity>> _selfProjectileQueue = std::make_shared<std::queue<core::ecs::Entity>>(); ///< Queue of self projectiles.
     std::shared_ptr<std::queue<core::ecs::Entity>> _selfMissileQueue = std::make_shared<std::queue<core::ecs::Entity>>(); ///< Queue of self missiles.
@@ -135,6 +139,11 @@ public:
      * The game loop continues running until the game window is closed.
      */
     void run();
+
+    /**
+     * @brief Inits game metrics like player info, map info etc.
+     */
+    void initGameMetrics();
 
     core::GameEngine &getGameEngine() { return _gameEngine; }
     core::ecs::Registry &getRegistry() { return _gameEngine.registry; }

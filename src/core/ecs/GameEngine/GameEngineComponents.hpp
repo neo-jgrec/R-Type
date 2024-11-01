@@ -204,6 +204,7 @@ struct TextComponent {
 #ifndef GE_USE_SDL
     sf::Text text;
     sf::Font font;
+    bool isFixed = false;
 #else
     TTF_Font* font = nullptr;
     SDL_Texture* textTexture = nullptr;

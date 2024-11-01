@@ -1,6 +1,7 @@
 #ifndef GAMEENGINE_HPP_
 #define GAMEENGINE_HPP_
 
+#include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/Text.hpp>
 #include <cmath>
 extern "C"
@@ -226,7 +227,7 @@ public:
             metricText.setString(name + ": " + valueFunc());
 
             if (metric)
-                registry.add_component<core::ge::TextComponent>(metricEntity, core::ge::TextComponent{metricText, assetManager.getFont("_ARIAL")});
+                registry.add_component<core::ge::TextComponent>(metricEntity, core::ge::TextComponent{metricText, assetManager.getFont("_ARIAL"), true});
             registry.add_component<core::ge::MetricsComponent>(metricEntity, core::ge::MetricsComponent{});
         #endif
     }
@@ -238,6 +239,8 @@ public:
         cpuEntity = registry.spawn_entity();
         ramEntity = registry.spawn_entity();
         fpsEntity = registry.spawn_entity();
+
+        [[maybe_unused]] float yOffsetSfml = 0.0f;
 
         #ifdef GE_USE_SDL
             auto font = assetManager.getFont("_ARIAL");
@@ -267,28 +270,38 @@ public:
             registry.add_component<core::ge::MetricsComponent>(ramEntity, core::ge::MetricsComponent{});
             registry.add_component<core::ge::MetricsComponent>(fpsEntity, core::ge::MetricsComponent{});
         #else
-            if (assetManager.getFont("_ARIAL").getInfo().family.empty()) {
+            if (assetManager.getFont("arial").getInfo().family.empty()) {
                 std::cerr << "Failed to load font for metrics!" << std::endl;
                 return;
             }
             sf::Text cpuText;
-            cpuText.setFont(assetManager.getFont("_ARIAL"));
+            cpuText.setFont(assetManager.getFont("arial"));
             cpuText.setCharacterSize(24);
             cpuText.setFillColor(sf::Color::White);
+            cpuText.setPosition(0.0f,yOffsetSfml);
+            yOffsetSfml += 30.0f;
 
             sf::Text ramText;
-            ramText.setFont(assetManager.getFont("_ARIAL"));
+            ramText.setFont(assetManager.getFont("arial"));
             ramText.setCharacterSize(24);
             ramText.setFillColor(sf::Color::White);
+            ramText.setPosition(0.0f, yOffsetSfml);
+            yOffsetSfml += 30.0f;
 
             sf::Text fpsText;
-            fpsText.setFont(assetManager.getFont("_ARIAL"));
+            fpsText.setFont(assetManager.getFont("arial"));
             fpsText.setCharacterSize(24);
             fpsText.setFillColor(sf::Color::White);
+            fpsText.setPosition(0.0f, yOffsetSfml);
+            yOffsetSfml += 30.0f;
 
-            registry.add_component<core::ge::TextComponent>(cpuEntity, core::ge::TextComponent{cpuText, assetManager.getFont("_ARIAL")});
-            registry.add_component<core::ge::TextComponent>(ramEntity, core::ge::TextComponent{ramText, assetManager.getFont("_ARIAL")});
-            registry.add_component<core::ge::TextComponent>(fpsEntity, core::ge::TextComponent{fpsText, assetManager.getFont("_ARIAL")});
+            cpuText.setString("CPU: 0.0%");
+            ramText.setString("RAM: 0.0%");
+            fpsText.setString("FPS: 0.0");
+
+            registry.add_component<core::ge::TextComponent>(cpuEntity, core::ge::TextComponent{cpuText, assetManager.getFont("arial"), true});
+            registry.add_component<core::ge::TextComponent>(ramEntity, core::ge::TextComponent{ramText, assetManager.getFont("arial"), true});
+            registry.add_component<core::ge::TextComponent>(fpsEntity, core::ge::TextComponent{fpsText, assetManager.getFont("arial"), true});
             registry.add_component<core::ge::MetricsComponent>(cpuEntity, core::ge::MetricsComponent{});
             registry.add_component<core::ge::MetricsComponent>(ramEntity, core::ge::MetricsComponent{});
             registry.add_component<core::ge::MetricsComponent>(fpsEntity, core::ge::MetricsComponent{});
@@ -309,12 +322,14 @@ public:
                 registry.add_component<core::ge::DrawableComponent>(entity, core::ge::DrawableComponent{metricRect, metricTexture});
             #else
                 sf::Text metricText;
-                metricText.setFont(assetManager.getFont("_ARIAL"));
+                metricText.setFont(assetManager.getFont("arial"));
                 metricText.setCharacterSize(24);
                 metricText.setFillColor(sf::Color::White);
                 metricText.setString(name + ": " + valueFunc());
+                metricText.setPosition(0.0f, yOffsetSfml);
+                yOffsetSfml += 30.0f;
 
-                registry.add_component<core::ge::TextComponent>(entity, core::ge::TextComponent{metricText, assetManager.getFont("_ARIAL")});
+                registry.add_component<core::ge::TextComponent>(entity, core::ge::TextComponent{metricText, assetManager.getFont("arial"), true});
             #endif
             registry.add_component<core::ge::MetricsComponent>(entity, core::ge::MetricsComponent{});
             yOffset += 60;
@@ -324,29 +339,48 @@ public:
     void disableMetrics()
     {
         // Disable predefined metrics
-        if (registry.has_component<core::ge::DrawableComponent>(cpuEntity))
-            registry.remove_component<core::ge::DrawableComponent>(cpuEntity);
-        if (registry.has_component<core::ge::DrawableComponent>(ramEntity))
-            registry.remove_component<core::ge::DrawableComponent>(ramEntity);
-        if (registry.has_component<core::ge::DrawableComponent>(fpsEntity))
-            registry.remove_component<core::ge::DrawableComponent>(fpsEntity);
+        #ifdef GE_USE_SDL
+            if (registry.has_component<core::ge::DrawableComponent>(cpuEntity))
+                registry.remove_component<core::ge::DrawableComponent>(cpuEntity);
+            if (registry.has_component<core::ge::DrawableComponent>(ramEntity))
+                registry.remove_component<core::ge::DrawableComponent>(ramEntity);
+            if (registry.has_component<core::ge::DrawableComponent>(fpsEntity))
+                registry.remove_component<core::ge::DrawableComponent>(fpsEntity);
 
+        #else
+            if (registry.has_component<core::ge::TextComponent>(cpuEntity)) {
+                registry.remove_component<core::ge::TextComponent>(cpuEntity);
+            }
+            if (registry.has_component<core::ge::TextComponent>(ramEntity)) {
+                registry.remove_component<core::ge::TextComponent>(ramEntity);
+            }
+            if (registry.has_component<core::ge::TextComponent>(fpsEntity)) {
+                registry.remove_component<core::ge::TextComponent>(fpsEntity);
+            }
+        #endif
         // Disable custom metrics
-        for (auto& [name, entity] : customMetrics) {
-            if (registry.has_component<core::ge::DrawableComponent>(entity))
-                registry.remove_component<core::ge::DrawableComponent>(entity);
-        }
+        #ifdef GE_USE_SDL
+            for (auto& [name, entity] : customMetrics) {
+                if (registry.has_component<core::ge::DrawableComponent>(entity))
+                    registry.remove_component<core::ge::DrawableComponent>(entity);
+            }
+        #else
+            for (auto& [name, entity] : customMetrics) {
+                if (registry.has_component<core::ge::TextComponent>(entity))
+                    registry.remove_component<core::ge::TextComponent>(entity);
+            }
+        #endif
     }
 
     void updateMetrics(bool onlyFPS = false)
     {
-        if (!registry.has_component<core::ge::DrawableComponent>(fpsEntity))
-            return;
-
+        // TODO: vérifier que ça marche encore avec sdl car déplacer condition si drawable component
         delta_t = clock.restart().asSeconds();
         fps = 1.0f / delta_t;
 
         #ifdef GE_USE_SDL
+            if (!registry.has_component<core::ge::DrawableComponent>(fpsEntity))
+                return;
             auto font = assetManager.getFont("_ARIAL");
             SDL_Color White = {255, 255, 255, 255};
 
@@ -669,13 +703,19 @@ protected:
             registry.add_system<core::ge::TextComponent>(
                 [&window = window](core::ecs::Entity, core::ge::TextComponent &text) {
 
+                    const sf::View currentView = window.getView();
+                    if (text.isFixed) {
+                        window.setView(window.getDefaultView());
+                    }
                     if (text.text.getString().isEmpty()) {
                         std::cerr << "Warning: Attempting to draw empty text" << std::endl;
                         return;
                     }
-
                     text.text.setFont(text.font);
                     window.draw(text.text);
+                    if (text.isFixed) {
+                        window.setView(currentView);
+                    }
                 });
         #endif
     }

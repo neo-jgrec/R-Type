@@ -135,7 +135,7 @@ namespace Scenes {
 
         core::ecs::Entity title = gameEngine.registry.spawn_entity();
         game.addToScene(title);
-        gameEngine.registry.add_component(title, core::ge::TextComponent{titleText, font});
+        gameEngine.registry.add_component(title, core::ge::TextComponent{titleText, font, false});
 
         game.addToScene(core::ge::UIFactory::createImage(
             game.getGameEngine(),
@@ -275,7 +275,7 @@ namespace Scenes {
 
         core::ecs::Entity title = gameEngine.registry.spawn_entity();
         game.addToScene(title);
-        gameEngine.registry.add_component(title, core::ge::TextComponent{titleText, font});
+        gameEngine.registry.add_component(title, core::ge::TextComponent{titleText, font, false});
 
         game.addToScene(core::ge::UIFactory::createImage(
             game.getGameEngine(),
@@ -319,7 +319,7 @@ namespace Scenes {
 
             const core::ecs::Entity entity = gameEngine.registry.spawn_entity();
             game.addToScene(entity);
-            gameEngine.registry.add_component(entity, core::ge::TextComponent{text, font});
+            gameEngine.registry.add_component(entity, core::ge::TextComponent{text, font, false});
 
             game.keyBindingTexts[label] = entity;
         };
