@@ -52,6 +52,11 @@ Server::Server()
     EventFactory::playerMove(*this);
     EventFactory::playerProjectileShoot(*this);
     EventFactory::playerMissileShoot(*this);
+
+    _gameEngine.addCommand("stop", "Stop the server", [this](const std::string &) {
+        _gameState = STOPPING;
+        return "Server stopping";
+    });
 }
 
 void Server::start()
@@ -61,7 +66,7 @@ void Server::start()
         return;
     asGameStarted = true;
 
-    std::cout << "Game starting" << std::endl;
+    *_gameEngine.out << "Game starting" << std::endl;
 
     const core::ecs::Entity world = EntityFactory::createWorld(*this, "assets/JY_map.json");
     if (const auto spawnPoints = _gameEngine.registry.get_component<World>(world)->spawnPoints; spawnPoints.empty()) {
@@ -95,7 +100,7 @@ void Server::run()
     while (true) {
         switch (_gameState) {
             case STARTING:
-                std::cout << "Server started" << std::endl;
+                *_gameEngine.out << "Server started" << std::endl;
                 _networkingService.run();
                 _gameState = WAITING_CONNECTION;
                 continue;
@@ -112,7 +117,7 @@ void Server::run()
                 break;
 
             case STOPPING:
-                std::cout << "Server stopped" << std::endl;
+                *_gameEngine.out << "Server stopped" << std::endl;
                 _networkingService.stop();
                 return;
         }

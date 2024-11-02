@@ -23,6 +23,8 @@ extern "C"
 #include <SFML/System/Clock.hpp>
 #include <SFML/Window/WindowStyle.hpp>
 
+#include "Shell.hpp"
+
 namespace core {
 /**
  * @class GameEngine
@@ -45,7 +47,8 @@ public:
         : luaState(nullptr),
           cpuEntity(ecs::Entity{}),
           ramEntity(ecs::Entity{}),
-          fpsEntity(ecs::Entity{}) {
+          fpsEntity(ecs::Entity{}),
+          shell(registry) {
         // Register all necessary components
         registry.register_component<core::ge::TransformComponent>();
         registry.register_component<core::ge::DrawableComponent>();
@@ -83,6 +86,8 @@ public:
         luaState = luaL_newstate();
         luaL_openlibs(luaState);
 
+        out = &shell.out();
+
         if (!initWindow)
             return;
 
@@ -92,7 +97,10 @@ public:
     /**
      * @brief Destructor for the GameEngine class. Defaulted.
      */
-    ~GameEngine() = default;
+    ~GameEngine()
+    {
+        shell.close();
+    }
 
     template <typename... Args>
     std::optional<luabridge::LuaRef> run_script(const std::string &path, const std::string &function, Args &&... args)
@@ -122,6 +130,7 @@ public:
         }
     }
 
+    std::ofstream *out;
     float delta_t = 0.0f;               ///< Time delta between frames, used for animations and movement.
     core::ecs::Registry registry;       ///< The entity-component system (ECS) registry managing all entities and components.
     MusicManager musicManager;          ///< Manager for background music in the game.
@@ -418,6 +427,10 @@ public:
         initGameMetrics();
     }
 
+    void addCommand(const std::string &command, const std::string &description, const std::function<std::string(std::string)> &callback)
+    {
+        shell.addCommand(command, description, callback);
+    }
 
 protected:
     /**
@@ -787,6 +800,8 @@ protected:
         #endif
     }
     private:
+        ge::Shell shell;
+
         static float getCPUUsage()
         {
             #ifdef _WIN32

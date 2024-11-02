@@ -20,7 +20,8 @@ void EventFactory::gameStarted(Server &server)
 
 void EventFactory::playerConnected(Server &server)
 {
-    NetworkingService &networkingService = server.getNetworkingService();
+    auto &gameEngine = server.getGameEngine();
+    auto &networkingService = server.getNetworkingService();
     auto &playersConnection = server.getPlayersConnection();
     auto &players = server.getPlayers();
 
@@ -34,7 +35,7 @@ void EventFactory::playerConnected(Server &server)
         for (; id < 4; id++) {
             if (playersConnection[id].has_value())
                 continue;
-            std::cout << "New connection from " << endpoint << std::endl;
+            *gameEngine.out << "New connection from " << endpoint << std::endl;
             playersConnection[id] = std::make_shared<asio::ip::udp::endpoint>(endpoint);
             break;
         }
@@ -134,7 +135,7 @@ void EventFactory::playerDisconnected(Server &server)
         if (id >= 4 || !playersConnection[id].has_value())
             return;
 
-        std::cout << "Player " << static_cast<int>(id) << " disconnected" << std::endl;
+        *gameEngine.out << "Player " << static_cast<int>(id) << " disconnected" << std::endl;
         playersConnection[id].reset();
 
         if (!players[id].has_value())
