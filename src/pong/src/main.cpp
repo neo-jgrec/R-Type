@@ -156,7 +156,7 @@ int main()
 
     while (isRunning) {
         SDL_Event event;
-        while (SDL_PollEvent(&event)) {
+        while (engine.pollEvent(&event)) {
             if (event.type == SDL_QUIT || (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE)) {
                 isRunning = false;
                 break;

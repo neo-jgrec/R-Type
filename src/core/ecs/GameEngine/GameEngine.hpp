@@ -383,7 +383,6 @@ public:
 
     void updateMetrics(bool onlyFPS = false)
     {
-        // TODO: vérifier que ça marche encore avec sdl car déplacer condition si drawable component
         delta_t = clock.restart().asSeconds();
         fps = 1.0f / delta_t;
 
@@ -465,6 +464,19 @@ public:
     {
         shell.addCommand(command, description, callback);
     }
+
+#ifdef GE_USE_SDL
+    int pollEvent(SDL_Event *event)
+    {
+        return SDL_PollEvent(event);
+    }
+#else
+    sf::Event *pollEvent(sf::Event *event)
+    {
+        window.pollEvent(*event);
+        return event;
+    }
+#endif
 
 protected:
     /**
