@@ -57,6 +57,17 @@ Server::Server()
         _gameState = STOPPING;
         return "Server stopping";
     });
+    _gameEngine.addCommand("kick", "Kick a player", [this](const std::string &args) {
+        if (args.empty())
+            return "Usage: kick <player_id>";
+        const uint8_t id = std::stoi(args);
+        if (id >= 4 || !_playersConnection[id].has_value())
+            return "Player not found";
+        _playersConnection[id].reset();
+        _gameEngine.registry.kill_entity(_players[id].value());
+        _players[id].reset();
+        return "Player kicked";
+    });
 }
 
 void Server::start()

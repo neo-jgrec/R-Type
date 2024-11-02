@@ -81,7 +81,7 @@ namespace core::ge {
 
 
     public:
-        Shell(core::ecs::Registry &registry)
+        Shell(const ecs::Registry &registry)
             : _registry(registry)
         {
             _logFilename = "/tmp/" + executable_name() + ".log";
@@ -102,8 +102,15 @@ namespace core::ge {
                     if (command == "exit")
                         break;
 
+                    std::string args;
+                    if (const auto space = command.find(' ');
+                        space != std::string::npos) {
+                        args = command.substr(space + 1);
+                        command = command.substr(0, space);
+                    }
+
                     if (const auto it = commands.find(command); it != commands.end()) {
-                        std::cout << it->second.second(command) << std::endl;
+                        std::cout << it->second.second(args) << std::endl;
                     } else {
                         std::cout << "Unknown command: " << command << std::endl;
                     }
