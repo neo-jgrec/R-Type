@@ -302,13 +302,17 @@ core::ecs::Entity EntityFactory::createProjectile(
 
     const auto &playerTransform = gameEngine.registry.get_component<core::ge::TransformComponent>(player);
 
+    const auto pos = sf::Vector2f(
+        playerTransform->position.x + playerTransform->size.x,
+        playerTransform->position.y + playerTransform->size.y / 2
+    );
     const auto size = sf::Vector2f(
         config.getValue<float>("/player/weapons/0/size/x", 72.0f),
         config.getValue<float>("/player/weapons/0/size/y", 20.0f)
     );
 
     gameEngine.registry.add_component(projectile, core::ge::VelocityComponent{config.getValue<float>("/player/weapons/0/speed/x", 500.0f), config.getValue<float>("/player/weapons/0/speed/y", 0.0f)});
-    gameEngine.registry.add_component(projectile, core::ge::TransformComponent{playerTransform->position, size, sf::Vector2f(1, 1), 0});
+    gameEngine.registry.add_component(projectile, core::ge::TransformComponent{pos, size, sf::Vector2f(1, 1), 0});
     gameEngine.registry.add_component(projectile, core::ge::CollisionComponent{PLAYER_PROJECTILE, std::vector{sf::FloatRect(0, 0, size.x, size.y)},{
         {ENEMY, onCollision},
         {WORLD, onCollision},
@@ -317,8 +321,8 @@ core::ecs::Entity EntityFactory::createProjectile(
 
 
     {
-        const auto x = static_cast<uint32_t>(playerTransform->position.x);
-        const auto y = static_cast<uint32_t>(playerTransform->position.y);
+        const auto x = static_cast<uint32_t>(pos.x);
+        const auto y = static_cast<uint32_t>(pos.y);
 
         server.sendRequestToPlayers(PlayerProjectileCreate, {
             id,
@@ -369,8 +373,12 @@ core::ecs::Entity EntityFactory::createMissile(
         config.getValue<float>("/player/weapons/1/size/y", 48.0f)
     );
 
+    const auto pos = sf::Vector2f(
+        playerTransform->position.x + playerTransform->size.x,
+        playerTransform->position.y + playerTransform->size.y / 2
+    );
     gameEngine.registry.add_component(projectile, core::ge::VelocityComponent{config.getValue<float>("/player/weapons/1/speed/x", 500.0f), config.getValue<float>("/player/weapons/1/speed/y", 0.0f)});
-    gameEngine.registry.add_component(projectile, core::ge::TransformComponent{playerTransform->position, size, sf::Vector2f(1, 1), 0});
+    gameEngine.registry.add_component(projectile, core::ge::TransformComponent{pos, size, sf::Vector2f(1, 1), 0});
     gameEngine.registry.add_component(projectile, core::ge::CollisionComponent{PLAYER_PROJECTILE, std::vector{sf::FloatRect(0, 0, size.x, size.y)},{
         {ENEMY, onCollision},
         {WORLD, onCollision},
@@ -378,8 +386,8 @@ core::ecs::Entity EntityFactory::createMissile(
     gameEngine.registry.add_component(projectile, Projectile{id});
 
     {
-        const auto x = static_cast<uint32_t>(playerTransform->position.x);
-        const auto y = static_cast<uint32_t>(playerTransform->position.y);
+        const auto x = static_cast<uint32_t>(pos.x);
+        const auto y = static_cast<uint32_t>(pos.y);
 
         server.sendRequestToPlayers(PlayerMissileCreate, {
             id,
