@@ -100,6 +100,9 @@ public:
      * @return A string representing the IP address and port in the format "IP:Port".
      */
     [[nodiscard]] std::string getLocalEndpoint() const {
+        if (!socket_.has_value()) {
+            throw std::runtime_error("Socket is not initialized");
+        }
         asio::ip::udp::endpoint local_endpoint = socket_->local_endpoint();
         return local_endpoint.address().to_string() + ":" + std::to_string(local_endpoint.port());
     }
@@ -109,6 +112,9 @@ public:
      * @return A string representing the IP address.
      */
     [[nodiscard]] std::string getIp() const {
+        if (!socket_.has_value()) {
+            throw std::runtime_error("Socket is not initialized");
+        }
         const asio::ip::udp::endpoint local_endpoint = socket_->local_endpoint();
         return local_endpoint.address().to_string();
     }
@@ -117,17 +123,20 @@ public:
      * @brief Gets the Port the server is currently listening on.
      * @return unsigned short representing the port number.
      */
-    [[nodiscard]] uint32_t getPort() const
-    {
+    [[nodiscard]] uint32_t getPort() const {
+        if (!socket_.has_value()) {
+            throw std::runtime_error("Socket is not initialized");
+        }
         return socket_->local_endpoint().port();
     }
 
     /**
     * @brief Destructor for NetworkingService. Closes the socket and stops the service.
     */
-    ~NetworkingService()
-    {
-        socket_->close();
+    ~NetworkingService() {
+        if (socket_.has_value()) {
+            socket_->close();
+        }
         stop();
     }
 
@@ -363,6 +372,9 @@ public:
      * @see `run()` for starting the I/O context in a separate thread.
      */
     void startReceive() {
+        if (!socket_.has_value()) {
+            throw std::runtime_error("Socket is not initialized");
+        }
         socket_->async_receive_from(
             asio::buffer(recv_buffer_), remote_endpoint_,
             [this](const std::error_code ec, const std::size_t bytes_recvd) {
@@ -406,18 +418,17 @@ public:
     void init()
     {
         static bool isInit = false;
+        if (isInit)
+            return;
 
-        if (!isInit)
-        {
-            try {
-                socket_ = asio::ip::udp::socket(io_context_, asio::ip::udp::endpoint(asio::ip::udp::v4(), _port));
-                isInit = true;
-                startReceive();
-                std::cout << "Network service initialized on port : " << _port << std::endl;
-            } catch (std::exception &e) {
-                std::cerr << "Error in Network service: " << e.what() << std::endl;
-                throw std::runtime_error("Failed to initialize network service");
-            }
+        try {
+            socket_ = asio::ip::udp::socket(io_context_, asio::ip::udp::endpoint(asio::ip::udp::v4(), _port));
+            isInit = true;
+            startReceive();
+            std::cout << "Network service initialized on port : " << _port << std::endl;
+        } catch (std::exception &e) {
+            std::cerr << "Error in Network service: " << e.what() << std::endl;
+            throw std::runtime_error("Failed to initialize network service");
         }
     }
 
@@ -549,7 +560,7 @@ public:
 
 private:
     asio::io_context io_context_;                   ///< ASIO I/O context for handling asynchronous network operations.
-    std::optional<asio::ip::udp::socket> socket_;                  ///< ASIO UDP socket for sending and receiving packets.
+    std::optional<asio::ip::udp::socket> socket_;    ///< ASIO UDP socket for sending and receiving packets.
     int _port;                                      ///< Port number for the server to listen on.
     asio::ip::udp::endpoint remote_endpoint_;       ///< Endpoint of the remote client sending the packet.
     std::array<uint8_t, 1400> recv_buffer_{};         ///< Buffer for receiving incoming packets.
@@ -608,6 +619,9 @@ private:
         const std::string& recipient,
         const int port
     ) {
+        if (!socket_.has_value()) {
+            throw std::runtime_error("Socket is not initialized");
+        }
         const asio::ip::udp::endpoint recipient_endpoint(asio::ip::address::from_string(recipient), port);
         std::error_code ec;
         socket_->send_to(asio::buffer(packet), recipient_endpoint, 0, ec);

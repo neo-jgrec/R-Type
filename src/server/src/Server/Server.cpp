@@ -33,7 +33,6 @@ void Server::sendRequestToPlayers(const uint8_t requestType, const std::vector<u
     }
 }
 
-
 Server::Server()
 {
     _gameEngine.registry.register_component<Network>();

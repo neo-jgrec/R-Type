@@ -1,8 +1,7 @@
 {
     "network": {
         "port": 1111,
-        "ip": "127.0.0.1",
-        "maxPlayers": 4
+        "ip": "127.0.0.1"
     },
     "view": {
         "size": {
