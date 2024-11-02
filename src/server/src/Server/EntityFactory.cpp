@@ -83,7 +83,7 @@ core::ecs::Entity EntityFactory::createPlayer(
     const auto &worldComponent = gameEngine.registry.get_component<World>(world);
 
     const std::function onCollision = [&, id](const core::ecs::Entity& entity, const core::ecs::Entity& otherEntity) {
-        std::cout << "Player " << static_cast<int>(id) << " collided" << std::endl;
+        *gameEngine.out << "Player " << static_cast<int>(id) << " collided" << std::endl;
 
         RequestType requestType = PlayerHit;
         {
@@ -96,7 +96,7 @@ core::ecs::Entity EntityFactory::createPlayer(
         server.sendRequestToPlayers(requestType, {id});
 
         if (requestType == PlayerDie) {
-            std::cout << "Player " << static_cast<int>(id) << " died" << std::endl;
+            *gameEngine.out << "Player " << static_cast<int>(id) << " died" << std::endl;
 
             gameEngine.run_collision(PLAYER, otherEntity);
 
@@ -204,7 +204,7 @@ core::ecs::Entity EntityFactory::createPlayer(
         });
     }
 
-    std::cout << "Player " << static_cast<int>(id) << " created" << std::endl;
+    *gameEngine.out << "Player " << static_cast<int>(id) << " created" << std::endl;
     return player;
 }
 
@@ -221,7 +221,7 @@ core::ecs::Entity EntityFactory::createEnemy(Server &server, const uint32_t x, u
 
     const auto currentId = id;
     const std::function onCollision = [&, currentId](const core::ecs::Entity& entity, const core::ecs::Entity& otherEntity) {
-        std::cout << "Enemy " << static_cast<int>(currentId) << " collided" << std::endl;
+        *gameEngine.out << "Enemy " << static_cast<int>(currentId) << " collided" << std::endl;
 
         gameEngine.run_collision(ENEMY, otherEntity);
 
@@ -271,7 +271,7 @@ core::ecs::Entity EntityFactory::createEnemy(Server &server, const uint32_t x, u
             payload);
     }
 
-    std::cout << "Enemy " << static_cast<int>(id++) << " created" << std::endl;
+    *gameEngine.out << "Enemy " << static_cast<int>(id++) << " created" << std::endl;
     return enemy;
 }
 
@@ -290,7 +290,7 @@ core::ecs::Entity EntityFactory::createProjectile(
 
     const uint8_t currentId = id;
     const auto onCollision = [&, currentId](const core::ecs::Entity& entity, const core::ecs::Entity& otherEntity) {
-        std::cout << "Projectile " << static_cast<int>(currentId) << " died" << std::endl;
+        *gameEngine.out << "Projectile " << static_cast<int>(currentId) << " died" << std::endl;
 
         gameEngine.run_collision(PLAYER_PROJECTILE, otherEntity);
         gameEngine.registry.kill_entity(entity);
@@ -333,7 +333,7 @@ core::ecs::Entity EntityFactory::createProjectile(
         });
     }
 
-    std::cout << "Projectile " << static_cast<int>(id) << " created" << std::endl;
+    *gameEngine.out << "Projectile " << static_cast<int>(id) << " created" << std::endl;
     return projectile;
 }
 
@@ -352,7 +352,7 @@ core::ecs::Entity EntityFactory::createMissile(
 
     const uint8_t currentId = id;
     const auto onCollision = [&, currentId](const core::ecs::Entity& entity, const core::ecs::Entity& otherEntity) {
-        std::cout << "Projectile " << static_cast<int>(currentId) << " died" << std::endl;
+        *gameEngine.out << "Projectile " << static_cast<int>(currentId) << " died" << std::endl;
 
         gameEngine.run_collision(PLAYER_PROJECTILE, otherEntity);
         gameEngine.registry.kill_entity(entity);
@@ -394,7 +394,7 @@ core::ecs::Entity EntityFactory::createMissile(
         });
     }
 
-    std::cout << "Missile " << static_cast<int>(id) << " created" << std::endl;
+    *gameEngine.out << "Missile " << static_cast<int>(id) << " created" << std::endl;
     return projectile;
 }
 
@@ -408,7 +408,7 @@ core::ecs::Entity EntityFactory::createTile(
     core::GameEngine &gameEngine = server.getGameEngine();
 
     const auto onCollision = [&](const core::ecs::Entity& entity, const core::ecs::Entity& otherEntity) {
-        std::cout << "Tile collided" << std::endl;
+        *gameEngine.out << "Tile collided" << std::endl;
 
         gameEngine.run_collision(TILE, otherEntity);
         server.sendRequestToPlayers(TileDestroy, {
