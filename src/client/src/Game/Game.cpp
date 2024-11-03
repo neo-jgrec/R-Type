@@ -365,6 +365,7 @@ void Game::run() {
         render();
     }
     _gameEngine.window.close();
+    _gameEngine.musicManager.stopMusic();
     _networkingService.stop();
 }
 
