@@ -66,9 +66,7 @@ namespace core::ge {
         {
             #ifdef _WIN32
 
-            char buf[MAX_PATH];
-            GetModuleFileNameA(nullptr, buf, MAX_PATH);
-            return buf;
+            return "game";
 
             #else
 
@@ -84,7 +82,7 @@ namespace core::ge {
         Shell(const ecs::Registry &registry)
             : _registry(registry)
         {
-            _logFilename = "/tmp/" + executable_name() + ".log";
+            _logFilename = std::filesystem::temp_directory_path().string() + executable_name() + ".log";
             _file.open(_logFilename, std::ios::out | std::ios::trunc);
             if (!_file.is_open()) {
                 throw std::runtime_error("Failed to open log file: " + _logFilename);
