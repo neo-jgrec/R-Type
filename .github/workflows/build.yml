@@ -52,7 +52,11 @@ jobs:
         run: echo "root='${{ steps.runvcpkg.outputs.RUNVCPKG_VCPKG_ROOT_OUT }}', triplet='${{ steps.runvcpkg.outputs.RUNVCPKG_VCPKG_DEFAULT_TRIPLET_OUT }}' "
 
       - name: Run CMake
-        run: cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=${{ steps.runvcpkg.outputs.RUNVCPKG_VCPKG_ROOT_OUT }}/scripts/buildsystems/vcpkg.cmake
+        run: cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=${{ steps.runvcpkg.outputs.RUNVCPKG_VCPKG_ROOT_OUT }}/scripts/buildsystems/vcpkg.cmake -DCMAKE_CXX_STANDARD=17
+        working-directory: ${{ github.workspace }}
+
+      - name: Build the project
+        run: cmake --build build --config Release
         working-directory: ${{ github.workspace }}
 
       - name: List $RUNNER_WORKSPACE after build
