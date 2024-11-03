@@ -16,6 +16,11 @@ The R-Type project follows a structured organization to maintain clarity and sep
 - `client/`: Client-side game code
   - `src/`: Client source files
     - `Game/`: Game logic and components
+      - `Game.*`: Game logic
+      - `Scenes.*`: Game scenes and transitions
+      - `EntityFactory.*`: Factory for creating game entities
+      - `Systems.*`: Game systems for updating entities
+      - `Map.*`: Game map and tile initialization
     - `events/`: Event handling and management
     - `main.cpp`: Entry point for the client application
 
