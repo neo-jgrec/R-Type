@@ -175,8 +175,7 @@ engine.addMetrics("Player 1 Score", [&engine, player1]() {
 
 ### Shell for commands
 The engine provides a shell for running commands during gameplay. Define commands and bind them to actions (can be cheats, debug, moderation, etc.).
-
-ROMAIN ICI TU PEUX AJOUTER DES TRUCS
+You can see how it works at : [Shell](Command%20Line%20Interface.md)
 
 ### Lua Scripting
 
