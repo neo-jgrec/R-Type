@@ -82,7 +82,7 @@ namespace core::ge {
         Shell(const ecs::Registry &registry)
             : _registry(registry)
         {
-            _logFilename = std::filesystem::temp_directory_path().string() + executable_name() + ".log";
+            _logFilename = (std::filesystem::temp_directory_path() / executable_name()).string() + ".log";
             _file.open(_logFilename, std::ios::out | std::ios::trunc);
             if (!_file.is_open()) {
                 throw std::runtime_error("Failed to open log file: " + _logFilename);
