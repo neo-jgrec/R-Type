@@ -103,6 +103,15 @@ public:
         shell.close();
     }
 
+    /**
+     * @brief run a lua script openned by the path and call the function with the args
+     *
+     * @tparam Args the type of the arguments
+     * @param path the path to the lua script
+     * @param function the function to call
+     * @param args the arguments to pass to the function
+     * @return std::optional<luabridge::LuaRef> the result of the function
+     */
     template <typename... Args>
     std::optional<luabridge::LuaRef> run_script(const std::string &path, const std::string &function, Args &&... args)
     {
@@ -120,6 +129,12 @@ public:
         return luaFunction(std::forward<Args>(args)...);
     }
 
+    /**
+     * @brief Run the collision system for the given entity.
+     *
+     * @param wantedMask
+     * @param entity
+     */
     void run_collision(const uint8_t wantedMask, const ecs::Entity entity)
     {
         for (const auto &collisionComponent = registry.get_component<ge::CollisionComponent>(entity);
@@ -131,7 +146,7 @@ public:
         }
     }
 
-    std::ofstream *out;
+    std::ofstream *out;                 ///< The output stream for the shell.
     float delta_t = 0.0f;               ///< Time delta between frames, used for animations and movement.
     core::ecs::Registry registry;       ///< The entity-component system (ECS) registry managing all entities and components.
     MusicManager musicManager;          ///< Manager for background music in the game.
@@ -149,8 +164,24 @@ public:
     lua_State *luaState;                ///< The Lua state for running Lua scripts.
 
     #ifdef GE_USE_SDL
+        /**
+         * @brief Initialize the SDL window with the given parameters.
+         *
+         * @param size The size of the window.
+         * @param framerateLimit The frame rate limit for the window.
+         * @param title The title of the window.
+         * @param style The window style flags.
+         */
         void initWindow(sf::VideoMode size, [[maybe_unused]] int framerateLimit, const std::string& title, SDL_WindowFlags style = SDL_WINDOW_SHOWN)
     #else
+        /**
+         * @brief Initialize the SFML window with the given parameters.
+         *
+         * @param size The size of the window.
+         * @param framerateLimit The frame rate limit for the window.
+         * @param title The title of the window.
+         * @param style The window style flags.
+         */
         void initWindow(sf::VideoMode size, [[maybe_unused]] int framerateLimit, const std::string& title , sf::Uint32 style = sf::Style::Default)
     #endif
     {
@@ -199,15 +230,22 @@ public:
 #endif
     }
 
-    float cpuUsage = 0.0f;
-    float ramUsage = 0.0f;
-    float fps = 0.0f;
-    ecs::Entity cpuEntity;
-    ecs::Entity ramEntity;
-    ecs::Entity fpsEntity;
-    std::unordered_map<std::string, ecs::Entity> customMetrics;
-    std::unordered_map<std::string, std::function<std::string()>> metricLambdas;
+    float cpuUsage = 0.0f;             ///< The current CPU usage in percentage.
+    float ramUsage = 0.0f;           ///< The current RAM usage in percentage.
+    float fps = 0.0f;              ///< The current frames per second (FPS) of the game.
+    ecs::Entity cpuEntity;            ///< The entity representing the CPU usage metric.
+    ecs::Entity ramEntity;           ///< The entity representing the RAM usage metric.
+    ecs::Entity fpsEntity;         ///< The entity representing the FPS metric.
+    std::unordered_map<std::string, ecs::Entity> customMetrics; ///< Custom metrics entities.
+    std::unordered_map<std::string, std::function<std::string()>> metricLambdas; ///< Custom metric lambdas.
 
+    /**
+     * @brief Add a custom metric to the game.
+     *
+     * @param name
+     * @param valueFunc
+     * @param metric
+     */
     void addMetrics(const std::string& name, const std::function<std::string()>& valueFunc, bool metric = false)
     {
         ecs::Entity metricEntity = registry.spawn_entity();
@@ -241,6 +279,10 @@ public:
         #endif
     }
 
+    /**
+     * @brief Initialize the game metrics entities.
+     *
+     */
     void initGameMetrics()
     {
         assetManager.loadFont("_ARIAL", "assets/Fonts/Arial.ttf");
@@ -345,6 +387,10 @@ public:
         }
     }
 
+    /**
+     * @brief Disable all metrics entities.
+     *
+     */
     void disableMetrics()
     {
         // Disable predefined metrics
@@ -381,9 +427,13 @@ public:
         #endif
     }
 
+    /**
+     * @brief Update the game metrics entities.
+     *
+     * @param onlyFPS If true, only update the FPS metric. Default is false.
+     */
     void updateMetrics(bool onlyFPS = false)
     {
-        // TODO: vérifier que ça marche encore avec sdl car déplacer condition si drawable component
         delta_t = clock.restart().asSeconds();
         fps = 1.0f / delta_t;
 
@@ -456,11 +506,21 @@ public:
         #endif
     }
 
+    /**
+     * @brief if metrics are disabled, re-enable them
+     */
     void reEnableMetrics()
     {
         initGameMetrics();
     }
 
+    /**
+     * @brief Add a command to the shell.
+     *
+     * @param command
+     * @param description
+     * @param callback
+     */
     void addCommand(const std::string &command, const std::string &description, const std::function<std::string(std::string)> &callback)
     {
         shell.addCommand(command, description, callback);
@@ -840,8 +900,13 @@ protected:
         #endif
     }
     private:
-        ge::Shell shell;
+        ge::Shell shell; ///< The shell instance for the game.
 
+        /**
+         * @brief Get the CPU usage in percentage.
+         *
+         * @return The CPU usage in percentage.
+         */
         static float getCPUUsage()
         {
             #ifdef _WIN32
@@ -861,6 +926,12 @@ protected:
                 return std::stof(result);
             #endif
         }
+
+        /**
+         * @brief Get the RAM usage in percentage.
+         *
+         * @return The RAM usage in percentage.
+         */
         static float getRAMUsage()
         {
             #ifdef _WIN32
