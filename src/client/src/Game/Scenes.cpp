@@ -80,6 +80,7 @@ namespace Scenes {
             buttonSize,
             "Quit",
             [&game] {
+                game._windowOpen = false;
                 game.closeWindow();
             }
         ));
