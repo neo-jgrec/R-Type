@@ -59,6 +59,10 @@ Each of this part is run in loop depending of the computer speed (the server wil
 
 The server initializes the systems and set the event handlers in the constructor. The server is started by calling the `run` method.
 
+## Configuration
+
+For information like size, speed, etc. the server uses the `assets/Data/config.json` file. This file is loaded with the `ConfigManager` class situated in `core/config/ConfigManager.hpp` at the initialization of the server.
+
 ## Command line interface
 
 The game engine has a command line interface that can be used to interact with the server.
