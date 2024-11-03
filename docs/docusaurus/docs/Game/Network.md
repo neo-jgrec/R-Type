@@ -32,7 +32,7 @@ packet-beta
 16-16: "Player id"
 ```
   - Request type = 1
-    
+
   - Payload size = 1
 
 - ### GameStart
@@ -46,7 +46,7 @@ packet-beta
 14-15: "Total packet"
 ```
   - Request type = 2
-    
+
   - Payload size = 0
 
 - ### GameOver
@@ -60,7 +60,7 @@ packet-beta
 14-15: "Total packet"
 ```
   - Request type = 3
-    
+
   - Payload size = 0
 
 - ### MapScroll
@@ -75,7 +75,7 @@ packet-beta
 16-19: "Total scroll"
 ```
   - Request type = 4
-        
+
   - Payload size = 4
 
 - ### TileDestroy
@@ -94,7 +94,40 @@ packet-beta
 
   - Payload size = 8
 
-- ### PlayerShoot
+- ### PlayerProjectileShoot
+```mermaid
+packet-beta
+0-0: "Version"
+1-1: "Request Type"
+2-9: "Packet id"
+10-11: "Payload size"
+12-13: "Seq number"
+14-15: "Total packet"
+16-16: "User id"
+```
+  - Request type = 6
+
+  - Payload size = 1
+
+- ### PlayerProjectileCreate
+```mermaid
+packet-beta
+0-0: "Version"
+1-1: "Request Type"
+2-9: "Packet id"
+10-11: "Payload size"
+12-13: "Seq number"
+14-15: "Total packet"
+16-16: "Projectile id"
+17-20: "X"
+21-24: "Y"
+```
+  - Request type = 6
+
+  - Payload size = 9
+
+
+- ### PlayerProjectileDestroy
 ```mermaid
 packet-beta
 0-0: "Version"
@@ -106,7 +139,54 @@ packet-beta
 16-16: "Projectile id"
 ```
   - Request type = 6
-    
+
+  - Payload size = 1
+
+- ### PlayerMissileShoot
+```mermaid
+packet-beta
+0-0: "Version"
+1-1: "Request Type"
+2-9: "Packet id"
+10-11: "Payload size"
+12-13: "Seq number"
+14-15: "Total packet"
+16-16: "User id"
+```
+  - Request type = 7
+
+  - Payload size = 1
+
+- ### PlayerMissileCreate
+```mermaid
+packet-beta
+0-0: "Version"
+1-1: "Request Type"
+2-9: "Packet id"
+10-11: "Payload size"
+12-13: "Seq number"
+14-15: "Total packet"
+16-16: "Missile id"
+17-20: "X"
+21-24: "Y"
+```
+  - Request type = 7
+
+  - Payload size = 9
+
+- ### PlayerMissileDestroy
+```mermaid
+packet-beta
+0-0: "Version"
+1-1: "Request Type"
+2-9: "Packet id"
+10-11: "Payload size"
+12-13: "Seq number"
+14-15: "Total packet"
+16-16: "Missile id"
+```
+  - Request type = 7
+
   - Payload size = 1
 
 - ### PlayerMove
@@ -123,7 +203,7 @@ packet-beta
 21-24: "Y"
 ```
   - Request type = 7
-    
+
   - Payload size = 9
 
 - ### PlayerCollide
@@ -140,7 +220,7 @@ packet-beta
 21-24: "Y"
 ```
   - Request type = 8
-    
+
   - Payload size = 9
 
 - ### PlayerHit
@@ -155,7 +235,7 @@ packet-beta
 16-16: "Player id"
 ```
   - Request type = 9
-    
+
   - Payload size = 1
 
 - ### PlayerDie
@@ -170,7 +250,7 @@ packet-beta
 16-16: "Player id"
 ```
   - Request type = 10
-    
+
   - Payload size = 1
 
 - ### EnemySpawn
@@ -187,7 +267,7 @@ packet-beta
 21-24: "Y"
 ```
   - Request type = 11
-    
+
   - Payload size = 9
 
 - ### EnemyMove
@@ -204,7 +284,7 @@ packet-beta
 21-24: "Y"
 ```
   - Request type = 12
-    
+
   - Payload size = 9
 
 - ### EnemyDie
@@ -219,5 +299,5 @@ packet-beta
 16-16: "Enemy id"
 ```
   - Request type = 13
-    
+
   - Payload size = 1
